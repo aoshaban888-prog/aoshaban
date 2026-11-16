@@ -1,0 +1,25 @@
+rules_version = '2';
+// Only signed-in Google accounts whose email has a document in the "allowed" collection
+// (document ID = the email, e.g. allowed/someone@gmail.com) can read or write the library.
+// Add or remove people from the Firebase console: Firestore > Data > allowed.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function allowed() {
+      return signedIn() && exists(/databases/$(database)/documents/allowed/$(request.auth.token.email));
+    }
+
+    // each user may only check their own entry; the list is edited from the console only
+    match /allowed/{email} {
+      allow read: if signedIn() && request.auth.token.email == email;
+      allow write: if false;
+    }
+
+    // the library: policies, associations, letterheads, vindex, versions, prefs
+    match /{col}/{id} {
+      allow read, write: if col != "allowed" && allowed();
+    }
+  }
+}

@@ -44,7 +44,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:20px}
 header.top h1{font-family:var(--font-display);font-weight:700;font-size:clamp(24px,3.4vw,32px);line-height:1.2;margin:0;text-wrap:balance}
 header.top p{margin:4px 0 0;color:var(--muted);max-width:62ch}
-.store-note{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.store-note{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .top-side{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .bk-ask{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--brass-soft);font-size:13px}
 .bk-ask[hidden]{display:none}
@@ -851,6 +851,10 @@ textarea.input{min-height:180px;resize:vertical;font-family:var(--font-doc);line
 <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.2/dist/docx-preview.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Firebase (Firestore + Google sign-in). If these fail to load (e.g. inside a Claude artifact), the page falls back to Claude's store or the browser. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 (() => {
 const $ = id => document.getElementById(id);
@@ -1040,7 +1044,67 @@ function setStore(kind, text){
   n.append(d, t);
 }
 
+/* ---------- Firebase: Firestore storage behind Google sign-in ----------
+   Access is controlled by Firestore rules (see firestore.rules): only emails listed in the "allowed" collection can read or write. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBa4DhloyfrfAU_9RAe_Ac-qnTZhd-LdiA",
+  authDomain: "aoshaban-87979.firebaseapp.com",
+  projectId: "aoshaban-87979",
+  storageBucket: "aoshaban-87979.firebasestorage.app",
+  messagingSenderId: "681076685044",
+  appId: "1:681076685044:web:99b1e1c9a202cfa43e46a1",
+};
+function storeButton(label, onClick){
+  const b = document.createElement("button"); b.type = "button"; b.className = "btn small"; b.textContent = label;
+  b.addEventListener("click", onClick); $("storeNote").append(b); return b;
+}
+function initFirebase(){
+  if (!(window.firebase && firebase.initializeApp && firebase.auth && firebase.firestore)) return Promise.resolve(false);
+  if (/^file:/.test(location.protocol)){ setStore("warn", "افتح الصفحة من رابط (http) لتسجيل الدخول، لا من ملف على الجهاز"); return Promise.resolve(false); }
+  let app;
+  try { app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG); } catch (e){ console.error(e); return Promise.resolve(false); }
+  const auth = app.auth(); const db = app.firestore();
+  try { db.settings({ ignoreUndefinedProperties: true }); } catch {}
+  const provider = new firebase.auth.GoogleAuthProvider(); provider.setCustomParameters({ prompt: "select_account" });
+  const signIn = async () => {
+    try { await auth.signInWithPopup(provider); }
+    catch (e){
+      if (e && (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment")) return auth.signInWithRedirect(provider);
+      if (e && e.code === "auth/unauthorized-domain") setStore("warn", "هذا الموقع غير مضاف في «Authorized domains» في إعدادات Firebase");
+      else if (!(e && e.code === "auth/popup-closed-by-user")) setStore("warn", "تعذّر تسجيل الدخول. حاول مرة أخرى.");
+      storeButton("تسجيل الدخول بقوقل", signIn);
+    }
+  };
+  const signOut = () => auth.signOut().then(() => location.reload());
+  state.mode = "auth"; renderList();
+  return new Promise(resolve => {
+    auth.onAuthStateChanged(async user => {
+      if (state.mode === "db") return;
+      if (!user){
+        setStore("warn", "سجّل الدخول بحساب قوقل لفتح المكتبة"); storeButton("تسجيل الدخول بقوقل", signIn);
+        return;
+      }
+      setStore("", "جارٍ التحقق من الصلاحية…");
+      let ok = false;
+      try { ok = (await db.collection("allowed").doc(user.email).get()).exists; } catch (e){ console.error(e); }
+      if (!ok){
+        setStore("warn", `حساب ${user.email} غير مصرّح له بفتح المكتبة`); storeButton("تبديل الحساب", signOut);
+        return;
+      }
+      state.db = db; state.col = db.collection("policies"); state.mode = "db"; state.canWrite = true;
+      setStore("ok", `المكتبة محفوظة في Firebase · ${user.email}`); storeButton("خروج", signOut);
+      state.col.onSnapshot(snap => {
+        state.policies = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderList(); renderChosen();
+        if (state.onPolicies) state.onPolicies();
+      }, e => { console.error(e); setStore("warn", "تعذّر الاتصال بالمكتبة. أعد تحميل الصفحة."); });
+      resolve(true);
+    });
+  });
+}
+
 async function initStore(){
+  if (await initFirebase()) return;
   const use = window.claude && window.claude.use ? window.claude.use.bind(window.claude) : null;
   if (use){
     use("downloads").then(d => { state.downloads = d; }).catch(() => {});
@@ -1179,8 +1243,8 @@ function versionsXml(opt, ctx){
 }
 function storeError(e){
   if (e && e.message === "too_big") return "نص السياسة أكبر من الحد المسموح للحفظ. قسّمها إلى سياستين.";
-  if (e && e.code === "invalid_argument") return "لا تملك صلاحية تعديل المكتبة.";
-  if (e && e.code === "quota_exceeded") return "امتلأت مساحة المكتبة. احذف سياسات غير مستخدمة ثم أعد المحاولة.";
+  if (e && (e.code === "invalid_argument" || e.code === "permission-denied")) return "لا تملك صلاحية تعديل المكتبة.";
+  if (e && (e.code === "quota_exceeded" || e.code === "resource-exhausted")) return "امتلأت مساحة المكتبة. احذف سياسات غير مستخدمة ثم أعد المحاولة.";
   return "تعذّر الحفظ. حاول مرة أخرى.";
 }
 
@@ -1253,7 +1317,8 @@ function renderList(){
     .sort((a, b) => (a.code || "").localeCompare(b.code || "", "ar") || (a.title || "").localeCompare(b.title || "", "ar"));
   if (!state.policies.length){
     const e = document.createElement("div"); e.className = "empty";
-    e.innerHTML = state.mode === "loading" ? "<strong>جارٍ تحميل المكتبة…</strong>" :
+    e.innerHTML = state.mode === "auth" ? "<strong>سجّل الدخول لعرض المكتبة</strong>استخدم زر «تسجيل الدخول بقوقل» أعلى الصفحة." :
+      state.mode === "loading" ? "<strong>جارٍ تحميل المكتبة…</strong>" :
       "<strong>المكتبة فارغة</strong>أضف أول سياسة من زر «إضافة سياسة»، ويمكنك رفع عدة ملفات وورد دفعة واحدة.";
     list.append(e); return;
   }
@@ -3946,7 +4011,16 @@ function ready(){
 async function offer(filename, blob){
   let dl = state.downloads;
   if (!dl && window.claude && window.claude.use){ try { dl = state.downloads = await window.claude.use("downloads"); } catch {} }
-  if (!dl){ setMsg("حفظ الملفات غير متاح في هذا العرض. افتح الصفحة داخل Claude.", "err"); return; }
+  if (!dl){
+    // outside Claude: a normal browser download
+    try {
+      const url = URL.createObjectURL(blob); const a = document.createElement("a");
+      a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setMsg("جاهز: " + filename, "ok");
+    } catch { setMsg("تعذّر حفظ الملف في هذا العرض.", "err"); }
+    return;
+  }
   try {
     await dl.save({ filename, data: blob });
     setMsg("جاهز: " + filename, "ok");
