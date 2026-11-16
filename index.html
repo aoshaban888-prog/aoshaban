@@ -1074,8 +1074,9 @@ function initFirebase(){
     try { await auth.signInWithPopup(provider); }
     catch (e){
       if (e && (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment")) return auth.signInWithRedirect(provider);
-      if (e && e.code === "auth/unauthorized-domain") setStore("warn", "هذا الموقع غير مضاف في «Authorized domains» في إعدادات Firebase");
-      else if (!(e && e.code === "auth/popup-closed-by-user")) setStore("warn", "تعذّر تسجيل الدخول. حاول مرة أخرى.");
+      console.error("sign-in", e, location.href);
+      if (e && e.code === "auth/unauthorized-domain") setStore("warn", `النطاق «${location.hostname || location.origin}» غير مضاف في «Authorized domains» في إعدادات Firebase`);
+      else if (!(e && e.code === "auth/popup-closed-by-user")) setStore("warn", `تعذّر تسجيل الدخول (${(e && e.code) || "خطأ غير معروف"}). حاول مرة أخرى.`);
       storeButton("تسجيل الدخول بقوقل", signIn);
     }
   };
