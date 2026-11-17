@@ -14,7 +14,7 @@
   const PERMS = [
     ["submit", "رفع الخطاب للاعتماد"], ["issue", "حفظ وطباعة (إصدار الخطاب برقم)"], ["printDraft", "طباعة بدون حفظ"], ["editText", "تعديل نص الخطاب وتنسيقه"],
     ["editIssued", "تعديل الخطابات الصادرة"], ["viewLog", "عرض سجل كل الخطابات"], ["deleteLog", "حذف الخطابات من السجل"],
-    ["pdf", "حفظ الخطاب PDF"],
+    ["pdf", "حفظ الخطاب PDF"], ["sign", "الاعتماد والتوقيع (تعديل صفة واسم المعتمد)"],
   ];
   const SETUP = [["templates", "إدارة القوالب"], ["heads", "إدارة الكليشات"], ["seal", "إدارة الختم والتوقيع"]];
   const ALL_KEYS = [...PERMS, ...SETUP].map(x => x[0]);
@@ -48,7 +48,7 @@
       el.classList.toggle("sec-off", hide);
       if (el.classList.contains("nav-sub") && hide) el.hidden = true;
     });
-    window.HRLetters && HRLetters.setPerms(permsOf(my));
+    window.HRLetters && HRLetters.setPerms({ ...permsOf(my), admin: isAdmin() });
     $("rqAllTab").hidden = !isAdmin();
     guard(location.hash.replace(/^#\/?/, ""));
   }

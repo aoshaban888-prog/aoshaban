@@ -173,7 +173,14 @@ ${HELLO}
   const values = {};
   let manual = false, showHdr = true, showFtr = true;
   // what this user may do here (js/requests.js → HRLetters.setPerms); all allowed until known
-  let P = { submit: true, issue: true, editText: true, editIssued: true, viewLog: true, deleteLog: true, templates: true, heads: true, seal: true, pdf: true, printDraft: true };
+  let P = { submit: true, issue: true, editText: true, editIssued: true, viewLog: true, deleteLog: true, templates: true, heads: true, seal: true, pdf: true, printDraft: true, sign: true, admin: true };
+  // the signer an admin sets for everyone (settings/letters); users without «sign» always use it
+  let signShared = null, signSaveT = null;
+  function useSharedSign(){
+    if (!signShared || P.sign) return;
+    $("hrSignRole").value = signShared.signRole || ""; $("hrSignName").value = signShared.signName || "";
+    renderPaper();
+  }
   let editingLetter = null; // an issued letter opened from the log: saving updates it and keeps its number
   // signature and stamp images, shared by all letters (Firestore hrMeta/seal)
   // positions are millimetres from the page's top-left corner
@@ -771,7 +778,6 @@ ${HELLO}
     lettersUnsub = q.onSnapshot(snap => { letters = snap.docs.map(x => ({ id: x.id, ...x.data() })); renderLog(); }, e => console.error(e));
   }
   function applyPerms(){
-    subLetters();
     // tabs and tools the user may not use disappear
     document.querySelector('[data-hrtab="tpl"]').hidden = !P.templates;
     document.querySelector('[data-hrtab="heads"]').hidden = !P.heads;
@@ -779,6 +785,10 @@ ${HELLO}
     if (on && on.hidden) setTab("new");
     $("hrTools").hidden = !P.editText;
     $("hrPdf").hidden = !P.pdf;
+    $("hrSignFields").hidden = !P.sign;
+    $("hrSignDetails").hidden = !P.sign && !P.seal;
+    $("hrSignNote").textContent = P.admin ? "ما تكتبه هنا يصير صفة واسم المعتمد في خطابات كل المستخدمين" : "تعديلك هنا يخص خطاباتك في هذا المتصفح";
+    useSharedSign();
     $("hrSealBox").hidden = !db || !P.seal; $("hrSealSignin").hidden = !!db || !P.seal;
     $("hrSealSection").hidden = !P.seal;
     $("hrBulkDel").hidden = !P.deleteLog; $("hrSelAll").closest("label").hidden = !P.deleteLog;
@@ -786,6 +796,7 @@ ${HELLO}
     setEditing(editingLetter);
     if (curTpl()) renderPaper("head");
     renderLog();
+    try { subLetters(); } catch (e){ console.error(e); }
   }
   /* ---------- API for js/requests.js ---------- */
   let canIssue = true, submitOn = false;
@@ -1031,6 +1042,8 @@ ${HELLO}
     sign = { name: $("hrSignName").value, role: $("hrSignRole").value };
     try { localStorage.setItem(SIGN_KEY, JSON.stringify(sign)); } catch {}
     renderPaper();
+    // an admin's entry becomes the signer for everyone
+    if (P.admin && db){ clearTimeout(signSaveT); signSaveT = setTimeout(() => db.collection("settings").doc("letters").set({ signName: sign.name.trim(), signRole: sign.role.trim(), updatedAt: new Date().toISOString() }, { merge: true }).catch(e => console.error(e)), 700); }
   }));
   $("hrRegen").addEventListener("click", async () => { if (await UI.confirm("إعادة بناء الخطاب من القالب والخانات؟ تضيع تعديلاتك على الورقة.", { ok: "إعادة البناء" })){ setManual(false); renderPaper(true); } });
   function renderSealForm(){
@@ -1149,6 +1162,12 @@ ${HELLO}
       fillTplSelect(); renderTpls(); migrate();
     }, e => console.error(e));
     subLetters();
+    db.collection("settings").doc("letters").onSnapshot(d => {
+      signShared = d.exists ? d.data() : null;
+      // fill the signer from the shared one when this browser has none yet
+      if (signShared && P.sign && !$("hrSignName").value && !$("hrSignRole").value){ $("hrSignRole").value = signShared.signRole || ""; $("hrSignName").value = signShared.signName || ""; renderPaper(); }
+      useSharedSign();
+    }, () => {});
     db.collection("hrMeta").doc("seal").onSnapshot(d => { if (d.exists){ seal = { ...seal, ...d.data() }; renderSealForm(); renderPaper("sign"); } }, () => {});
     renderSealForm();
     db.collection("hrHeads").onSnapshot(snap => { heads = snap.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => a.name.localeCompare(b.name)); fillHeadSelect(); renderHeads(); }, e => console.error(e));

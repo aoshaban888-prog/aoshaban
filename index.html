@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261118d"></script>
-<link rel="stylesheet" href="css/library.css?v=20261118d">
-<link rel="stylesheet" href="css/app.css?v=20261118d">
+<script src="js/boot.js?v=20261118f"></script>
+<link rel="stylesheet" href="css/library.css?v=20261118f">
+<link rel="stylesheet" href="css/app.css?v=20261118f">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -382,11 +382,13 @@
           <div class="s-row"><label for="hrDate">تاريخ الخطاب</label><input class="input" id="hrDate" type="date"></div>
           <div class="hr-sep">بيانات الخطاب</div>
           <div id="hrFields"></div>
-          <details class="hr-sign">
+          <details class="hr-sign" id="hrSignDetails">
             <summary>الاعتماد والتوقيع</summary>
+            <div id="hrSignFields">
             <div class="s-row"><label for="hrSignRole">صفة المعتمد</label><input class="input" id="hrSignRole" placeholder="مثال: المدير التنفيذي"></div>
             <div class="s-row"><label for="hrSignName">اسم المعتمد</label><input class="input" id="hrSignName"></div>
-            <p class="muted-text">الصفة والاسم تُحفظ في هذا المتصفح وتظهر في كل خطاب</p>
+            <p class="muted-text" id="hrSignNote">الصفة والاسم تُحفظ في هذا المتصفح وتظهر في كل خطاب</p>
+            </div>
             <div id="hrSealSection"><div class="hr-sep">الختم والتوقيع</div>
             <p class="muted-text" id="hrSealSignin">سجّل الدخول لإضافة الختم والتوقيع</p>
             <div id="hrSealBox" hidden>
@@ -943,18 +945,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261118d"></script>
-<script src="js/library.js?v=20261118d"></script>
+<script src="js/ui.js?v=20261118f"></script>
+<script src="js/library.js?v=20261118f"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/home.js?v=20261118d"></script>
-<script src="js/tasks.js?v=20261118d"></script>
-<script src="js/slider.js?v=20261118d"></script>
-<script src="js/settings.js?v=20261118d"></script>
-<script src="js/fonts.js?v=20261118d"></script>
-<script src="js/hr.js?v=20261118d"></script>
-<script src="js/requests.js?v=20261118d"></script>
-<script src="js/table-tools.js?v=20261118d"></script>
-<script src="js/login.js?v=20261118d"></script>
-<script src="js/shell.js?v=20261118d"></script>
+<script src="js/home.js?v=20261118f"></script>
+<script src="js/tasks.js?v=20261118f"></script>
+<script src="js/slider.js?v=20261118f"></script>
+<script src="js/settings.js?v=20261118f"></script>
+<script src="js/fonts.js?v=20261118f"></script>
+<script src="js/hr.js?v=20261118f"></script>
+<script src="js/requests.js?v=20261118f"></script>
+<script src="js/table-tools.js?v=20261118f"></script>
+<script src="js/login.js?v=20261118f"></script>
+<script src="js/shell.js?v=20261118f"></script>
 </body>
 </html>
