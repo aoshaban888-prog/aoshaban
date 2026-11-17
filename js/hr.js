@@ -163,9 +163,10 @@ ${HELLO}
   let manual = false, showHdr = true, showFtr = true;
   // signature and stamp images, shared by all letters (Firestore hrMeta/seal)
   // positions are millimetres from the page's top-left corner
-  // until moved by hand (placed), they sit under the signer's name, measured from the page's bottom margin
-  const defaultPos = m => ({ sigX: 30, sigY: 297 - m.bottom - 24, stampX: 10, stampY: 297 - m.bottom - 36 });
-  let seal = { sig: "", stamp: "", sigH: 18, stampW: 32, placed: false };
+  // they follow the signer's name: the signature right under it, the stamp beside it;
+  // moving them by hand stores only the offset from there (sigDX/sigDY, stampDX/stampDY in mm)
+  let seal = { sig: "", stamp: "", sigH: 18, stampW: 32, sigDX: 0, sigDY: 0, stampDX: 0, stampDY: 0 };
+  const PX_MM = 96 / 25.4;
 
   /* ---------- dates ---------- */
   const pad = n => String(n).padStart(2, "0");
@@ -209,15 +210,41 @@ ${HELLO}
     return `<div class="lt-role">${esc(L.signRole || "")}</div><div class="lt-name">${esc(L.signName || "")}</div>` +
       (o.sig || o.stamp ? `<div class="lt-sigspace"></div>` : `<div class="lt-line">التوقيع: ...................................</div><div class="lt-stamp">الختم</div>`); };
   // signature and stamp on a layer over the whole page; on the editable page they can be dragged
-  function sealHtml(p, editable, m){
+  function sealHtml(p, editable){
     const o = sealOn(p); if (!o.sig && !o.stamp) return "";
-    const pos = p.sealPos || (seal.placed ? seal : defaultPos(m));
-    const sz = p.sealSize || seal;
+    const pos = p.sealPos, sz = p.sealSize || seal;
     const handles = editable ? '<i class="h nw"></i><i class="h ne"></i><i class="h sw"></i><i class="h se"></i>' : "";
-    const box = (k, src, alt, size) => `<div class="lt-sb ${k}${editable ? " drag" : ""}" data-k="${k}" style="left:${pos[k + "X"]}mm;top:${pos[k + "Y"]}mm;${size}"><img src="${src}" alt="${alt}" draggable="false">${handles}</div>`;
+    const at = k => pos && pos[k + "X"] != null && !isNaN(pos[k + "X"]) ? `left:${pos[k + "X"]}mm;top:${pos[k + "Y"]}mm;` : null;
+    const box = (k, src, alt, size) => { const a = at(k);
+      return `<div class="lt-sb ${k}${editable ? " drag" : ""}"${a ? "" : " data-auto"} data-k="${k}" style="${a || "left:0;top:0;visibility:hidden;"}${size}"><img src="${src}" alt="${alt}" draggable="false">${handles}</div>`; };
     return `<div class="lt-seal" contenteditable="false">` +
       (o.stamp ? box("stamp", seal.stamp, "الختم", `width:${sz.stampW}mm`) : "") +
       (o.sig ? box("sig", seal.sig, "التوقيع", `height:${sz.sigH}mm`) : "") + `</div>`;
+  }
+  // the point under the signer's name, in mm from the page's top-left corner
+  function anchorOf(paper){
+    const sign = paper.querySelector(".lt-sign"); if (!sign) return null;
+    const pr = paper.getBoundingClientRect(); if (!pr.width) return null;
+    const k = pr.width / paper.offsetWidth || 1;
+    const sp = sign.querySelector(".lt-sigspace"), nm = sign.querySelector(".lt-name");
+    const sr = sign.getBoundingClientRect();
+    const y = sp ? sp.getBoundingClientRect().top : nm && nm.textContent.trim() ? nm.getBoundingClientRect().bottom : sr.bottom;
+    return { x: ((sr.left + sr.right) / 2 - pr.left) / k / PX_MM, y: (y - pr.top) / k / PX_MM, k };
+  }
+  const baseOf = (key, w, h, A) => key === "sig" ? { x: A.x - w / 2, y: A.y + 1 } : { x: A.x - w * 1.05, y: A.y - h * 0.2 };
+  function boxSize(b, A){ const r = b.getBoundingClientRect(); return { w: r.width / A.k / PX_MM, h: r.height / A.k / PX_MM }; }
+  function placeSeal(paper){
+    if (!paper) return;
+    const A = anchorOf(paper); if (!A) return;
+    paper.querySelectorAll(".lt-sb[data-auto]").forEach(b => {
+      const key = b.dataset.k, img = b.querySelector("img");
+      const place = () => {
+        const { w, h } = boxSize(b, A), base = baseOf(key, w, h, A);
+        b.style.left = (base.x + (+seal[key + "DX"] || 0)) + "mm"; b.style.top = (base.y + (+seal[key + "DY"] || 0)) + "mm";
+        b.style.visibility = "";
+      };
+      if (img.complete && img.naturalWidth) place(); else img.addEventListener("load", place, { once: true });
+    });
   }
   function metaHtml(L){
     const d = parseDay(L.date);
@@ -240,7 +267,7 @@ ${HELLO}
     const frame = fr ? `<div class="lt-frame" style="top:${fr.y}mm;left:${fr.x}mm;width:${fr.w}mm"><img src="${fr.image}" alt=""><div class="lt-frame-t" style="padding:${fr.padTop}mm ${fr.padSide}mm 0;font-size:${fr.fontSize}px">${frameHtml(L)}</div></div>` : "";
     const plainHead = !fr ? `<header class="lt-head">${head && head.bg ? "<span></span>" : `<div class="lt-org">${esc(L.assoc || "")}</div>`}<div class="lt-meta">${metaHtml(L)}</div></header>` : "";
     return `${hdr}${frame}<div class="lt-content" style="padding:${m.top}mm ${m.side}mm ${m.bottom}mm">${plainHead}
-      <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><div class="lt-signbox"><footer class="lt-sign"${ce}>${parts.sign}</footer></div></div>${ftr}${sealHtml(parts, editable, m)}`;
+      <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><div class="lt-signbox"><footer class="lt-sign"${ce}>${parts.sign}</footer></div></div>${ftr}${sealHtml(parts, editable)}`;
   }
   const paperStyle = head => head && head.bg ? `background-image:url("${head.bg}")` : "";
 
@@ -270,7 +297,7 @@ ${HELLO}
       { title: esc(t.title), body: genBody(t.body, vals(L)), sign: genSign(L, sw), ...headParts(head), showHdr, showFtr, ...sw };
     paper.setAttribute("style", paperStyle(head));
     paper.innerHTML = paperInner(L, head, parts, true);
-    fit();
+    fit(); placeSeal(paper);
   }
   function grab(){
     const p = $("hrPaper"), g = sel => { const el = p.querySelector(sel); return el ? clean(el.innerHTML) : ""; };
@@ -296,7 +323,7 @@ ${HELLO}
     });
   }
   new ResizeObserver(fit).observe($("hrNew"));
-  window.addEventListener("app:view", e => { if (e.detail === "hr/letters") setTimeout(fit, 30); });
+  window.addEventListener("app:view", e => { if (e.detail === "hr/letters") setTimeout(() => { fit(); placeSeal($("hrPaper")); }, 30); });
 
   function renderFields(){
     const box = $("hrFields"); box.innerHTML = "";
@@ -574,7 +601,7 @@ ${HELLO}
     const L = { assoc: "جمعية البر الخيرية", date: ymd(new Date()), ref: "001/1448", signRole: "المدير التنفيذي", signName: "" };
     const parts = { showSig: true, showStamp: true, title: "عنوان الخطاب", body: "<p>هذا نص تجريبي يوضح مكان المحتوى داخل الكليشة. عدّل الهوامش حتى يقع النص في المساحة الفارغة من التصميم، وحرّك إطار التاريخ حتى يطابق مكانه.</p><p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>", sign: genSign(L), hdr: hDraft.hdr, ftr: hDraft.ftr };
     const p = $("hdPaper"); p.setAttribute("style", paperStyle(hDraft)); p.innerHTML = paperInner(L, hDraft, parts, false);
-    fit();
+    fit(); placeSeal(p);
   }
   async function imgData(f, maxW, png){
     const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
@@ -619,7 +646,7 @@ ${HELLO}
   function setTab(t){
     document.querySelectorAll("[data-hrtab]").forEach(b => b.setAttribute("aria-selected", b.dataset.hrtab === t ? "true" : "false"));
     $("hrNew").hidden = t !== "new"; $("hrLog").hidden = t !== "log"; $("hrTpls").hidden = t !== "tpl"; $("hrHeads").hidden = t !== "heads";
-    setTimeout(fit, 20);
+    setTimeout(() => { fit(); placeSeal($("hrPaper")); placeSeal($("hdPaper")); }, 20);
   }
   document.querySelectorAll("[data-hrtab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.hrtab)));
   $("hrTpl").addEventListener("change", async () => {
@@ -660,9 +687,8 @@ ${HELLO}
     clearTimeout(sizeT); sizeT = setTimeout(() => saveSeal({}), 600);
   }));
   ["hrShowSig", "hrShowStamp"].forEach(id => $(id).addEventListener("change", () => renderPaper("sign")));
-  $("hrSealReset").addEventListener("click", () => { saveSeal({ placed: false }); UI.toast("رجع الختم والتوقيع لمكانهما الافتراضي"); });
+  $("hrSealReset").addEventListener("click", () => { saveSeal({ sigDX: 0, sigDY: 0, stampDX: 0, stampDY: 0 }); UI.toast("رجع الختم والتوقيع تحت اسم المعتمد"); });
   // drag the signature or stamp on the page; the page is scaled, so pixels are turned back into millimetres
-  const PX_MM = 96 / 25.4;
   $("hrPaper").addEventListener("pointerdown", e => {
     const box = e.target.closest(".lt-sb.drag"); if (!box) return;
     e.preventDefault();
@@ -691,8 +717,11 @@ ${HELLO}
     };
     const up = () => {
       el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); box.classList.remove("moving");
-      const patch = { ...(sealNow() || {}), placed: true };
+      const patch = {};
       if (handle){ if (key === "stamp") patch.stampW = parseFloat(box.style.width); else patch.sigH = parseFloat(box.style.height); }
+      const A = anchorOf($("hrPaper"));
+      if (A){ const { w, h } = boxSize(box, A), base = baseOf(key, w, h, A);
+        patch[key + "DX"] = Math.round((parseFloat(box.style.left) - base.x) * 2) / 2; patch[key + "DY"] = Math.round((parseFloat(box.style.top) - base.y) * 2) / 2; }
       saveSeal(patch);
     };
     el.addEventListener("pointermove", move); el.addEventListener("pointerup", up);
