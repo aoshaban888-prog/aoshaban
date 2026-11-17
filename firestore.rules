@@ -2,7 +2,7 @@ rules_version = '2';
 // Only signed-in Google accounts whose email has a document in the "allowed" collection
 // (document ID = the email, e.g. allowed/someone@gmail.com) can read or write the site.
 // A person whose document has role: "admin" can also add, remove and change people
-// from the site (التمكين التقني). The first admin is set by hand in the console.
+// from the site settings page. The first admin is set by hand in the console.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
