@@ -341,7 +341,7 @@ ${HELLO}
     const t = curTpl() || { title: "", body: "" };
     const defs = defaultsOf(t.body);
     const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"], ...(values[f + "#s"] != null ? [[f + "#s", values[f + "#s"]]] : [])] : [[f, values[f] ?? defs[f] ?? (f === CLOSING ? CLOSINGS[0] : "")]]));
-    return { ref: editingLetter ? editingLetter.ref : undefined, title: t.title, body: t.body, html: !!t.html, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
+    return { ref: editingLetter && editingLetter.kind !== "request" ? editingLetter.ref : undefined, title: t.title, body: t.body, html: !!t.html, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
              fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim(), showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked };
   }
   const vals = L => ({ ...L.fields, [ASSOC_FIELD]: L.assoc, "صفة المعتمد": L.signRole, "اسم المعتمد": L.signName });
@@ -641,14 +641,23 @@ ${HELLO}
     window.addEventListener("afterprint", done);
     setTimeout(() => window.print(), 80);
   }
+  function partsOf(L, head){
+    return L.parts ? { ...L.parts, title: clean(L.parts.title), body: clean(L.parts.body), sign: clean(L.parts.sign), hdr: clean(L.parts.hdr), ftr: clean(L.parts.ftr) }
+      : { title: esc(L.title), body: genBody(L.body, vals(L), !!L.html), sign: genSign(L, L), ...headParts(head) };
+  }
   function printLetter(L){ // from the log: the saved page
     const head = heads.find(h => h.id === L.headId) || null;
-    const parts = L.parts ? { ...L.parts, title: clean(L.parts.title), body: clean(L.parts.body), sign: clean(L.parts.sign), hdr: clean(L.parts.hdr), ftr: clean(L.parts.ftr) }
-      : { title: esc(L.title), body: genBody(L.body, vals(L), !!L.html), sign: genSign(L, L), ...headParts(head) };
-    printParts(L, head, parts);
+    printParts(L, head, partsOf(L, head));
   }
   async function saveAndPrint(){
     if (!db){ msg("سجّل الدخول لحفظ الخطاب", "err"); return; }
+    if (editingLetter && editingLetter.kind === "request"){
+      const btn = $("hrSave"); btn.disabled = true;
+      try { await editingLetter.onSave(window.HRLetters.snapshot()); } catch (e){ console.error(e); UI.toast("تعذّر الحفظ", "err"); }
+      finally { btn.disabled = false; }
+      return;
+    }
+    if (!canIssue){ UI.alert("صلاحيتك رفع الخطاب للاعتماد. استخدم «رفع للاعتماد»."); return; }
     const t = curTpl(); if (!t){ msg("اختر نوع الخطاب", "err"); return; }
     const L = draft();
     if (!L.assoc && !curHead()){ msg("اكتب اسم الجمعية أو اختر كليشة", "err"); $("hrAssoc").focus(); return; }
@@ -686,12 +695,16 @@ ${HELLO}
   /* ---------- editing an issued letter ---------- */
   function setEditing(l){
     editingLetter = l;
+    const req = !!(l && l.kind === "request");
     $("hrEditing").hidden = !l;
-    if (l) $("hrEditingRef").textContent = l.ref;
-    $("hrSave").textContent = l ? "حفظ التعديل وطباعة" : "حفظ وطباعة";
+    if (l) $("hrEditingText").textContent = req ? `تعديل الطلب: ${l.label}` : `تعديل الخطاب ${l.ref} · يُحفظ بنفس الرقم`;
+    $("hrSave").textContent = req ? (l.saveText || "حفظ") : l ? "حفظ التعديل وطباعة" : "حفظ وطباعة";
+    $("hrSave").hidden = !req && !canIssue;
+    $("hrPrint").hidden = !canIssue;
+    $("hrSubmit").hidden = req || !submitOn;
   }
-  async function openLetter(l){
-    if (manual && !editingLetter && !(await UI.confirm("فتح الخطاب للتعديل يستبدل الخطاب المفتوح الآن. متابعة؟", { ok: "فتح" }))) return;
+  async function openLetter(l, opts){
+    if (manual && !editingLetter && !(opts && opts.force) && !(await UI.confirm("فتح الخطاب للتعديل يستبدل الخطاب المفتوح الآن. متابعة؟", { ok: "فتح" }))) return;
     // its template, or a stand-in made from the letter itself when the template was deleted
     let t = templates.find(x => x.id === l.templateId);
     if (!t){ t = { id: "letter-" + l.id, title: l.title, body: l.body || "", html: !!l.html, category: "أخرى", order: 1e15 }; templates = templates.filter(x => !String(x.id).startsWith("letter-")).concat(t); fillTplSelect(); }
@@ -702,7 +715,7 @@ ${HELLO}
     $("hrShowSig").checked = l.showSig !== false; $("hrShowStamp").checked = l.showStamp !== false;
     Object.keys(values).forEach(k => delete values[k]); Object.assign(values, l.fields || {});
     if (l.parts){ showHdr = l.parts.showHdr !== false; showFtr = l.parts.showFtr !== false; }
-    setEditing(l); setTab("new"); renderFields();
+    setEditing(opts && opts.request ? { kind: "request", label: opts.label, saveText: opts.saveText, onSave: opts.onSave } : l); setTab("new"); renderFields();
     if (l.parts){
       // the page exactly as it was saved; field values keep following their fields
       const head = curHead(), paper = $("hrPaper");
@@ -712,6 +725,21 @@ ${HELLO}
     } else { setManual(false); renderPaper(true); }
     msg(""); window.scrollTo(0, 0);
   }
+
+  /* ---------- API for js/requests.js ---------- */
+  let canIssue = true, submitOn = false;
+  window.HRLetters = {
+    snapshot(){ const L = draft(); L.employee = L.fields["اسم الموظف"] || ""; L.parts = grab(); return L; },
+    clear(){ setEditing(null); Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); },
+    open: (l, opts) => openLetter(l, { force: true, ...(opts || {}) }),
+    paper(L){ const head = heads.find(h => h.id === L.headId) || null; return { style: paperStyle(head), html: paperInner(L, head, partsOf(L, head), false) }; },
+    print: L => printLetter(L),
+    fit: () => fit(), place: el => placeSeal(el),
+    setCanIssue(v){ canIssue = !!v; setEditing(editingLetter); },
+    enableSubmit(v){ submitOn = !!v; setEditing(editingLetter); },
+    templates: () => templates.filter(t => !String(t.id).startsWith("local") && !String(t.id).startsWith("letter-")),
+  };
+  $("hrSubmit").addEventListener("click", () => { if (window.Requests && db) window.Requests.submit(window.HRLetters.snapshot()); else UI.alert("سجّل الدخول لرفع الطلب"); });
 
   /* ---------- log ---------- */
   const picked = new Set();

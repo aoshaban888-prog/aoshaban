@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261117w"></script>
-<link rel="stylesheet" href="css/library.css?v=20261117w">
-<link rel="stylesheet" href="css/app.css?v=20261117w">
+<script src="js/boot.js?v=20261117x"></script>
+<link rel="stylesheet" href="css/library.css?v=20261117x">
+<link rel="stylesheet" href="css/app.css?v=20261117x">
 </head>
 <body>
 <div class="app">
@@ -20,17 +20,22 @@
     </div>
     <nav class="nav">
       <a href="#/home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>الرئيسية</a>
-      <a href="#/tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>المهام</a>
-      <button class="nav-group" type="button" id="govBtn" data-group="governance" aria-expanded="false" aria-controls="govSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10M19 21V10M9.5 21V10M14.5 21V10"/><path d="M2 10 12 3l10 7z"/></svg><span>الحوكمة</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-      <div class="nav-sub" id="govSub" hidden>
+      <a href="#/tasks" data-sec="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>المهام</a>
+      <button class="nav-group" data-sec="governance" type="button" id="govBtn" data-group="governance" aria-expanded="false" aria-controls="govSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10M19 21V10M9.5 21V10M14.5 21V10"/><path d="M2 10 12 3l10 7z"/></svg><span>الحوكمة</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-sub" data-sec="governance" id="govSub" hidden>
         <a class="sub" href="#/governance/library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>اللوائح والسياسات</a>
       </div>
-      <button class="nav-group" type="button" id="hrBtn" data-group="hr" aria-expanded="false" aria-controls="hrSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><span>الموارد البشرية</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-      <div class="nav-sub" id="hrSub" hidden>
+      <button class="nav-group" data-sec="hr" type="button" id="hrBtn" data-group="hr" aria-expanded="false" aria-controls="hrSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><span>الموارد البشرية</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-sub" data-sec="hr" id="hrSub" hidden>
         <a class="sub" href="#/hr/letters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>الخطابات</a>
+        <a class="sub" href="#/hr/requests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>الطلبات<span class="nav-badge" id="rqBadge" hidden></span></a>
       </div>
-      <div class="nav-label">الإدارة</div>
-      <a href="#/admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>التمكين التقني</a>
+      <div class="nav-label" data-sec="admin">الإدارة</div>
+      <button class="nav-group" type="button" id="admBtn" data-group="admin" data-sec="admin" aria-expanded="false" aria-controls="admSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>التمكين التقني</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-sub" id="admSub" data-sec="admin" hidden>
+        <a class="sub" href="#/admin">الإعدادات العامة</a>
+        <a class="sub" href="#/admin/requests">إدارة الطلبات الإدارية</a>
+      </div>
     </nav>
     <div class="side-foot">
       <div class="account" id="account" hidden>
@@ -365,10 +370,11 @@
             <div class="hr-docbar">
               <div class="hr-actions">
                 <button class="btn primary" type="button" id="hrSave">حفظ وطباعة</button>
+                <button class="btn primary" type="button" id="hrSubmit" hidden>رفع للاعتماد</button>
                 <button class="btn" type="button" id="hrPrint">طباعة بدون حفظ</button>
                 <button class="btn small ghost" type="button" id="hrClear">تفريغ الخانات</button>
               </div>
-              <div class="hr-editing" id="hrEditing" hidden>تعديل الخطاب <bdi id="hrEditingRef"></bdi> · يُحفظ بنفس الرقم <button class="linkbtn" type="button" id="hrEditEnd">خطاب جديد</button></div>
+              <div class="hr-editing" id="hrEditing" hidden><span id="hrEditingText"></span> <button class="linkbtn" type="button" id="hrEditEnd">خطاب جديد</button></div>
               <span class="hr-pdfnote" title="للحفظ كملف PDF اختر «حفظ بتنسيق PDF» في نافذة الطباعة، وفعّل «رسومات الخلفية» إذا لم تظهر الكليشة">PDF: اختر «حفظ بتنسيق PDF» في نافذة الطباعة</span>
             </div>
             <p class="s-msg" id="hrMsg" role="status"></p>
@@ -464,6 +470,66 @@
           </section>
           <div class="hr-paper-wrap"><article class="hr-paper" id="hdPaper" aria-label="معاينة الكليشة"></article></div>
         </div>
+      </div>
+    </section>
+    <section class="view" data-view="hr/requests" hidden>
+      <header class="page-h">
+        <div><p class="crumb">الموارد البشرية</p><h1>الطلبات</h1></div>
+        <div class="actions"><div class="seg-tabs" role="tablist" aria-label="الطلبات">
+          <button type="button" role="tab" data-rqtab="inbox" aria-selected="true">بانتظار اعتمادي <span class="rq-count" id="rqInboxN"></span></button>
+          <button type="button" role="tab" data-rqtab="mine" aria-selected="false">طلباتي</button>
+          <button type="button" role="tab" data-rqtab="all" aria-selected="false" id="rqAllTab" hidden>كل الطلبات</button>
+        </div></div>
+      </header>
+      <p class="muted-text" id="rqSignin">سجّل الدخول لعرض الطلبات</p>
+      <div class="rq-layout" id="rqLayout" hidden>
+        <section class="card rq-list-card" aria-label="قائمة الطلبات"><ul class="rq-list" id="rqList"></ul><p class="muted-text" id="rqEmpty" hidden></p></section>
+        <section class="card rq-detail" id="rqDetail" hidden aria-label="تفاصيل الطلب">
+          <div class="rq-head"><h2 id="rqTitle"></h2><span class="rq-chip" id="rqStatus"></span></div>
+          <dl class="rq-meta" id="rqMeta"></dl>
+          <h3 class="rq-h3">مسار الاعتماد</h3>
+          <ol class="rq-steps" id="rqSteps"></ol>
+          <div id="rqNoteWrap" hidden><textarea class="input rq-note" id="rqNote" rows="2" placeholder="ملاحظة للمقدّم أو للمرحلة التالية"></textarea></div>
+          <div class="rq-actions" id="rqActions"></div>
+          <h3 class="rq-h3">سجل الطلب</h3>
+          <ol class="rq-history" id="rqHistory"></ol>
+          <h3 class="rq-h3">الخطاب</h3>
+          <div class="hr-paper-wrap"><article class="hr-paper" id="rqPaper" aria-label="معاينة الخطاب"></article></div>
+        </section>
+      </div>
+    </section>
+    <section class="view" data-view="admin/requests" hidden>
+      <header class="page-h"><div><p class="crumb">التمكين التقني</p><h1>إدارة الطلبات الإدارية</h1></div></header>
+      <p class="muted-text" id="raSignin">سجّل الدخول لضبط الطلبات الإدارية</p>
+      <p class="muted-text" id="raNoAdmin" hidden>هذه الصفحة للمديرين فقط</p>
+      <div class="s-grid" id="raBox" hidden>
+        <section class="card wide" aria-labelledby="ra1">
+          <div class="card-h"><h2 id="ra1">مسارات الاعتماد</h2><button class="btn small" type="button" id="raWfNew">مسار جديد</button></div>
+          <p class="muted-text">كل مسار يبدأ بمقدّم الطلب ثم مراحل الاعتماد بالترتيب. اختر لكل مرحلة معتمداً أو أكثر (يكفي اعتماد أحدهم)، وحدّد الخطابات التي تمشي عليه. الخطابات غير المحددة تمشي على المسار الافتراضي</p>
+          <ul class="hr-tpls" id="raWfList"></ul>
+          <p class="muted-text" id="raWfEmpty" hidden>لا توجد مسارات بعد</p>
+          <div class="ra-editor" id="raWfEditor" hidden>
+            <h3 id="raWfHead">مسار جديد</h3>
+            <div class="s-row"><label for="raWfName">اسم المسار</label><input class="input" id="raWfName" maxlength="60" placeholder="مثال: اعتماد الخطابات الخارجية"></div>
+            <label class="s-check"><input type="checkbox" id="raWfDefault"> المسار الافتراضي لكل الخطابات غير المحددة</label>
+            <div class="hr-sep">المراحل</div>
+            <div class="ra-stages" id="raStages"></div>
+            <button class="btn small" type="button" id="raStageAdd">+ مرحلة</button>
+            <div class="hr-sep">الخطابات التي تمشي على هذا المسار</div>
+            <div class="ra-tpls" id="raWfTpls"></div>
+            <div class="hr-actions" style="margin-top:16px"><button class="btn primary" type="button" id="raWfSave">حفظ المسار</button><button class="btn" type="button" id="raWfCancel">إلغاء</button></div>
+          </div>
+        </section>
+        <section class="card wide" aria-labelledby="ra2">
+          <div class="card-h"><h2 id="ra2">صلاحيات المستخدمين</h2></div>
+          <p class="muted-text">«يصدر مباشرة» يحفظ ويطبع الخطاب برقم صادر دون اعتماد، ومن دونها يرفع الطلب للاعتماد. والأقسام تحدد ما يظهر للمستخدم. المدير يملك كل الصلاحيات</p>
+          <div class="table-wrap"><table class="u-table"><thead><tr><th>الحساب</th><th>الدور</th><th>الخطابات</th><th>الأقسام</th></tr></thead><tbody id="raPerms"></tbody></table></div>
+        </section>
+        <section class="card" aria-labelledby="ra3">
+          <div class="card-h"><h2 id="ra3">خيارات الاعتماد</h2></div>
+          <label class="s-check"><input type="checkbox" id="raOptEdit"> المعتمد يقدر يعدّل الخطاب قبل اعتماده</label>
+          <label class="s-check"><input type="checkbox" id="raOptNote"> إلزام كتابة السبب عند الإرجاع أو الرفض</label>
+        </section>
       </div>
     </section>
     <section class="view admin" data-view="admin" hidden>
@@ -833,16 +899,17 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261117w"></script>
-<script src="js/library.js?v=20261117w"></script>
+<script src="js/ui.js?v=20261117x"></script>
+<script src="js/library.js?v=20261117x"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/home.js?v=20261117w"></script>
-<script src="js/tasks.js?v=20261117w"></script>
-<script src="js/slider.js?v=20261117w"></script>
-<script src="js/settings.js?v=20261117w"></script>
-<script src="js/fonts.js?v=20261117w"></script>
-<script src="js/hr.js?v=20261117w"></script>
-<script src="js/table-tools.js?v=20261117w"></script>
-<script src="js/shell.js?v=20261117w"></script>
+<script src="js/home.js?v=20261117x"></script>
+<script src="js/tasks.js?v=20261117x"></script>
+<script src="js/slider.js?v=20261117x"></script>
+<script src="js/settings.js?v=20261117x"></script>
+<script src="js/fonts.js?v=20261117x"></script>
+<script src="js/hr.js?v=20261117x"></script>
+<script src="js/requests.js?v=20261117x"></script>
+<script src="js/table-tools.js?v=20261117x"></script>
+<script src="js/shell.js?v=20261117x"></script>
 </body>
 </html>

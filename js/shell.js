@@ -5,7 +5,9 @@
     "tasks": "المهام",
     "governance/library": "اللوائح والسياسات",
     "hr/letters": "الخطابات",
+    "hr/requests": "الطلبات",
     "admin": "التمكين التقني",
+    "admin/requests": "إدارة الطلبات الإدارية",
   };
   const DEFAULT = () => (window.siteSettings && ROUTES[window.siteSettings.startPage]) ? window.siteSettings.startPage : "home";
   const app = document.querySelector(".app");
@@ -30,11 +32,11 @@
     if (MOVED[r]){ r = MOVED[r]; history.replaceState(null, "", "#/" + r); }
     if (!ROUTES[r]) r = DEFAULT();
     document.querySelectorAll(".view").forEach(v => { v.hidden = v.dataset.view !== r; });
-    groups.forEach(g => g.btn.classList.toggle("has-current", r.startsWith(g.key + "/")));
+    groups.forEach(g => g.btn.classList.toggle("has-current", r === g.key || r.startsWith(g.key + "/")));
     document.querySelectorAll(".nav a").forEach(a => {
       if (a.getAttribute("href") === "#/" + r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    groups.forEach(g => { if (r.startsWith(g.key + "/")) setGroup(g, true, false); });
+    groups.forEach(g => { if (r === g.key || r.startsWith(g.key + "/")) setGroup(g, true, false); });
     document.querySelector(".topbar .t").textContent = ROUTES[r];
     document.title = ROUTES[r] + " · " + ((window.siteSettings && window.siteSettings.siteName) || "مكتب الحوكمة");
     app.classList.remove("nav-open");

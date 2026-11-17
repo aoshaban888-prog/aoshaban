@@ -571,6 +571,64 @@ bdi{unicode-bidi:isolate}
   #hrPrintArea .hr-paper{box-shadow:none;transform:none}
 }
 
+/* ---------- الطلبات الإدارية ---------- */
+.sec-off{display:none!important}
+.nav-badge{margin-inline-start:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--danger);color:#fff;font-size:12px;font-weight:600;display:inline-grid;place-items:center;font-variant-numeric:tabular-nums}
+.nav a[aria-current="page"] .nav-badge{background:#fff;color:var(--accent)}
+.rq-count:not(:empty){display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-inline-start:4px;border-radius:9px;background:var(--danger);color:#fff;font-size:11px}
+.rq-layout{display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);gap:20px;align-items:start}
+.rq-list-card{padding:8px}
+.rq-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.rq-item{padding:10px 12px;border-radius:var(--r);cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.rq-item:hover{background:var(--line-soft)}
+.rq-item.on{background:var(--accent-soft)}
+.rq-top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.rq-t{font-weight:500;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rq-sub{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.rq-sub span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rq-chip{flex:none;font-size:12px;padding:2px 8px;border-radius:10px;background:var(--line-soft);color:var(--ink-2);white-space:nowrap}
+.rq-chip.pending{background:#fef3c7;color:#92400e}
+.rq-chip.approved{background:#dcfce7;color:#166534}
+.rq-chip.rejected{background:#fee2e2;color:#991b1b}
+.rq-chip.returned{background:#e0e7ff;color:#3730a3}
+.rq-head{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px}
+.rq-head h2{font-size:18px;font-weight:500;margin:0}
+.rq-meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px 16px;margin:0 0 16px}
+.rq-meta div{display:flex;flex-direction:column}
+.rq-meta dt{font-size:12px;color:var(--muted)}
+.rq-meta dd{margin:0;font-size:14px}
+.rq-h3{font-size:14px;font-weight:500;color:var(--ink-2);margin:16px 0 8px}
+.rq-steps{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.rq-step{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line-soft);border-radius:var(--r);font-size:13px}
+.rq-step .rq-sn{font-weight:500}
+.rq-step .rq-sa{color:var(--muted)}
+.rq-dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
+.rq-step.done .rq-dot{background:var(--ok)}
+.rq-step.now{border-color:var(--accent);background:var(--accent-soft)}
+.rq-step.now .rq-dot{background:var(--accent)}
+.rq-step.rejected .rq-dot{background:var(--danger)}
+.rq-step.returned .rq-dot{background:#6366f1}
+.rq-note{margin:12px 0 0;min-height:0}
+.rq-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rq-actions:empty{display:none}
+.rq-history{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.rq-history li{display:grid;grid-template-columns:120px 1fr;gap:2px 12px;font-size:13px}
+.rq-hw{color:var(--muted)}
+.rq-hn{grid-column:2;color:var(--ink-2)}
+.rq-hn:empty{display:none}
+.ra-editor{margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft)}
+.ra-editor h3{font-size:15px;font-weight:500;margin:0 0 12px}
+.ra-stages{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.ra-stage{display:grid;grid-template-columns:28px minmax(140px,220px) minmax(0,1fr) auto;align-items:start;gap:10px;padding:10px;border:1px solid var(--line-soft);border-radius:var(--r)}
+.ra-stage.fixed{grid-template-columns:28px auto 1fr;align-items:center;background:var(--bg)}
+.ra-n{width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:600}
+.ra-stage .input{height:34px;padding:0 10px;line-height:normal}
+.ra-apps,.ra-tpls{display:flex;flex-wrap:wrap;gap:4px 16px}
+.ra-apps .s-check,.ra-tpls .s-check,.ra-secs .s-check{margin:0}
+.ra-secs{display:flex;flex-wrap:wrap;gap:4px 12px}
+.ra-btns{display:flex;gap:2px}
+@media (max-width:1100px){.rq-layout{grid-template-columns:minmax(0,1fr)}.ra-stage{grid-template-columns:28px minmax(0,1fr)}.ra-stage .ra-apps,.ra-stage .ra-btns{grid-column:2}}
+
 /* ---------- the violet gradient: selection, primary action, next prayer (all themes) ---------- */
 .nav a[aria-current="page"]{background:var(--grad);color:#fff;box-shadow:var(--glow)}
 .nav a[aria-current="page"] svg{color:#fff}
