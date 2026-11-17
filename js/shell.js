@@ -30,6 +30,21 @@
   document.addEventListener("keydown", e => { if (e.key === "Escape") app.classList.remove("nav-open"); });
   route();
 
+  /* pin or hide the sidebar on wide screens; hidden, it opens over the page from the menu button */
+  const pinBtn = document.getElementById("pinBtn");
+  function setPinned(on, save){
+    app.classList.toggle("side-hidden", !on);
+    app.classList.remove("nav-open");
+    pinBtn.setAttribute("aria-pressed", on ? "true" : "false");
+    const label = on ? "إخفاء القائمة" : "تثبيت القائمة";
+    pinBtn.title = label; pinBtn.setAttribute("aria-label", label);
+    if (save){ try { localStorage.setItem("app-side", on ? "pinned" : "hidden"); } catch {} }
+    window.dispatchEvent(new Event("resize"));
+  }
+  let sideSaved = null; try { sideSaved = localStorage.getItem("app-side"); } catch {}
+  setPinned(sideSaved !== "hidden", false);
+  pinBtn.addEventListener("click", () => setPinned(app.classList.contains("side-hidden"), true));
+
   /* theme: light, dark or neon; with nothing chosen the page follows the system */
   const root = document.documentElement;
   const sysTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
