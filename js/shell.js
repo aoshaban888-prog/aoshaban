@@ -4,6 +4,7 @@
     "home": "الرئيسية",
     "tasks": "المهام",
     "governance/library": "اللوائح والسياسات",
+    "governance/hr": "الموارد البشرية",
     "admin": "التمكين التقني",
   };
   const DEFAULT = () => (window.siteSettings && ROUTES[window.siteSettings.startPage]) ? window.siteSettings.startPage : "home";
