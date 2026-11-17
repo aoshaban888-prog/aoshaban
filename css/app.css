@@ -436,6 +436,11 @@ bdi{unicode-bidi:isolate}
 .tt-handle{position:absolute;z-index:6;width:18px;height:18px;padding:0;border:1px solid #7c3aed;border-radius:3px;background:#fff;color:#7c3aed;display:grid;place-items:center;cursor:move;touch-action:none}
 .tt-handle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tt-handle:hover{background:#f3edff}
+.tt-plus{position:absolute;z-index:7;width:18px;height:18px;margin:-9px 0 0 -9px;padding:0;border:0;border-radius:50%;background:#7c3aed;color:#fff;font:600 14px/18px var(--font-ui);text-align:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.tt-plus:hover{background:#6d28d9}
+.tt-guide{position:absolute;z-index:6;pointer-events:none;background:#7c3aed}
+.tt-guide.h{height:2px;margin-top:-1px}
+.tt-guide.v{width:2px;margin-left:-1px}
 .tt-drop{height:0;border-top:2px solid #7c3aed;margin:2px 0;pointer-events:none}
 .tt-menu{position:fixed;z-index:220;min-width:240px;background:var(--surface);color:var(--ink);border:1px solid var(--line-soft);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:4px;display:flex;flex-direction:column}
 .tt-sub{position:absolute;top:-5px;inset-inline-start:100%;min-width:200px}

@@ -66,6 +66,66 @@
     handle.addEventListener("pointermove", move); handle.addEventListener("pointerup", up);
   });
 
+  /* ---------- "+" between rows (on the table's right side) and between columns (above it) ---------- */
+  const plus = document.createElement("button");
+  plus.type = "button"; plus.className = "tt-plus"; plus.hidden = true; plus.textContent = "+";
+  const guide = document.createElement("div"); guide.className = "tt-guide"; guide.hidden = true;
+  let slot = null, plusT = null;
+  const ZONE = 18;
+  function findSlot(e){
+    const pr = paper.getBoundingClientRect(), s = k();
+    for (const t of paper.querySelectorAll(".lt-table")){
+      if (!editableTable(t)) continue;
+      const r = t.getBoundingClientRect();
+      // rows: pointer just outside the right edge, level with the table
+      if (e.clientX > r.right && e.clientX < r.right + ZONE * s && e.clientY >= r.top - 4 && e.clientY <= r.bottom + 4){
+        const ys = [r.top, ...[...t.rows].map(row => row.getBoundingClientRect().bottom)];
+        let i = 0; ys.forEach((y, j) => { if (Math.abs(y - e.clientY) < Math.abs(ys[i] - e.clientY)) i = j; });
+        return { t, type: "row", i, x: (r.right - pr.left) / s + 9, y: (ys[i] - pr.top) / s, len: r.width / s, gx: (r.left - pr.left) / s };
+      }
+      // columns: pointer just above the top edge, over the table
+      if (e.clientY < r.top && e.clientY > r.top - ZONE * s && e.clientX >= r.left - 4 && e.clientX <= r.right + 4 && t.rows[0]){
+        const cells = [...t.rows[0].cells];
+        const xs = [r.right, ...cells.map(c => c.getBoundingClientRect().left)]; // right to left: boundary j sits before cell j
+        let j = 0; xs.forEach((x, n) => { if (Math.abs(x - e.clientX) < Math.abs(xs[j] - e.clientX)) j = n; });
+        return { t, type: "col", i: j, x: (xs[j] - pr.left) / s, y: (r.top - pr.top) / s - 9, len: r.height / s, gy: (r.top - pr.top) / s };
+      }
+    }
+    return null;
+  }
+  function showPlus(sl){
+    slot = sl; clearTimeout(plusT);
+    if (plus.parentNode !== paper) paper.append(plus, guide);
+    plus.style.left = sl.x + "px"; plus.style.top = sl.y + "px"; plus.hidden = false;
+    plus.title = sl.type === "row" ? "إضافة صف هنا" : "إضافة عمود هنا";
+    if (sl.type === "row"){ guide.className = "tt-guide h"; guide.style.cssText = `left:${sl.gx}px;top:${sl.y}px;width:${sl.len}px`; }
+    else { guide.className = "tt-guide v"; guide.style.cssText = `left:${sl.x}px;top:${sl.gy}px;height:${sl.len}px`; }
+    guide.hidden = false;
+  }
+  function hidePlus(){ clearTimeout(plusT); plusT = setTimeout(() => { plus.hidden = true; guide.hidden = true; slot = null; }, 350); }
+  paper.addEventListener("mousemove", e => {
+    if (e.buttons || e.target === plus) return;
+    const sl = findSlot(e); if (sl) showPlus(sl); else hidePlus();
+  });
+  plus.addEventListener("mousedown", e => e.preventDefault());
+  plus.addEventListener("click", () => {
+    if (!slot) return; const { t, type, i } = slot;
+    if (type === "row"){
+      const ref = t.rows[Math.min(i, t.rows.length - 1)];
+      const n = ref.cloneNode(false); n.style.height = ""; [...ref.cells].forEach(() => n.append(newCell()));
+      if (i >= t.rows.length) ref.after(n); else ref.before(n);
+    } else {
+      const cg = t.querySelector("colgroup");
+      if (cg){ const n = cg.children.length, f = n / (n + 1);
+        [...cg.children].forEach(c => { c.style.width = (parseFloat(c.style.width) * f).toFixed(2) + "%"; });
+        const col = document.createElement("col"); col.style.width = (100 / (n + 1)).toFixed(2) + "%";
+        cg.insertBefore(col, cg.children[i] || null); }
+      [...t.rows].forEach(r => r.insertBefore(newCell(), r.children[i] || null));
+    }
+    plus.hidden = true; guide.hidden = true; slot = null;
+    changed(t); showHandle(t);
+  });
+
   /* ---------- outer edges: table width ---------- */
   function outerEdge(e){
     const td = e.target.closest && e.target.closest(".lt-table td, .lt-table th");
