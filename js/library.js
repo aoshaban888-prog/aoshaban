@@ -83,23 +83,32 @@ const cssWeight = v => v.allBold ? 700 : 400;
    any other file becomes a new document font under "خطوط مرفوعة". Bytes also feed Word embedding (fontBytes). */
 const upFaces = new Set();
 function useUploadedFonts(list){
-  list.forEach(f => {
+  const italic = f => f.style === "italic";
+  list.slice().sort((x, y) => italic(x) - italic(y)).forEach(f => {
     fontCache[f.fileName] = f.buf;
     const known = ALL_WEIGHTS.filter(v => !v.system && (v.file === f.fileName || v.bold === f.fileName));
-    const addFace = (fam, w) => {
-      const k = fam + "|" + w + "|" + f.id; if (upFaces.has(k)) return; upFaces.add(k);
-      try { const ff = new FontFace(fam, f.buf, { weight: String(w) }); document.fonts.add(ff); ff.load().catch(() => {}); } catch {}
+    const addFace = (fam, w, st) => {
+      const k = fam + "|" + w + "|" + st + "|" + f.id; if (upFaces.has(k)) return; upFaces.add(k);
+      try { const ff = new FontFace(fam, f.buf, { weight: String(w), style: st }); document.fonts.add(ff); ff.load().catch(() => {}); } catch {}
     };
-    known.forEach(v => addFace(v.word, v.bold === f.fileName || v.allBold ? 700 : 400));
+    known.forEach(v => addFace(v.word, v.bold === f.fileName || v.allBold ? 700 : 400, "normal"));
     if (known.length) return;
-    let fam = FAMILIES.find(x => x.uploaded && x.name === f.family);
-    if (!fam){ fam = { name: f.family, uploaded: true, weights: [] }; FAMILIES.splice(FAMILIES.findIndex(x => x.system), 0, fam); }
+    const group = f.group || f.family;
+    let fam = FAMILIES.find(x => x.uploaded && x.name === group);
+    if (italic(f)){ // an italic file is the italic face of the same weight
+      const v = fam && fam.weights.find(x => x.w === f.weight);
+      if (v){ v.italic = f.fileName; addFace(v.word, v.allBold ? 700 : 400, "italic"); }
+      return;
+    }
+    if (!fam){ fam = { name: group, uploaded: true, weights: [] }; FAMILIES.splice(FAMILIES.findIndex(x => x.system), 0, fam); }
     if (fam.weights.some(v => v.file === f.fileName)) return;
+    // each weight is its own Word family (its name ID 1); a bold that shares the family name is that family's Bold face
+    const allBold = f.weight >= 700 && f.family === group;
     const w = fam.weights.some(v => v.w === f.weight) ? f.weight + 1 : f.weight;
-    const v = { w, word: f.family, file: f.fileName, allBold: f.weight >= 700, uploaded: true, family: fam };
+    const v = { w, word: f.family, file: f.fileName, allBold, uploaded: true, family: fam };
     v.id = fam.name + "|" + w;
     fam.weights.push(v); fam.weights.sort((a, b) => a.w - b.w); ALL_WEIGHTS.push(v);
-    addFace(v.word, v.allBold ? 700 : 400);
+    addFace(v.word, allBold ? 700 : 400, "normal");
   });
   // a font chosen earlier that only exists as an upload comes back once it is loaded
   let saved = null; try { saved = localStorage.getItem("assoc-policies-font2"); } catch {}

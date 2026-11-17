@@ -9,12 +9,18 @@
   const MAX = 4 * 1024 * 1024;
   let db = null, metas = [], loaded = new Map(); // id -> { ...meta, buf }
 
+  /* ---------- family grouping: "Lama Sans Black Italic" belongs to "Lama Sans" ---------- */
+  const STYLE_WORDS = /\s+(thin|hairline|extra ?light|ultra ?light|light|book|regular|normal|medium|semi ?bold|demi ?bold|bold|extra ?bold|ultra ?bold|heavy|black|italic|oblique)$/i;
+  function stripStyle(name){ let n = (name || "").trim(), prev; do { prev = n; n = n.replace(STYLE_WORDS, ""); } while (n !== prev && n); return n || name; }
+  const groupOf = m => m.group || stripStyle(m.family);
+  const isItalic = m => m.style === "italic" || /italic|oblique/i.test(`${m.family} ${m.fileName}`);
+
   /* ---------- read family and weight from the font's own tables ---------- */
   function fontInfo(buf, fileName){
     const base = fileName.replace(/\.[^.]+$/, "");
     const guessW = /thin|hairline/i.test(base) ? 100 : /ultra ?light|extra ?light/i.test(base) ? 200 : /light/i.test(base) ? 300
       : /medium/i.test(base) ? 500 : /semi ?bold|demi/i.test(base) ? 600 : /extra ?bold|heavy/i.test(base) ? 800 : /black/i.test(base) ? 900 : /bold/i.test(base) ? 700 : 400;
-    const out = { family: base.replace(/[-_](thin|light|ultralight|extralight|regular|medium|semibold|bold|extrabold|heavy|black|italic)$/i, ""), weight: guessW };
+    const out = { style: /italic|oblique/i.test(base) ? "italic" : "normal", family: base.replace(/[-_](thin|light|ultralight|extralight|regular|medium|semibold|bold|extrabold|heavy|black|italic)$/i, ""), weight: guessW };
     try {
       const v = new DataView(buf);
       const tag = String.fromCharCode(v.getUint8(0), v.getUint8(1), v.getUint8(2), v.getUint8(3));
@@ -26,22 +32,28 @@
         if (t === "name") nameOff = v.getUint32(r + 8);
         if (t === "OS/2") os2Off = v.getUint32(r + 8);
       }
-      if (os2Off){ const w = v.getUint16(os2Off + 4); if (w >= 100 && w <= 950) out.weight = Math.round(w / 50) * 50; }
+      if (os2Off){
+        const w = v.getUint16(os2Off + 4); if (w >= 100 && w <= 950) out.weight = Math.round(w / 50) * 50;
+        if (v.getUint16(os2Off + 62) & 1) out.style = "italic";
+      }
       if (nameOff){
         const count = v.getUint16(nameOff + 2), strOff = nameOff + v.getUint16(nameOff + 4);
         const names = {};
         for (let i = 0; i < count; i++){
           const r = nameOff + 6 + i * 12;
           const plat = v.getUint16(r), lang = v.getUint16(r + 4), id = v.getUint16(r + 6), len = v.getUint16(r + 8), off = v.getUint16(r + 10);
-          if (plat !== 3 || (id !== 1 && id !== 16)) continue;
+          if (plat !== 3 || (id !== 1 && id !== 16 && id !== 2 && id !== 17)) continue;
           if (names[id] && lang !== 0x409) continue;
           let s = ""; for (let k = 0; k < len; k += 2) s += String.fromCharCode(v.getUint16(strOff + off + k));
           names[id] = s;
         }
         // name ID 1 is the family Word lists (e.g. "DIN Next LT Arabic Medium"); 16 is the typographic family
         if (names[1]) out.family = names[1]; else if (names[16]) out.family = names[16];
+        out.group = names[16] || stripStyle(out.family);
+        if (/italic|oblique/i.test(`${names[2] || ""} ${names[17] || ""}`)) out.style = "italic";
       }
     } catch (e){ console.warn("font info", e); }
+    out.group = out.group || stripStyle(out.family);
     return out;
   }
 
@@ -62,9 +74,12 @@
       b64 += c.data().data;
     }
     const buf = fromB64(b64);
-    try { const ff = new FontFace(m.family, buf, { weight: String(m.weight), style: m.style || "normal" }); await ff.load(); document.fonts.add(ff); }
-    catch (e){ console.warn("font face", m.fileName, e); }
-    loaded.set(m.id, { ...m, buf });
+    const group = groupOf(m), style = isItalic(m) ? "italic" : "normal";
+    for (const fam of new Set([group, m.family])){
+      try { const ff = new FontFace(fam, buf, { weight: String(m.weight), style }); await ff.load(); document.fonts.add(ff); }
+      catch (e){ console.warn("font face", m.fileName, e); }
+    }
+    loaded.set(m.id, { ...m, group, style, buf });
   }
   async function sync(){
     const want = new Set(metas.map(m => m.id));
@@ -81,29 +96,45 @@
   const W = { 100: "رفيع", 200: "خفيف جداً", 300: "خفيف", 400: "عادي", 500: "متوسط", 600: "شبه غامق", 700: "غامق", 800: "غامق جداً", 900: "أسود" };
   const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.round(n / 1024) + " KB";
   function msg(t, kind){ const el = $("fMsg"); if (!el) return; el.textContent = t || ""; el.className = "s-msg" + (kind ? " " + kind : ""); }
+  const openGroups = new Set();
   function renderAdmin(){
     const list = $("fList"); if (!list) return;
     list.innerHTML = "";
     $("fUpload").hidden = !db; $("fSignin").hidden = !!db;
-    const rows = metas.slice().sort((a, b) => a.family.localeCompare(b.family) || a.weight - b.weight);
-    $("fEmpty").hidden = !db || rows.length > 0;
-    rows.forEach(m => {
-      const li = document.createElement("li");
-      li.innerHTML = `<span class="f-sample"></span><span class="f-meta"><span class="f-name"></span><bdi class="f-file mono"></bdi></span><span class="f-state"></span><button class="btn small ghost" type="button">حذف</button>`;
-      const ready = loaded.has(m.id);
-      li.querySelector(".f-sample").textContent = "أبجد";
-      li.querySelector(".f-sample").style.cssText = `font-family:"${m.family}";font-weight:${m.weight}`;
-      li.querySelector(".f-name").textContent = `${m.family} · ${W[m.weight] || m.weight}`;
-      li.querySelector(".f-file").textContent = `${m.fileName} · ${kb(m.size)}`;
-      li.querySelector(".f-state").textContent = ready ? "" : "جارٍ التحميل…";
-      li.querySelector("button").addEventListener("click", () => remove(m));
-      list.append(li);
+    $("fEmpty").hidden = !db || metas.length > 0;
+    const groups = new Map();
+    metas.forEach(m => { const g = groupOf(m); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(m); });
+    [...groups.keys()].sort((x, y) => x.localeCompare(y)).forEach(g => {
+      const items = groups.get(g).sort((x, y) => x.weight - y.weight || isItalic(x) - isItalic(y));
+      const size = items.reduce((t, m) => t + (m.size || 0), 0);
+      const loading = items.filter(m => !loaded.has(m.id)).length;
+      const det = document.createElement("details"); det.className = "f-group"; det.open = openGroups.has(g);
+      det.addEventListener("toggle", () => { if (det.open) openGroups.add(g); else openGroups.delete(g); });
+      det.innerHTML = `<summary><span class="f-chev" aria-hidden="true"></span><span class="f-sample"></span><span class="f-meta"><span class="f-name"></span><span class="f-file"></span></span><button class="btn small ghost" type="button">حذف العائلة</button></summary><ul class="f-weights"></ul>`;
+      const sm = det.querySelector(".f-sample"); sm.textContent = "أبجد"; sm.style.fontFamily = `"${g}"`;
+      det.querySelector(".f-name").textContent = g;
+      det.querySelector(".f-file").textContent = `${items.length} ${items.length === 1 ? "ملف" : items.length === 2 ? "ملفان" : items.length <= 10 ? "ملفات" : "ملفاً"} · ${kb(size)}` + (loading ? ` · جارٍ تحميل ${loading}` : "");
+      det.querySelector("summary button").addEventListener("click", e => { e.preventDefault(); removeGroup(g, items); });
+      const ul = det.querySelector(".f-weights");
+      items.forEach(m => {
+        const li = document.createElement("li");
+        li.innerHTML = `<span class="f-sample"></span><span class="f-meta"><span class="f-name"></span><bdi class="f-file mono"></bdi></span><span class="f-state"></span><button class="btn small ghost" type="button">حذف</button>`;
+        const it = isItalic(m);
+        const smp = li.querySelector(".f-sample"); smp.textContent = "أبجد";
+        smp.style.cssText = `font-family:"${g}";font-weight:${m.weight};font-style:${it ? "italic" : "normal"}`;
+        li.querySelector(".f-name").textContent = (W[m.weight] || m.weight) + (it ? " مائل" : "");
+        li.querySelector(".f-file").textContent = `${m.fileName} · ${kb(m.size)}`;
+        li.querySelector(".f-state").textContent = loaded.has(m.id) ? "" : "جارٍ التحميل…";
+        li.querySelector("button").addEventListener("click", () => remove(m));
+        ul.append(li);
+      });
+      list.append(det);
     });
   }
   function fillFontSelect(){
     const sel = $("sFont"); if (!sel) return;
     let g = sel.querySelector("optgroup[data-up]");
-    const fams = [...new Set(metas.map(m => m.family))].sort();
+    const fams = [...new Set(metas.map(groupOf))].sort();
     if (!fams.length){ if (g) g.remove(); return; }
     if (!g){ g = document.createElement("optgroup"); g.label = "خطوط مرفوعة"; g.dataset.up = "1"; sel.append(g); }
     g.innerHTML = "";
@@ -125,10 +156,21 @@
         for (let i = 0; i < n; i++) await db.collection("fontChunks").doc(`${id}_${i}`).set({ font: id, i, data: b64.slice(i * CHUNK, (i + 1) * CHUNK) });
         if (old) for (let i = n; i < old.n; i++) await db.collection("fontChunks").doc(`${id}_${i}`).delete().catch(() => {});
         loaded.delete(id);
-        await db.collection("fonts").doc(id).set({ family: info.family, weight: info.weight, style: "normal", fileName: f.name, size: f.size, n, createdAt: new Date().toISOString() });
-        msg(`أُضيف «${info.family}» (${W[info.weight] || info.weight})`, "ok");
+        await db.collection("fonts").doc(id).set({ family: info.family, group: info.group, weight: info.weight, style: info.style || "normal", fileName: f.name, size: f.size, n, createdAt: new Date().toISOString() });
+        msg(`أُضيف «${info.group}» (${W[info.weight] || info.weight}${info.style === "italic" ? " مائل" : ""})`, "ok");
       } catch (e){ console.error(e); msg(`تعذّر رفع «${f.name}»`, "err"); }
     }
+  }
+  async function removeGroup(g, items){
+    if (!confirm(`حذف عائلة «${g}» كاملة (${items.length} ملف)؟`)) return;
+    msg(`جارٍ حذف ${g}…`);
+    try {
+      for (const m of items){
+        await db.collection("fonts").doc(m.id).delete();
+        for (let i = 0; i < m.n; i++) await db.collection("fontChunks").doc(`${m.id}_${i}`).delete().catch(() => {});
+      }
+      openGroups.delete(g); msg(`حُذفت عائلة «${g}»`, "ok");
+    } catch (e){ console.error(e); msg("تعذّر الحذف", "err"); }
   }
   async function remove(m){
     if (!confirm(`حذف الخط «${m.family}» (${m.fileName})؟`)) return;
