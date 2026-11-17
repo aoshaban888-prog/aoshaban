@@ -251,11 +251,20 @@ ${HELLO}
     return `<div class="lt-m"><span>اليوم:</span> ${weekday(d)}</div><div class="lt-m"><span>التاريخ:</span> ${hijri(d)} هـ</div><div class="lt-m"><span>الموافق:</span> ${greg(d)} م</div><div class="lt-m"><span>الرقم:</span> <bdi>${esc(L.ref || "يُعطى عند الحفظ")}</bdi></div>`;
   }
   // inside the date frame: the recipient, the outgoing number, then the day and the Gregorian date
-  function frameHtml(L){
+  // measure text with a canvas so the size is the same on screen, in print and when reprinting
+  const measureCtx = document.createElement("canvas").getContext("2d");
+  function fitSize(text, base, widthMm){
+    const fam = getComputedStyle(document.body).fontFamily;
+    measureCtx.font = `600 ${base}px ${fam}`;
+    const w = measureCtx.measureText(text).width, avail = widthMm * 96 / 25.4 * 0.96;
+    return w > avail ? Math.max(6, Math.floor(base * avail / w * 10) / 10) : base;
+  }
+  function frameHtml(L, fr){
     const d = parseDay(L.date), f = L.fields || {};
     const name = (f[RECIP] || "").trim();
+    const size = name && fr ? fitSize(name, fr.fontSize, fr.w - 2 * fr.padSide) : null;
     const to = name ? esc(name) : `<span class="lt-blank">${esc(RECIP)}</span>`;
-    return `<div class="lt-m lt-fto">${to}</div><div class="lt-m"><span>الرقم:</span> <bdi>${esc(L.ref || "يُعطى عند الحفظ")}</bdi></div><div class="lt-m">${weekday(d)} ${greg(d)} م</div>`;
+    return `<div class="lt-m lt-fto"${size ? ` style="font-size:${size}px"` : ""}>${to}</div><div class="lt-m"><span>الرقم:</span> <bdi>${esc(L.ref || "يُعطى عند الحفظ")}</bdi></div><div class="lt-m">${weekday(d)} ${greg(d)} م</div>`;
   }
   /* the whole A4 page; parts = { title, body, sign, hdr, ftr } (HTML), editable puts contenteditable on them */
   function paperInner(L, head, parts, editable){
@@ -264,7 +273,7 @@ ${HELLO}
     const fr = head && head.frame && head.frame.image ? head.frame : null;
     const hdr = parts.showHdr !== false && (parts.hdr || editable) ? `<div class="lt-hdr" style="top:6mm;inset-inline:${m.side}mm;min-height:${Math.max(8, m.top - 10)}mm"${ce} data-ph="ترويسة أعلى الصفحة">${parts.hdr || ""}</div>` : "";
     const ftr = parts.showFtr !== false && (parts.ftr || editable) ? `<div class="lt-ftr" style="bottom:6mm;inset-inline:${m.side}mm;min-height:${Math.max(8, m.bottom - 10)}mm"${ce} data-ph="تذييل أسفل الصفحة">${parts.ftr || ""}</div>` : "";
-    const frame = fr ? `<div class="lt-frame" style="top:${fr.y}mm;left:${fr.x}mm;width:${fr.w}mm"><img src="${fr.image}" alt=""><div class="lt-frame-t" style="padding:${fr.padTop}mm ${fr.padSide}mm 0;font-size:${fr.fontSize}px">${frameHtml(L)}</div></div>` : "";
+    const frame = fr ? `<div class="lt-frame" style="top:${fr.y}mm;left:${fr.x}mm;width:${fr.w}mm"><img src="${fr.image}" alt=""><div class="lt-frame-t" style="padding:${fr.padTop}mm ${fr.padSide}mm 0;font-size:${fr.fontSize}px">${frameHtml(L, fr)}</div></div>` : "";
     const plainHead = !fr ? `<header class="lt-head">${head && head.bg ? "<span></span>" : `<div class="lt-org">${esc(L.assoc || "")}</div>`}<div class="lt-meta">${metaHtml(L)}</div></header>` : "";
     return `${hdr}${frame}<div class="lt-content" style="padding:${m.top}mm ${m.side}mm ${m.bottom}mm">${plainHead}
       <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><div class="lt-signbox"><footer class="lt-sign"${ce}>${parts.sign}</footer></div></div>${ftr}${sealHtml(parts, editable)}`;
@@ -287,7 +296,8 @@ ${HELLO}
     if (!t){ paper.removeAttribute("style"); paper.innerHTML = '<p class="lt-empty">اختر نوع الخطاب</p>'; fit(); return; }
     if (manual && !force){ // keep the edited text, only refresh the date and number
       paper.querySelectorAll(".lt-meta").forEach(el => { el.innerHTML = metaHtml(L); });
-      paper.querySelectorAll(".lt-frame-t").forEach(el => { el.innerHTML = frameHtml(L); });
+      const fr = head && head.frame && head.frame.image ? head.frame : null;
+      paper.querySelectorAll(".lt-frame-t").forEach(el => { el.innerHTML = frameHtml(L, fr); });
       return;
     }
     const keep = force === "head" || force === "sign" ? grab() : null;
