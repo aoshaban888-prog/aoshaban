@@ -504,6 +504,8 @@ bdi{unicode-bidi:isolate}
 .hr-docbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:8px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);box-shadow:var(--shadow-sm)}
 .hr-docbar .hr-actions{margin:0}
 .hr-pdfnote{font-size:12px;color:var(--muted)}
+.hr-editing{font-size:13px;font-weight:500;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:var(--r-sm)}
+.hr-editing .linkbtn{font-weight:400}
 .hr-stick .s-msg{margin:0}
 .hr-tools{display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);box-shadow:var(--shadow-sm)}
 .hr-tools .tg{display:flex;align-items:center;gap:2px;padding-inline-end:4px;margin-inline-end:2px;border-inline-end:1px solid var(--line-soft);position:relative}

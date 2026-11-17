@@ -172,6 +172,7 @@ ${HELLO}
   try { sign = { ...sign, ...JSON.parse(localStorage.getItem(SIGN_KEY) || "{}") }; } catch {}
   const values = {};
   let manual = false, showHdr = true, showFtr = true;
+  let editingLetter = null; // an issued letter opened from the log: saving updates it and keeps its number
   // signature and stamp images, shared by all letters (Firestore hrMeta/seal)
   // positions are millimetres from the page's top-left corner
   // they follow the signer's name: the signature right under it, the stamp beside it;
@@ -340,7 +341,7 @@ ${HELLO}
     const t = curTpl() || { title: "", body: "" };
     const defs = defaultsOf(t.body);
     const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"], ...(values[f + "#s"] != null ? [[f + "#s", values[f + "#s"]]] : [])] : [[f, values[f] ?? defs[f] ?? (f === CLOSING ? CLOSINGS[0] : "")]]));
-    return { title: t.title, body: t.body, html: !!t.html, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
+    return { ref: editingLetter ? editingLetter.ref : undefined, title: t.title, body: t.body, html: !!t.html, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
              fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim(), showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked };
   }
   const vals = L => ({ ...L.fields, [ASSOC_FIELD]: L.assoc, "صفة المعتمد": L.signRole, "اسم المعتمد": L.signName });
@@ -653,23 +654,63 @@ ${HELLO}
     if (!L.assoc && !curHead()){ msg("اكتب اسم الجمعية أو اختر كليشة", "err"); $("hrAssoc").focus(); return; }
     const btn = $("hrSave"); btn.disabled = true; msg("جارٍ الحفظ…");
     try {
-      const year = hijriYear(parseDay(L.date));
-      const counter = db.collection("hrMeta").doc("counter");
-      const no = await db.runTransaction(async tx => {
-        const d = await tx.get(counter);
-        const last = d.exists && d.data().year === year ? d.data().last || 0 : 0;
-        tx.set(counter, { year, last: last + 1 });
-        return last + 1;
-      });
-      L.no = no; L.year = year; L.ref = `${String(no).padStart(3, "0")}/${year}`;
       L.employee = L.fields["اسم الموظف"] || ""; L.parts = grab();
-      L.createdAt = new Date().toISOString(); L.createdBy = me;
-      await db.collection("hrLetters").add(L);
+      if (editingLetter){
+        const E = editingLetter;
+        Object.assign(L, { no: E.no, year: E.year, ref: E.ref, createdAt: E.createdAt, createdBy: E.createdBy || "", updatedAt: new Date().toISOString(), updatedBy: me });
+        await db.collection("hrLetters").doc(E.id).set(L);
+        editingLetter = { ...L, id: E.id };
+        msg(""); UI.toast(`حُفظ تعديل الخطاب ${L.ref}`);
+      } else {
+        const year = hijriYear(parseDay(L.date));
+        const counter = db.collection("hrMeta").doc("counter");
+        const no = await db.runTransaction(async tx => {
+          const d = await tx.get(counter);
+          const last = d.exists && d.data().year === year ? d.data().last || 0 : 0;
+          tx.set(counter, { year, last: last + 1 });
+          return last + 1;
+        });
+        L.no = no; L.year = year; L.ref = `${String(no).padStart(3, "0")}/${year}`;
+        L.createdAt = new Date().toISOString(); L.createdBy = me;
+        const r = await db.collection("hrLetters").add(L);
+        // later changes to this letter keep its number
+        setEditing({ ...L, id: r.id });
+        msg(""); UI.toast(`حُفظ الخطاب برقم ${L.ref}`);
+      }
       renderPaper(); // show the number on the page
-      msg(""); UI.toast(`حُفظ الخطاب برقم ${L.ref}`);
       printParts(L, curHead(), L.parts);
     } catch (e){ console.error(e); msg("تعذّر حفظ الخطاب. حاول مرة أخرى", "err"); }
     finally { btn.disabled = false; }
+  }
+
+  /* ---------- editing an issued letter ---------- */
+  function setEditing(l){
+    editingLetter = l;
+    $("hrEditing").hidden = !l;
+    if (l) $("hrEditingRef").textContent = l.ref;
+    $("hrSave").textContent = l ? "حفظ التعديل وطباعة" : "حفظ وطباعة";
+  }
+  async function openLetter(l){
+    if (manual && !editingLetter && !(await UI.confirm("فتح الخطاب للتعديل يستبدل الخطاب المفتوح الآن. متابعة؟", { ok: "فتح" }))) return;
+    // its template, or a stand-in made from the letter itself when the template was deleted
+    let t = templates.find(x => x.id === l.templateId);
+    if (!t){ t = { id: "letter-" + l.id, title: l.title, body: l.body || "", html: !!l.html, category: "أخرى", order: 1e15 }; templates = templates.filter(x => !String(x.id).startsWith("letter-")).concat(t); fillTplSelect(); }
+    $("hrTpl").value = t.id;
+    if ([...$("hrHead").options].some(o => o.value === (l.headId || ""))) $("hrHead").value = l.headId || "";
+    $("hrAssoc").value = l.assoc || ""; $("hrDate").value = l.date || ymd(new Date());
+    if (l.signRole != null) $("hrSignRole").value = l.signRole; if (l.signName != null) $("hrSignName").value = l.signName;
+    $("hrShowSig").checked = l.showSig !== false; $("hrShowStamp").checked = l.showStamp !== false;
+    Object.keys(values).forEach(k => delete values[k]); Object.assign(values, l.fields || {});
+    if (l.parts){ showHdr = l.parts.showHdr !== false; showFtr = l.parts.showFtr !== false; }
+    setEditing(l); setTab("new"); renderFields();
+    if (l.parts){
+      // the page exactly as it was saved; field values keep following their fields
+      const head = curHead(), paper = $("hrPaper");
+      paper.setAttribute("style", paperStyle(head));
+      paper.innerHTML = paperInner(draft(), head, { ...l.parts, title: clean(l.parts.title), body: clean(l.parts.body), sign: clean(l.parts.sign), hdr: clean(l.parts.hdr), ftr: clean(l.parts.ftr), sealPos: null, sealSize: null }, true);
+      setManual(true); fit(); placeSeal(paper);
+    } else { setManual(false); renderPaper(true); }
+    msg(""); window.scrollTo(0, 0);
   }
 
   /* ---------- log ---------- */
@@ -712,14 +753,15 @@ ${HELLO}
     $("hrLogEmpty").textContent = letters.length ? "لا توجد نتائج" : "لم يصدر أي خطاب بعد";
     rows.forEach(l => {
       const tr = document.createElement("tr"); if (picked.has(l.id)) tr.classList.add("sel");
-      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small" type="button">طباعة</button> <button class="btn small ghost" type="button">حذف</button></td>`;
+      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small" type="button">تعديل</button> <button class="btn small" type="button">طباعة</button> <button class="btn small ghost" type="button">حذف</button></td>`;
       const td = tr.querySelectorAll("td");
       td[0].querySelector("bdi").textContent = l.ref;
       td[1].textContent = `${hijri(parseDay(l.date))} هـ`;
       td[2].textContent = l.title; td[3].textContent = l.employee || "—"; td[4].textContent = l.assoc || "";
       const cb = tr.querySelector(".hr-pick"); cb.checked = picked.has(l.id);
       cb.addEventListener("change", () => { if (cb.checked) picked.add(l.id); else picked.delete(l.id); tr.classList.toggle("sel", cb.checked); syncBulk(rows); });
-      const [pb, db2] = tr.querySelectorAll("button");
+      const [eb, pb, db2] = tr.querySelectorAll("button");
+      eb.addEventListener("click", () => openLetter(l));
       pb.addEventListener("click", () => printLetter(l));
       db2.addEventListener("click", async () => { if (await UI.confirm(`حذف الخطاب ${l.ref} من السجل؟ لن يُعاد استخدام رقمه.`, { ok: "حذف", danger: true })) db.collection("hrLetters").doc(l.id).delete().then(() => UI.toast("حُذف الخطاب")).catch(() => UI.toast("تعذّر الحذف", "err")); });
       body.append(tr);
@@ -884,7 +926,7 @@ ${HELLO}
   document.querySelectorAll("[data-hrtab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.hrtab)));
   $("hrTpl").addEventListener("change", async () => {
     if (manual && !(await UI.confirm("تغيير نوع الخطاب يستبدل النص الذي عدّلته على الورقة. متابعة؟", { ok: "استبدال" }))) return;
-    setManual(false); renderFields(); renderPaper();
+    setManual(false); setEditing(null); renderFields(); renderPaper();
   });
   $("hrHead").addEventListener("change", () => { try { localStorage.setItem(HEAD_KEY, $("hrHead").value); } catch {} renderPaper("head"); });
   ["hrAssoc", "hrDate"].forEach(id => $(id).addEventListener("input", () => renderPaper()));
@@ -962,7 +1004,8 @@ ${HELLO}
 
   $("hrSave").addEventListener("click", saveAndPrint);
   $("hrPrint").addEventListener("click", () => { if (curTpl()) printParts(draft(), curHead(), grab()); });
-  $("hrClear").addEventListener("click", () => { Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); });
+  $("hrEditEnd").addEventListener("click", () => { setEditing(null); Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); });
+  $("hrClear").addEventListener("click", () => { setEditing(null); Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); });
   $("hrLogQ").addEventListener("input", renderLog);
   $("hrNewTpl").addEventListener("click", () => openEditor(null));
   $("hrEdCancel").addEventListener("click", () => { $("hrEditor").hidden = true; editing = null; });
