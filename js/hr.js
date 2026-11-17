@@ -229,6 +229,7 @@ ${HELLO}
       const html = fieldHtml(el.dataset.f, vals);
       if (el.outerHTML !== html){ const t = document.createElement("template"); t.innerHTML = html; el.replaceWith(t.content); }
     });
+    paper.querySelectorAll(`[data-f="${CLOSING}"]`).forEach(el => { const p = el.closest("p"); if (p && p.textContent.trim() === el.textContent.trim()) p.classList.add("lt-close"); });
   }
   // recipient, greeting and closing paragraphs get their own look (bold; the closing centred)
   function clsOf(text){
@@ -477,11 +478,31 @@ ${HELLO}
     EDIT_ROOTS().forEach(r => r.querySelectorAll('font[size="7"]').forEach(f => { const s = document.createElement("span"); s.style.fontSize = px + "px"; s.innerHTML = f.innerHTML; f.replaceWith(s); }));
     afterEdit();
   }
+  // alignment set on the paragraphs themselves (the browser command does not override the page's own paragraph styles)
+  const ALIGN = { justifyRight: "right", justifyCenter: "center", justifyLeft: "left", justifyFull: "justify" };
+  const BLOCKS = "p,h3,h4,li,td,th,div";
+  function curBlocks(){
+    if (!range) return [];
+    const host = elOf(range.startContainer) && elOf(range.startContainer).closest("[contenteditable=true]"); if (!host) return [];
+    const own = n => { const b = elOf(n) && elOf(n).closest(BLOCKS); return b && host.contains(b) && b !== host ? b : null; };
+    if (range.collapsed){ const b = own(range.startContainer); return b ? [b] : []; }
+    const list = [...host.querySelectorAll(BLOCKS)].filter(b => range.intersectsNode(b) && !b.querySelector(BLOCKS.split(",").map(x => ":scope " + x).join(",")));
+    return list.length ? list : [own(range.startContainer)].filter(Boolean);
+  }
+  function setAlign(v){
+    if (!restore()) return;
+    let blocks = curBlocks();
+    if (!blocks.length){ document.execCommand("formatBlock", false, "p"); const s = getSelection(); if (s.rangeCount) range = s.getRangeAt(0).cloneRange(); blocks = curBlocks(); }
+    blocks.forEach(b => { b.style.textAlign = v; });
+    afterEdit();
+  }
   function cellNow(){ const s = getSelection(); const n = s.rangeCount ? s.anchorNode : null; return n && inPaper(n) ? elOf(n).closest("td,th") : null; }
   function syncTools(){
     const td = cellNow();
     document.querySelectorAll(".hr-tools [data-tbl]").forEach(b => { b.disabled = !td; });
-    ["bold", "italic", "underline", "strikeThrough", "justifyRight", "justifyCenter", "justifyLeft", "justifyFull", "insertUnorderedList", "insertOrderedList"].forEach(c => {
+    const blk = curBlocks()[0], al = blk ? getComputedStyle(blk).textAlign : "";
+    Object.entries(ALIGN).forEach(([c, v]) => document.querySelectorAll(`.hr-tools [data-cmd="${c}"]`).forEach(b => b.setAttribute("aria-pressed", blk && (al === v || (v === "right" && al === "start")) ? "true" : "false")));
+    ["bold", "italic", "underline", "strikeThrough", "insertUnorderedList", "insertOrderedList"].forEach(c => {
       let on = false; try { on = document.queryCommandState(c); } catch {}
       document.querySelectorAll(`.hr-tools [data-cmd="${c}"]`).forEach(b => b.setAttribute("aria-pressed", on ? "true" : "false"));
     });
@@ -508,7 +529,7 @@ ${HELLO}
     const T = $(P + "Tools"); if (!T) return;
     T.querySelectorAll("button[data-cmd]").forEach(b => {
       b.addEventListener("mousedown", e => e.preventDefault());
-      b.addEventListener("click", () => exec(b.dataset.cmd, b.dataset.val));
+      b.addEventListener("click", () => ALIGN[b.dataset.cmd] ? setAlign(ALIGN[b.dataset.cmd]) : exec(b.dataset.cmd, b.dataset.val));
     });
     $(P + "Font").addEventListener("change", e => { const f = e.target.value; if (!f) return; if (window.SiteSettings) SiteSettings.loadFont(f); exec("fontName", f); e.target.value = ""; });
     $(P + "Size").addEventListener("change", e => { const v = +e.target.value; if (v) setSize(v); e.target.value = ""; });
