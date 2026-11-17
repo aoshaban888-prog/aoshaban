@@ -12,7 +12,7 @@
   const SECTIONS = [["tasks", "المهام"], ["governance", "الحوكمة"], ["hr", "الموارد البشرية"]];
   // permissions inside the letters pages; members start with «submit» only
   const PERMS = [
-    ["submit", "رفع الخطاب للاعتماد"], ["issue", "إصدار الخطاب مباشرة برقم"], ["editText", "تعديل نص الخطاب وتنسيقه"],
+    ["submit", "رفع الخطاب للاعتماد"], ["issue", "حفظ وطباعة (إصدار الخطاب برقم)"], ["printDraft", "طباعة بدون حفظ"], ["editText", "تعديل نص الخطاب وتنسيقه"],
     ["editIssued", "تعديل الخطابات الصادرة"], ["viewLog", "عرض سجل كل الخطابات"], ["deleteLog", "حذف الخطابات من السجل"],
     ["pdf", "حفظ الخطاب PDF"],
   ];
@@ -20,7 +20,7 @@
   const ALL_KEYS = [...PERMS, ...SETUP].map(x => x[0]);
   const PRESETS = [
     ["employee", "موظف: يرفع للاعتماد فقط", ["submit"]],
-    ["issuer", "موظف بإصدار مباشر", ["submit", "issue", "editText", "pdf"]],
+    ["issuer", "موظف بإصدار مباشر", ["submit", "issue", "printDraft", "editText", "pdf"]],
     ["officer", "مسؤول الخطابات: كل الصلاحيات", ALL_KEYS],
   ];
   // a user's permissions: admins have all; older records with canIssue keep it

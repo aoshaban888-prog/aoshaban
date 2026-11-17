@@ -173,7 +173,7 @@ ${HELLO}
   const values = {};
   let manual = false, showHdr = true, showFtr = true;
   // what this user may do here (js/requests.js → HRLetters.setPerms); all allowed until known
-  let P = { submit: true, issue: true, editText: true, editIssued: true, viewLog: true, deleteLog: true, templates: true, heads: true, seal: true, pdf: true };
+  let P = { submit: true, issue: true, editText: true, editIssued: true, viewLog: true, deleteLog: true, templates: true, heads: true, seal: true, pdf: true, printDraft: true };
   let editingLetter = null; // an issued letter opened from the log: saving updates it and keeps its number
   // signature and stamp images, shared by all letters (Firestore hrMeta/seal)
   // positions are millimetres from the page's top-left corner
@@ -735,7 +735,7 @@ ${HELLO}
     if (l) $("hrEditingText").textContent = req ? `تعديل الطلب: ${l.label}` : `تعديل الخطاب ${l.ref} · يُحفظ بنفس الرقم`;
     $("hrSave").textContent = req ? (l.saveText || "حفظ") : l ? "حفظ التعديل وطباعة" : "حفظ وطباعة";
     $("hrSave").hidden = !req && !canIssue;
-    $("hrPrint").hidden = !canIssue;
+    $("hrPrint").hidden = !P.printDraft;
     $("hrSubmit").hidden = req || !submitOn;
   }
   async function openLetter(l, opts){
