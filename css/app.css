@@ -425,9 +425,12 @@ bdi{unicode-bidi:isolate}
 .lt-table td,.lt-table th{border:1px solid #9a9a9a;padding:4px 8px;vertical-align:top;min-width:24px}
 .lt-signbox{margin-top:auto;align-self:flex-end;position:relative;min-width:220px}
 .lt-sign{text-align:center;padding-top:24px;line-height:1.8;outline:none}
-.lt-seal{position:absolute;inset-inline:0;bottom:0;pointer-events:none}
-.lt-sigimg{position:absolute;bottom:2mm;left:50%;transform:translateX(-50%);max-width:70mm;width:auto}
-.lt-stampimg{position:absolute;bottom:0;right:calc(100% - 14mm);height:auto;opacity:.92}
+.lt-seal{position:absolute;inset:0;pointer-events:none;z-index:4}
+.lt-seal img{position:absolute;max-width:none;user-select:none}
+.lt-seal img.drag{pointer-events:auto;cursor:move;touch-action:none}
+.lt-seal img.drag:hover,.lt-seal img.moving{outline:1.5px dashed rgba(124,58,237,.7);outline-offset:2px}
+.lt-stampimg{height:auto;opacity:.92}
+.lt-sigspace{height:26mm}
 .seal-pick{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .seal-prev{width:96px;height:56px;border:1px dashed var(--line);border-radius:var(--r);display:grid;place-items:center;background:#fff;overflow:hidden}
 .seal-prev img{max-width:88px;max-height:48px;object-fit:contain}

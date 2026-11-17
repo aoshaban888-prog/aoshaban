@@ -162,7 +162,10 @@ ${HELLO}
   const values = {};
   let manual = false, showHdr = true, showFtr = true;
   // signature and stamp images, shared by all letters (Firestore hrMeta/seal)
-  let seal = { sig: "", stamp: "", sigH: 18, stampW: 32 };
+  // positions are millimetres from the page's top-left corner
+  // until moved by hand (placed), they sit under the signer's name, measured from the page's bottom margin
+  const defaultPos = m => ({ sigX: 30, sigY: 297 - m.bottom - 24, stampX: 10, stampY: 297 - m.bottom - 36 });
+  let seal = { sig: "", stamp: "", sigH: 18, stampW: 32, placed: false };
 
   /* ---------- dates ---------- */
   const pad = n => String(n).padStart(2, "0");
@@ -204,10 +207,16 @@ ${HELLO}
   const sealOn = p => ({ sig: !!(p.showSig !== false && seal.sig), stamp: !!(p.showStamp !== false && seal.stamp) });
   const genSign = (L, p = {}) => { const o = sealOn(p);
     return `<div class="lt-role">${esc(L.signRole || "")}</div><div class="lt-name">${esc(L.signName || "")}</div>` +
-      (o.sig || o.stamp ? `<div class="lt-sigspace" style="height:${Math.max(seal.sigH + 6, o.stamp ? seal.stampW * 0.7 : 0)}mm"></div>` : `<div class="lt-line">التوقيع: ...................................</div><div class="lt-stamp">الختم</div>`); };
-  function sealHtml(p){
+      (o.sig || o.stamp ? `<div class="lt-sigspace"></div>` : `<div class="lt-line">التوقيع: ...................................</div><div class="lt-stamp">الختم</div>`); };
+  // signature and stamp on a layer over the whole page; on the editable page they can be dragged
+  function sealHtml(p, editable, m){
     const o = sealOn(p); if (!o.sig && !o.stamp) return "";
-    return `<div class="lt-seal" contenteditable="false">${o.sig ? `<img class="lt-sigimg" src="${seal.sig}" alt="" style="height:${seal.sigH}mm">` : ""}${o.stamp ? `<img class="lt-stampimg" src="${seal.stamp}" alt="" style="width:${seal.stampW}mm">` : ""}</div>`;
+    const pos = p.sealPos || (seal.placed ? seal : defaultPos(m));
+    const cls = editable ? " drag" : "";
+    return `<div class="lt-seal" contenteditable="false">` +
+      (o.stamp ? `<img class="lt-stampimg${cls}" data-k="stamp" src="${seal.stamp}" alt="الختم" draggable="false" style="left:${pos.stampX}mm;top:${pos.stampY}mm;width:${seal.stampW}mm">` : "") +
+      (o.sig ? `<img class="lt-sigimg${cls}" data-k="sig" src="${seal.sig}" alt="التوقيع" draggable="false" style="left:${pos.sigX}mm;top:${pos.sigY}mm;height:${seal.sigH}mm">` : "") +
+      `</div>`;
   }
   function metaHtml(L){
     const d = parseDay(L.date);
@@ -230,7 +239,7 @@ ${HELLO}
     const frame = fr ? `<div class="lt-frame" style="top:${fr.y}mm;left:${fr.x}mm;width:${fr.w}mm"><img src="${fr.image}" alt=""><div class="lt-frame-t" style="padding:${fr.padTop}mm ${fr.padSide}mm 0;font-size:${fr.fontSize}px">${frameHtml(L)}</div></div>` : "";
     const plainHead = !fr ? `<header class="lt-head">${head && head.bg ? "<span></span>" : `<div class="lt-org">${esc(L.assoc || "")}</div>`}<div class="lt-meta">${metaHtml(L)}</div></header>` : "";
     return `${hdr}${frame}<div class="lt-content" style="padding:${m.top}mm ${m.side}mm ${m.bottom}mm">${plainHead}
-      <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><div class="lt-signbox"><footer class="lt-sign"${ce}>${parts.sign}</footer>${sealHtml(parts)}</div></div>${ftr}`;
+      <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><div class="lt-signbox"><footer class="lt-sign"${ce}>${parts.sign}</footer></div></div>${ftr}${sealHtml(parts, editable, m)}`;
   }
   const paperStyle = head => head && head.bg ? `background-image:url("${head.bg}")` : "";
 
@@ -256,7 +265,7 @@ ${HELLO}
     const keep = force === "head" || force === "sign" ? grab() : null;
     const sw = { showSig: L.showSig, showStamp: L.showStamp };
     if (keep && force === "sign") keep.sign = genSign(L, sw);
-    const parts = keep ? { ...keep, ...headParts(head), showHdr, showFtr, ...sw } :
+    const parts = keep ? { ...keep, ...headParts(head), showHdr, showFtr, ...sw, sealPos: null } :
       { title: esc(t.title), body: genBody(t.body, vals(L)), sign: genSign(L, sw), ...headParts(head), showHdr, showFtr, ...sw };
     paper.setAttribute("style", paperStyle(head));
     paper.innerHTML = paperInner(L, head, parts, true);
@@ -264,7 +273,12 @@ ${HELLO}
   }
   function grab(){
     const p = $("hrPaper"), g = sel => { const el = p.querySelector(sel); return el ? clean(el.innerHTML) : ""; };
-    return { title: g(".lt-title"), body: g(".lt-body"), sign: g(".lt-sign"), hdr: g(".lt-hdr"), ftr: g(".lt-ftr"), showHdr, showFtr, showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked };
+    return { title: g(".lt-title"), body: g(".lt-body"), sign: g(".lt-sign"), hdr: g(".lt-hdr"), ftr: g(".lt-ftr"), showHdr, showFtr, showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked, sealPos: sealNow() };
+  }
+  function sealNow(){
+    const p = $("hrPaper"), at = (k, a) => { const i = p.querySelector(`.lt-seal img[data-k="${k}"]`); return i ? parseFloat(i.style[a]) : null; };
+    const r = { sigX: at("sig", "left"), sigY: at("sig", "top"), stampX: at("stamp", "left"), stampY: at("stamp", "top") };
+    return Object.values(r).some(v => v !== null) ? r : null;
   }
   function setManual(on){ manual = on; $("hrManual").hidden = !on; }
   $("hrPaper").addEventListener("input", e => { if (!manual && e.target.closest(".lt-title,.lt-body,.lt-sign,.lt-hdr,.lt-ftr")) setManual(true); });
@@ -643,6 +657,23 @@ ${HELLO}
     clearTimeout(sizeT); sizeT = setTimeout(() => saveSeal({}), 600);
   }));
   ["hrShowSig", "hrShowStamp"].forEach(id => $(id).addEventListener("change", () => renderPaper("sign")));
+  $("hrSealReset").addEventListener("click", () => { saveSeal({ placed: false }); UI.toast("رجع الختم والتوقيع لمكانهما الافتراضي"); });
+  // drag the signature or stamp on the page; the page is scaled, so pixels are turned back into millimetres
+  const PX_MM = 96 / 25.4;
+  $("hrPaper").addEventListener("pointerdown", e => {
+    const img = e.target.closest(".lt-seal img.drag"); if (!img) return;
+    e.preventDefault(); try { img.setPointerCapture(e.pointerId); } catch {} img.classList.add("moving");
+    const k = parseFloat(getComputedStyle($("hrPaper")).getPropertyValue("--k")) || 1;
+    const key = img.dataset.k, x0 = parseFloat(img.style.left), y0 = parseFloat(img.style.top), sx = e.clientX, sy = e.clientY;
+    const move = ev => {
+      const x = Math.max(-20, Math.min(200, x0 + (ev.clientX - sx) / (PX_MM * k)));
+      const y = Math.max(-10, Math.min(290, y0 + (ev.clientY - sy) / (PX_MM * k)));
+      img.style.left = (Math.round(x * 2) / 2) + "mm"; img.style.top = (Math.round(y * 2) / 2) + "mm";
+    };
+    // once moved, both images keep their place from now on
+    const up = () => { img.removeEventListener("pointermove", move); img.removeEventListener("pointerup", up); img.classList.remove("moving"); saveSeal({ ...seal, ...(sealNow() || {}), placed: true }); };
+    img.addEventListener("pointermove", move); img.addEventListener("pointerup", up);
+  });
 
   $("hrSave").addEventListener("click", saveAndPrint);
   $("hrPrint").addEventListener("click", () => { if (curTpl()) printParts(draft(), curHead(), grab()); });
