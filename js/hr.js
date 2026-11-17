@@ -452,13 +452,19 @@ ${HELLO}
     if (templates.some(t => t.id === keep)) sel.value = keep;
     renderFields(); if (!manual) renderPaper();
   }
+  const sharedHead = () => (signShared && signShared.defaultHead && heads.some(h => h.id === signShared.defaultHead)) ? signShared.defaultHead : "";
   function fillHeadSelect(){
-    const sel = $("hrHead"); const keep = sel.value || (() => { try { return localStorage.getItem(HEAD_KEY) || ""; } catch { return ""; } })();
+    const sel = $("hrHead");
+    let own = ""; try { own = localStorage.getItem(HEAD_KEY) || ""; } catch {}
+    const keep = !P.heads ? sharedHead() : (sel.value || own || sharedHead());
     sel.innerHTML = ""; sel.append(new Option("بدون كليشة", ""));
     heads.forEach(h => sel.append(new Option(h.name, h.id)));
     sel.value = heads.some(h => h.id === keep) ? keep : "";
-    renderPaper("head");
+    sel.disabled = !P.heads && !P.admin;
+    if (!editingLetter || editingLetter.kind === "request") renderPaper("head");
   }
+  // shared letters settings (settings/letters): the admin's signer and letterhead are everyone's defaults
+  function saveShared(patch){ if (P.admin && db) db.collection("settings").doc("letters").set({ ...patch, updatedAt: new Date().toISOString() }, { merge: true }).catch(e => console.error(e)); }
   function msg(t, k){ $("hrMsg").textContent = t || ""; $("hrMsg").className = "s-msg" + (k ? " " + k : ""); }
 
   /* ---------- toolbars: one over the letter, one in the template editor; each works on the editable area with the caret ---------- */
@@ -828,6 +834,7 @@ ${HELLO}
     if (on && on.hidden) setTab("new");
     $("hrTools").hidden = !P.editText;
     $("hrPdf").hidden = !P.pdf;
+    fillHeadSelect();
     $("hrSignFields").hidden = !P.sign;
     $("hrSignDetails").hidden = !P.sign && !P.seal;
     $("hrSignNote").textContent = P.admin ? "ما تكتبه هنا يصير صفة واسم المعتمد في خطابات كل المستخدمين" : "تعديلك هنا يخص خطاباتك في هذا المتصفح";
@@ -849,6 +856,15 @@ ${HELLO}
     open: (l, opts) => openLetter(l, { force: true, ...(opts || {}) }),
     paper(L){ const head = heads.find(h => h.id === L.headId) || null; return { style: paperStyle(head), html: paperInner(L, head, partsOf(L, head), false) }; },
     print: L => printLetter(L),
+    finalize(L0){
+      const L = JSON.parse(JSON.stringify(L0 || {}));
+      const sh = signShared || {};
+      let changed = false;
+      if (!(L.signName || "").trim() && !(L.signRole || "").trim() && (sh.signName || sh.signRole)){ L.signName = sh.signName || ""; L.signRole = sh.signRole || ""; changed = true; }
+      if (!L.headId && sh.defaultHead && heads.some(h => h.id === sh.defaultHead)) L.headId = sh.defaultHead;
+      if (changed && L.parts) L.parts.sign = genSign(L, L);
+      return L;
+    },
     preview: (L, opts) => { const head = heads.find(h => h.id === L.headId) || null; preview(L, head, partsOf(L, head), opts); },
     pdf: L => { const head = heads.find(h => h.id === L.headId) || null; return savePdf(L, head, partsOf(L, head)); },
     fit: () => fit(), place: el => placeSeal(el),
@@ -1083,14 +1099,14 @@ ${HELLO}
     if (manual && !(await UI.confirm("تغيير نوع الخطاب يستبدل النص الذي عدّلته على الورقة. متابعة؟", { ok: "استبدال" }))) return;
     setManual(false); setEditing(null); renderFields(); renderPaper();
   });
-  $("hrHead").addEventListener("change", () => { try { localStorage.setItem(HEAD_KEY, $("hrHead").value); } catch {} renderPaper("head"); });
+  $("hrHead").addEventListener("change", () => { try { localStorage.setItem(HEAD_KEY, $("hrHead").value); } catch {} saveShared({ defaultHead: $("hrHead").value }); renderPaper("head"); });
   ["hrAssoc", "hrDate"].forEach(id => $(id).addEventListener("input", () => renderPaper()));
   ["hrSignName", "hrSignRole"].forEach(id => $(id).addEventListener("input", () => {
     sign = { name: $("hrSignName").value, role: $("hrSignRole").value };
     try { localStorage.setItem(SIGN_KEY, JSON.stringify(sign)); } catch {}
     renderPaper();
     // an admin's entry becomes the signer for everyone
-    if (P.admin && db){ clearTimeout(signSaveT); signSaveT = setTimeout(() => db.collection("settings").doc("letters").set({ signName: sign.name.trim(), signRole: sign.role.trim(), updatedAt: new Date().toISOString() }, { merge: true }).catch(e => console.error(e)), 700); }
+    if (P.admin){ clearTimeout(signSaveT); signSaveT = setTimeout(() => saveShared({ signName: sign.name.trim(), signRole: sign.role.trim() }), 700); }
   }));
   $("hrRegen").addEventListener("click", async () => { if (await UI.confirm("إعادة بناء الخطاب من القالب والخانات؟ تضيع تعديلاتك على الورقة.", { ok: "إعادة البناء" })){ setManual(false); renderPaper(true); } });
   function renderSealForm(){
@@ -1215,6 +1231,14 @@ ${HELLO}
       // fill the signer from the shared one when this browser has none yet
       if (signShared && P.sign && !$("hrSignName").value && !$("hrSignRole").value){ $("hrSignRole").value = signShared.signRole || ""; $("hrSignName").value = signShared.signName || ""; renderPaper(); }
       useSharedSign();
+      // an admin's own signer and letterhead fill the shared settings the first time
+      if (P.admin){
+        const miss = {};
+        if (!(signShared && (signShared.signName || signShared.signRole)) && ($("hrSignName").value || $("hrSignRole").value)){ miss.signName = $("hrSignName").value.trim(); miss.signRole = $("hrSignRole").value.trim(); }
+        if (!(signShared && "defaultHead" in signShared) && $("hrHead").value) miss.defaultHead = $("hrHead").value;
+        if (Object.keys(miss).length) saveShared(miss);
+      }
+      fillHeadSelect();
     }, () => {});
     db.collection("hrMeta").doc("seal").onSnapshot(d => { if (d.exists){ seal = { ...seal, ...d.data() }; renderSealForm(); renderPaper("sign"); } }, () => {});
     renderSealForm();

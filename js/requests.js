@@ -168,12 +168,12 @@
     }
     if (r.submittedBy === me && r.status === "returned") add("تعديل وإعادة الرفع", "primary", () => editAs(r, "submitter"));
     if (r.submittedBy === me && (r.status === "pending" || r.status === "returned")) add("سحب الطلب", "ghost", () => act(r, "cancel"));
-    add("معاينة كاملة", "ghost", () => HRLetters.preview({ ...r.letter, ref: r.ref }, { title: r.title, print: r.status === "approved", pdf: r.status === "approved" }));
-    if (r.status === "approved") add("طباعة الخطاب", "primary", () => HRLetters.print({ ...r.letter, ref: r.ref }));
-    if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...r.letter, ref: r.ref }));
+    add("معاينة كاملة", "ghost", () => HRLetters.preview({ ...HRLetters.finalize(r.letter), ref: r.ref }, { title: r.title, print: r.status === "approved", pdf: r.status === "approved" }));
+    if (r.status === "approved") add("طباعة الخطاب", "primary", () => HRLetters.print({ ...HRLetters.finalize(r.letter), ref: r.ref }));
+    if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...HRLetters.finalize(r.letter), ref: r.ref }));
     $("rqNoteWrap").hidden = !amApprover(r);
     // preview
-    const pv = HRLetters.paper({ ...r.letter, ref: r.ref });
+    const pv = HRLetters.paper({ ...(r.status === "approved" ? r.letter : HRLetters.finalize(r.letter)), ref: r.ref });
     const paper = $("rqPaper"); paper.setAttribute("style", pv.style); paper.innerHTML = pv.html;
     setTimeout(() => { HRLetters.fit(); HRLetters.place(paper); }, 30);
   }
@@ -191,7 +191,7 @@
     try {
       if (action === "approve" && last){
         // the outgoing number, the letter in the log, and the request closed
-        const L = r.letter || {};
+        const L = HRLetters.finalize(r.letter || {});
         const year = +new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn", { year: "numeric" }).format(new Date((L.date || now.slice(0, 10)) + "T12:00:00")).replace(/\D/g, "");
         const no = await db.runTransaction(async tx => {
           const c = db.collection("hrMeta").doc("counter"); const d = await tx.get(c);
