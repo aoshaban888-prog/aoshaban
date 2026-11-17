@@ -344,7 +344,18 @@
             <summary>الاعتماد والتوقيع</summary>
             <div class="s-row"><label for="hrSignRole">صفة المعتمد</label><input class="input" id="hrSignRole" placeholder="مثال: المدير التنفيذي"></div>
             <div class="s-row"><label for="hrSignName">اسم المعتمد</label><input class="input" id="hrSignName"></div>
-            <p class="muted-text">تُحفظ في هذا المتصفح وتظهر في كل خطاب</p>
+            <p class="muted-text">الصفة والاسم تُحفظ في هذا المتصفح وتظهر في كل خطاب</p>
+            <div class="hr-sep">الختم والتوقيع</div>
+            <p class="muted-text" id="hrSealSignin">سجّل الدخول لإضافة الختم والتوقيع</p>
+            <div id="hrSealBox" hidden>
+              <div class="s-row"><span class="lbl">التوقيع</span><div class="seal-pick"><div class="seal-prev" id="hrSigPrev"></div><div class="logo-btns"><label class="btn small">رفع صورة<input type="file" id="hrSigFile" accept="image/png,image/webp,image/*" hidden></label><button class="btn small ghost" type="button" id="hrSigClear">إزالة</button></div></div></div>
+              <div class="s-row"><label for="hrSigH">ارتفاع التوقيع</label><div class="range"><input type="range" id="hrSigH" min="8" max="40"><span class="mono" id="hrSigHv"></span></div></div>
+              <div class="s-row"><span class="lbl">الختم</span><div class="seal-pick"><div class="seal-prev" id="hrStampPrev"></div><div class="logo-btns"><label class="btn small">رفع صورة<input type="file" id="hrStampFile" accept="image/png,image/webp,image/*" hidden></label><button class="btn small ghost" type="button" id="hrStampClear">إزالة</button></div></div></div>
+              <div class="s-row"><label for="hrStampW">عرض الختم</label><div class="range"><input type="range" id="hrStampW" min="18" max="60"><span class="mono" id="hrStampWv"></span></div></div>
+              <label class="s-check"><input type="checkbox" id="hrShowSig" checked> إظهار التوقيع في هذا الخطاب</label>
+              <label class="s-check"><input type="checkbox" id="hrShowStamp" checked> إظهار الختم في هذا الخطاب</label>
+              <p class="muted-text">ارفع صورتين PNG بخلفية شفافة. تُحفظان لكل الخطابات ويراهما من يملك صلاحية الدخول</p>
+            </div>
           </details>
           <div class="hr-actions">
             <button class="btn primary" type="button" id="hrSave">حفظ وطباعة</button>

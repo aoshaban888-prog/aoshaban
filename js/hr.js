@@ -161,6 +161,8 @@ ${HELLO}
   try { sign = { ...sign, ...JSON.parse(localStorage.getItem(SIGN_KEY) || "{}") }; } catch {}
   const values = {};
   let manual = false, showHdr = true, showFtr = true;
+  // signature and stamp images, shared by all letters (Firestore hrMeta/seal)
+  let seal = { sig: "", stamp: "", sigH: 18, stampW: 32 };
 
   /* ---------- dates ---------- */
   const pad = n => String(n).padStart(2, "0");
@@ -199,7 +201,14 @@ ${HELLO}
     });
     return (body || "").split(/\n\s*\n/).map(p => `<p>${fill(p).replace(/\n/g, "<br>")}</p>`).join("");
   }
-  const genSign = L => `<div class="lt-role">${esc(L.signRole || "")}</div><div class="lt-name">${esc(L.signName || "")}</div><div class="lt-line">التوقيع: ...................................</div><div class="lt-stamp">الختم</div>`;
+  const sealOn = p => ({ sig: !!(p.showSig !== false && seal.sig), stamp: !!(p.showStamp !== false && seal.stamp) });
+  const genSign = (L, p = {}) => { const o = sealOn(p);
+    return `<div class="lt-role">${esc(L.signRole || "")}</div><div class="lt-name">${esc(L.signName || "")}</div>` +
+      (o.sig || o.stamp ? `<div class="lt-sigspace" style="height:${Math.max(seal.sigH + 6, o.stamp ? seal.stampW * 0.7 : 0)}mm"></div>` : `<div class="lt-line">التوقيع: ...................................</div><div class="lt-stamp">الختم</div>`); };
+  function sealHtml(p){
+    const o = sealOn(p); if (!o.sig && !o.stamp) return "";
+    return `<div class="lt-seal" contenteditable="false">${o.sig ? `<img class="lt-sigimg" src="${seal.sig}" alt="" style="height:${seal.sigH}mm">` : ""}${o.stamp ? `<img class="lt-stampimg" src="${seal.stamp}" alt="" style="width:${seal.stampW}mm">` : ""}</div>`;
+  }
   function metaHtml(L){
     const d = parseDay(L.date);
     return `<div class="lt-m"><span>اليوم:</span> ${weekday(d)}</div><div class="lt-m"><span>التاريخ:</span> ${hijri(d)} هـ</div><div class="lt-m"><span>الموافق:</span> ${greg(d)} م</div><div class="lt-m"><span>الرقم:</span> <bdi>${esc(L.ref || "يُعطى عند الحفظ")}</bdi></div>`;
@@ -207,8 +216,8 @@ ${HELLO}
   // inside the date frame: the recipient, the outgoing number, then the day and the Gregorian date
   function frameHtml(L){
     const d = parseDay(L.date), f = L.fields || {};
-    const name = (f[RECIP] || "").trim(), pre = f[RECIP + "#p"] ?? "السادة";
-    const to = name ? `${pre ? esc(pre) + "/ " : ""}${esc(name)}` : `<span class="lt-blank">${esc(RECIP)}</span>`;
+    const name = (f[RECIP] || "").trim();
+    const to = name ? esc(name) : `<span class="lt-blank">${esc(RECIP)}</span>`;
     return `<div class="lt-m lt-fto">${to}</div><div class="lt-m"><span>الرقم:</span> <bdi>${esc(L.ref || "يُعطى عند الحفظ")}</bdi></div><div class="lt-m">${weekday(d)} ${greg(d)} م</div>`;
   }
   /* the whole A4 page; parts = { title, body, sign, hdr, ftr } (HTML), editable puts contenteditable on them */
@@ -221,7 +230,7 @@ ${HELLO}
     const frame = fr ? `<div class="lt-frame" style="top:${fr.y}mm;left:${fr.x}mm;width:${fr.w}mm"><img src="${fr.image}" alt=""><div class="lt-frame-t" style="padding:${fr.padTop}mm ${fr.padSide}mm 0;font-size:${fr.fontSize}px">${frameHtml(L)}</div></div>` : "";
     const plainHead = !fr ? `<header class="lt-head">${head && head.bg ? "<span></span>" : `<div class="lt-org">${esc(L.assoc || "")}</div>`}<div class="lt-meta">${metaHtml(L)}</div></header>` : "";
     return `${hdr}${frame}<div class="lt-content" style="padding:${m.top}mm ${m.side}mm ${m.bottom}mm">${plainHead}
-      <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><footer class="lt-sign"${ce}>${parts.sign}</footer></div>${ftr}`;
+      <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><div class="lt-signbox"><footer class="lt-sign"${ce}>${parts.sign}</footer>${sealHtml(parts)}</div></div>${ftr}`;
   }
   const paperStyle = head => head && head.bg ? `background-image:url("${head.bg}")` : "";
 
@@ -232,7 +241,7 @@ ${HELLO}
     const t = curTpl() || { title: "", body: "" };
     const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"]] : [[f, values[f] || ""]]));
     return { title: t.title, body: t.body, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
-             fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim() };
+             fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim(), showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked };
   }
   const vals = L => ({ ...L.fields, [ASSOC_FIELD]: L.assoc, "صفة المعتمد": L.signRole, "اسم المعتمد": L.signName });
   function headParts(head){ return { hdr: head ? head.hdr || "" : "", ftr: head ? head.ftr || "" : "" }; }
@@ -244,16 +253,18 @@ ${HELLO}
       paper.querySelectorAll(".lt-frame-t").forEach(el => { el.innerHTML = frameHtml(L); });
       return;
     }
-    const keep = force === "head" ? grab() : null;
-    const parts = keep ? { ...keep, ...headParts(head), showHdr, showFtr } :
-      { title: esc(t.title), body: genBody(t.body, vals(L)), sign: genSign(L), ...headParts(head), showHdr, showFtr };
+    const keep = force === "head" || force === "sign" ? grab() : null;
+    const sw = { showSig: L.showSig, showStamp: L.showStamp };
+    if (keep && force === "sign") keep.sign = genSign(L, sw);
+    const parts = keep ? { ...keep, ...headParts(head), showHdr, showFtr, ...sw } :
+      { title: esc(t.title), body: genBody(t.body, vals(L)), sign: genSign(L, sw), ...headParts(head), showHdr, showFtr, ...sw };
     paper.setAttribute("style", paperStyle(head));
     paper.innerHTML = paperInner(L, head, parts, true);
     fit();
   }
   function grab(){
     const p = $("hrPaper"), g = sel => { const el = p.querySelector(sel); return el ? clean(el.innerHTML) : ""; };
-    return { title: g(".lt-title"), body: g(".lt-body"), sign: g(".lt-sign"), hdr: g(".lt-hdr"), ftr: g(".lt-ftr"), showHdr, showFtr };
+    return { title: g(".lt-title"), body: g(".lt-body"), sign: g(".lt-sign"), hdr: g(".lt-hdr"), ftr: g(".lt-ftr"), showHdr, showFtr, showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked };
   }
   function setManual(on){ manual = on; $("hrManual").hidden = !on; }
   $("hrPaper").addEventListener("input", e => { if (!manual && e.target.closest(".lt-title,.lt-body,.lt-sign,.lt-hdr,.lt-ftr")) setManual(true); });
@@ -410,7 +421,7 @@ ${HELLO}
   function printLetter(L){ // from the log: the saved page
     const head = heads.find(h => h.id === L.headId) || null;
     const parts = L.parts ? { ...L.parts, title: clean(L.parts.title), body: clean(L.parts.body), sign: clean(L.parts.sign), hdr: clean(L.parts.hdr), ftr: clean(L.parts.ftr) }
-      : { title: esc(L.title), body: genBody(L.body, vals(L)), sign: genSign(L), ...headParts(head) };
+      : { title: esc(L.title), body: genBody(L.body, vals(L)), sign: genSign(L, L), ...headParts(head) };
     printParts(L, head, parts);
   }
   async function saveAndPrint(){
@@ -544,7 +555,7 @@ ${HELLO}
   function renderHeadPreview(){
     if (!hDraft) return;
     const L = { assoc: "جمعية البر الخيرية", date: ymd(new Date()), ref: "001/1448", signRole: "المدير التنفيذي", signName: "" };
-    const parts = { title: "عنوان الخطاب", body: "<p>هذا نص تجريبي يوضح مكان المحتوى داخل الكليشة. عدّل الهوامش حتى يقع النص في المساحة الفارغة من التصميم، وحرّك إطار التاريخ حتى يطابق مكانه.</p><p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>", sign: genSign(L), hdr: hDraft.hdr, ftr: hDraft.ftr };
+    const parts = { showSig: true, showStamp: true, title: "عنوان الخطاب", body: "<p>هذا نص تجريبي يوضح مكان المحتوى داخل الكليشة. عدّل الهوامش حتى يقع النص في المساحة الفارغة من التصميم، وحرّك إطار التاريخ حتى يطابق مكانه.</p><p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>", sign: genSign(L), hdr: hDraft.hdr, ftr: hDraft.ftr };
     const p = $("hdPaper"); p.setAttribute("style", paperStyle(hDraft)); p.innerHTML = paperInner(L, hDraft, parts, false);
     fit();
   }
@@ -606,6 +617,33 @@ ${HELLO}
     renderPaper();
   }));
   $("hrRegen").addEventListener("click", async () => { if (await UI.confirm("إعادة بناء الخطاب من القالب والخانات؟ تضيع تعديلاتك على الورقة.", { ok: "إعادة البناء" })){ setManual(false); renderPaper(true); } });
+  function renderSealForm(){
+    [["sig", "hrSigPrev", "hrSigClear"], ["stamp", "hrStampPrev", "hrStampClear"]].forEach(([k, prev, clr]) => {
+      const p = $(prev); p.innerHTML = seal[k] ? `<img src="${seal[k]}" alt="">` : '<span class="muted-text">لا توجد صورة</span>'; $(clr).hidden = !seal[k];
+    });
+    $("hrSigH").value = seal.sigH; $("hrSigHv").textContent = seal.sigH + "mm";
+    $("hrStampW").value = seal.stampW; $("hrStampWv").textContent = seal.stampW + "mm";
+    $("hrSealSignin").hidden = !!db; $("hrSealBox").hidden = !db;
+  }
+  async function saveSeal(patch){
+    seal = { ...seal, ...patch }; renderSealForm(); renderPaper("sign");
+    if (!db) return;
+    try { await db.collection("hrMeta").doc("seal").set(seal); } catch (e){ console.error(e); UI.toast("تعذّر حفظ الختم والتوقيع", "err"); }
+  }
+  [["hrSigFile", "sig"], ["hrStampFile", "stamp"]].forEach(([inp, k]) => $(inp).addEventListener("change", async e => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    try { await saveSeal({ [k]: await imgData(f, 600, true) }); UI.toast(k === "sig" ? "حُفظ التوقيع" : "حُفظ الختم"); }
+    catch { UI.toast("تعذّرت قراءة الصورة", "err"); }
+  }));
+  $("hrSigClear").addEventListener("click", () => saveSeal({ sig: "" }));
+  $("hrStampClear").addEventListener("click", () => saveSeal({ stamp: "" }));
+  let sizeT = null;
+  [["hrSigH", "sigH"], ["hrStampW", "stampW"]].forEach(([id, k]) => $(id).addEventListener("input", e => {
+    seal[k] = +e.target.value; $(id + "v").textContent = e.target.value + "mm"; renderPaper("sign");
+    clearTimeout(sizeT); sizeT = setTimeout(() => saveSeal({}), 600);
+  }));
+  ["hrShowSig", "hrShowStamp"].forEach(id => $(id).addEventListener("change", () => renderPaper("sign")));
+
   $("hrSave").addEventListener("click", saveAndPrint);
   $("hrPrint").addEventListener("click", () => { if (curTpl()) printParts(draft(), curHead(), grab()); });
   $("hrClear").addEventListener("click", () => { Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); });
@@ -636,6 +674,8 @@ ${HELLO}
       fillTplSelect(); renderTpls(); migrate();
     }, e => console.error(e));
     db.collection("hrLetters").onSnapshot(snap => { letters = snap.docs.map(x => ({ id: x.id, ...x.data() })); renderLog(); }, e => console.error(e));
+    db.collection("hrMeta").doc("seal").onSnapshot(d => { if (d.exists){ seal = { ...seal, ...d.data() }; renderSealForm(); renderPaper("sign"); } }, () => {});
+    renderSealForm();
     db.collection("hrHeads").onSnapshot(snap => { heads = snap.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => a.name.localeCompare(b.name)); fillHeadSelect(); renderHeads(); }, e => console.error(e));
     db.collection("associations").onSnapshot(snap => {
       $("hrAssocList").innerHTML = ""; snap.docs.map(x => x.data().name).filter(Boolean).forEach(n => $("hrAssocList").append(new Option(n, n)));
@@ -643,7 +683,7 @@ ${HELLO}
   }
   // before sign-in the standard letters still preview, they just can't be saved
   templates = DEFAULT_TEMPLATES.map((t, i) => ({ id: "local" + i, ...t }));
-  fontList(); fillTplSelect(); renderTpls(); renderLog(); renderHeads(); fillHeadSelect();
+  fontList(); fillTplSelect(); renderTpls(); renderLog(); renderHeads(); fillHeadSelect(); renderSealForm();
   if (window.appDb && window.appUser) connect({ db: window.appDb, user: window.appUser });
   window.addEventListener("app:db", e => connect(e.detail));
 })();
