@@ -321,7 +321,15 @@
           <div class="s-row"><label for="sFont">خط الواجهة</label><select class="select" id="sFont"></select></div>
           <div class="s-row"><label for="sFontSize">حجم النص</label><select class="select" id="sFontSize"><option value="14">صغير</option><option value="15">متوسط</option><option value="16">كبير</option><option value="17">كبير جداً</option></select></div>
           <p class="font-sample">لائحة الحوكمة لجمعية البر الخيرية · 1448 هـ</p>
-          <p class="muted-text">خطوط المستندات المصدّرة (وورد وPDF) تُختار من المكتبة نفسها</p>
+          <div class="f-up">
+            <h3>خطوط مرفوعة</h3>
+            <p class="muted-text">ارفع ملفات خطوطك (ttf أو otf). تظهر هنا في قائمة خط الواجهة، وفي قائمة خطوط المستندات في المكتبة. تُحفظ في قاعدة البيانات ولا يراها إلا من سجّل الدخول. الملف اللي يحمل نفس اسم أحد خطوط الجمعية، مثل <bdi>DINNextLTArabic-Regular.ttf</bdi>، يكمّل ذلك الخط في المعاينة والتصدير</p>
+            <p class="muted-text" id="fSignin">سجّل الدخول لرفع الخطوط</p>
+            <label class="f-drop" id="fUpload" hidden><input type="file" id="fFiles" accept=".ttf,.otf,.woff,.woff2" multiple hidden><span>اسحب ملفات الخطوط هنا أو اضغط للاختيار</span></label>
+            <p class="s-msg" id="fMsg" role="status"></p>
+            <ul class="f-list" id="fList"></ul>
+            <p class="muted-text" id="fEmpty" hidden>لم تُرفع خطوط بعد</p>
+          </div>
         </section>
 
         <section class="card" aria-labelledby="s4"><div class="card-h"><h2 id="s4">الواجهة</h2></div>
@@ -601,6 +609,7 @@
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
 <script src="js/home.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/fonts.js"></script>
 <script src="js/shell.js"></script>
 </body>
 </html>

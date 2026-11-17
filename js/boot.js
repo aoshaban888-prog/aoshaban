@@ -28,7 +28,7 @@
   function merge(s){
     const o = { ...DEFAULTS, ...(s || {}) };
     o.home = { ...DEFAULTS.home, ...((s && s.home) || {}) };
-    if (!FONTS[o.font]) o.font = DEFAULTS.font;
+    if (!o.font) o.font = DEFAULTS.font;
     if (!RADIUS[o.radius]) o.radius = DEFAULTS.radius;
     return o;
   }
@@ -43,7 +43,7 @@
     const s = merge(raw);
     const st = document.documentElement.style;
     st.setProperty("--a1", s.a1); st.setProperty("--a2", s.a2);
-    loadFont(s.font);
+    if (FONTS[s.font]) loadFont(s.font);
     st.setProperty("--font-ui", `"${s.font}",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif`);
     st.setProperty("--fs", s.fontSize + "px");
     const [r, rs, rc] = RADIUS[s.radius];

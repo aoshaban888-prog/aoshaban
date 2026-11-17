@@ -196,6 +196,19 @@ bdi{unicode-bidi:isolate}
 .seg-pick span{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:var(--r-sm);font-size:13px;color:var(--ink-2)}
 .seg-pick input:checked + span{background:var(--grad);color:#fff}
 .seg-pick input:focus-visible + span{outline:2px solid var(--accent);outline-offset:1px}
+.f-up{margin-top:20px;padding-top:16px;border-top:1px solid var(--line-soft)}
+.f-up h3{font-size:15px;font-weight:500;margin:0 0 4px}
+.f-up > .muted-text{margin-bottom:12px}
+.f-drop{display:flex;align-items:center;justify-content:center;min-height:64px;border:1px dashed var(--line);border-radius:var(--r);color:var(--ink-2);font-size:14px;cursor:pointer;margin-bottom:12px;transition:border-color 140ms var(--ease),background-color 140ms var(--ease)}
+.f-drop:hover,.f-drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.f-list{list-style:none;margin:0;padding:0}
+.f-list li{display:flex;align-items:center;gap:12px;min-height:52px;border-top:1px solid var(--line-soft)}
+.f-list li:first-child{border-top:0}
+.f-sample{font-size:22px;width:64px;flex:none;line-height:1.2}
+.f-meta{flex:1;min-width:0;display:flex;flex-direction:column}
+.f-name{font-size:14px}
+.f-file{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f-state{font-size:13px;color:var(--muted)}
 .u-help{font-size:14px;color:var(--ink-2)}
 .u-help p{margin:0 0 8px}
 .u-help ol{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:4px}

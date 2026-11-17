@@ -79,6 +79,37 @@ const cssWeight = v => v.allBold ? 700 : 400;
   $("font").value = weightById(saved) ? saved : legacy ? legacy.id : "DIN Next LT Arabic|400";
 })();
 
+/* fonts uploaded from التمكين التقني (js/fonts.js): a file named like one of the families above fills that face;
+   any other file becomes a new document font under "خطوط مرفوعة". Bytes also feed Word embedding (fontBytes). */
+const upFaces = new Set();
+function useUploadedFonts(list){
+  list.forEach(f => {
+    fontCache[f.fileName] = f.buf;
+    const known = ALL_WEIGHTS.filter(v => !v.system && (v.file === f.fileName || v.bold === f.fileName));
+    const addFace = (fam, w) => {
+      const k = fam + "|" + w + "|" + f.id; if (upFaces.has(k)) return; upFaces.add(k);
+      try { const ff = new FontFace(fam, f.buf, { weight: String(w) }); document.fonts.add(ff); ff.load().catch(() => {}); } catch {}
+    };
+    known.forEach(v => addFace(v.word, v.bold === f.fileName || v.allBold ? 700 : 400));
+    if (known.length) return;
+    let fam = FAMILIES.find(x => x.uploaded && x.name === f.family);
+    if (!fam){ fam = { name: f.family, uploaded: true, weights: [] }; FAMILIES.splice(FAMILIES.findIndex(x => x.system), 0, fam); }
+    if (fam.weights.some(v => v.file === f.fileName)) return;
+    const w = fam.weights.some(v => v.w === f.weight) ? f.weight + 1 : f.weight;
+    const v = { w, word: f.family, file: f.fileName, allBold: f.weight >= 700, uploaded: true, family: fam };
+    v.id = fam.name + "|" + w;
+    fam.weights.push(v); fam.weights.sort((a, b) => a.w - b.w); ALL_WEIGHTS.push(v);
+    addFace(v.word, v.allBold ? 700 : 400);
+  });
+  // a font chosen earlier that only exists as an upload comes back once it is loaded
+  let saved = null; try { saved = localStorage.getItem("assoc-policies-font2"); } catch {}
+  if (saved && weightById(saved) && $("font").value !== saved){ $("font").value = saved; renderFontButton(); $("font").dispatchEvent(new Event("change")); }
+  else renderFontButton();
+  if (fp.open) renderFontMenu();
+  previewStale = true; if (pTab === "preview") schedulePreview(100);
+}
+window.addEventListener("app:fonts", e => useUploadedFonts(e.detail));
+
 /* font picker: family list, each family opens its weights */
 const fp = { open: false, famOpen: null };
 function weightLabel(v){ return WEIGHT_NAMES[v.w] || String(v.w); }
@@ -106,7 +137,8 @@ const narrowPicker = () => window.innerWidth < 700;
 function renderFontMenu(){
   const menu = $("fpMenu"); menu.innerHTML = "";
   const cur = currentWeight();
-  [["خطوط الجمعية", FAMILIES.filter(f => !f.system)], ["خطوط وورد الشائعة", FAMILIES.filter(f => f.system)]].forEach(([title, fams]) => {
+  [["خطوط الجمعية", FAMILIES.filter(f => !f.system && !f.uploaded)], ["خطوط مرفوعة", FAMILIES.filter(f => f.uploaded)], ["خطوط وورد الشائعة", FAMILIES.filter(f => f.system)]].forEach(([title, fams]) => {
+    if (!fams.length) return;
     const h = document.createElement("div"); h.className = "fp-group"; h.textContent = title; menu.append(h);
     fams.forEach(fam => {
       const multi = fam.weights.length > 1;
