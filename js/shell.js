@@ -4,21 +4,30 @@
     "home": "الرئيسية",
     "tasks": "المهام",
     "governance/library": "اللوائح والسياسات",
-    "governance/associations": "الجمعيات",
-    "governance/compliance": "متطلبات الامتثال",
     "admin": "التمكين التقني",
   };
   const DEFAULT = () => (window.siteSettings && ROUTES[window.siteSettings.startPage]) ? window.siteSettings.startPage : "home";
   const app = document.querySelector(".app");
   let current = null;
 
+  const govBtn = document.getElementById("govBtn"), govSub = document.getElementById("govSub");
+  function setGov(open, save){
+    govBtn.setAttribute("aria-expanded", open ? "true" : "false"); govSub.hidden = !open;
+    if (save){ try { localStorage.setItem("app-nav-gov", open ? "1" : "0"); } catch {} }
+  }
+  let govSaved = null; try { govSaved = localStorage.getItem("app-nav-gov"); } catch {}
+  setGov(govSaved === "1", false);
+  govBtn.addEventListener("click", () => setGov(govSub.hidden, true));
+
   function route(){
     let r = location.hash.replace(/^#\/?/, "");
     if (!ROUTES[r]) r = DEFAULT();
     document.querySelectorAll(".view").forEach(v => { v.hidden = v.dataset.view !== r; });
+    govBtn.classList.toggle("has-current", r.startsWith("governance/"));
     document.querySelectorAll(".nav a").forEach(a => {
       if (a.getAttribute("href") === "#/" + r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
+    if (r.startsWith("governance/")) setGov(true, false);
     document.querySelector(".topbar .t").textContent = ROUTES[r];
     document.title = ROUTES[r] + " · " + ((window.siteSettings && window.siteSettings.siteName) || "مكتب الحوكمة");
     app.classList.remove("nav-open");

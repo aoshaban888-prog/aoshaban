@@ -69,6 +69,16 @@ bdi{unicode-bidi:isolate}
 .nav a[aria-current="page"]{background:var(--surface);color:var(--ink);font-weight:500;box-shadow:var(--shadow-sm),inset 0 0 0 1px var(--line-soft)}
 .nav a[aria-current="page"] svg{color:var(--accent)}
 .nav .sub{padding-inline-start:36px}
+.nav-group{display:flex;align-items:center;gap:10px;width:100%;height:36px;padding:0 8px;border:0;border-radius:var(--r);background:none;color:var(--ink-2);font:inherit;font-size:15px;text-align:start;cursor:pointer;margin-top:2px;transition:background-color 140ms var(--ease),color 140ms var(--ease)}
+.nav-group svg{width:18px;height:18px;flex:none;color:var(--muted)}
+.nav-group span:first-of-type{flex:1}
+.nav-group:hover{background:var(--line-soft);color:var(--ink)}
+.nav-group.has-current{color:var(--ink);font-weight:500}
+.nav-group.has-current svg{color:var(--accent)}
+.nav-group svg.nav-chev{width:16px;height:16px;color:var(--muted);transform:rotate(90deg);transition:transform 160ms var(--ease)}
+.nav-group[aria-expanded="true"] svg.nav-chev{transform:none}
+.nav-sub{display:flex;flex-direction:column;gap:2px;margin-top:2px}
+.nav-sub a.sub{padding-inline-start:36px;font-size:14px}
 .side-foot{margin-top:auto;display:flex;flex-direction:column;gap:12px;padding:16px 8px 0;border-top:1px solid var(--line-soft)}
 .side-foot .store-note{font-size:13px;color:var(--ink-2);display:flex;align-items:center;flex-wrap:wrap;gap:8px;line-height:1.5;overflow-wrap:anywhere}
 .side-foot .store-note > span:nth-child(2){flex:1 1 0;min-width:0}

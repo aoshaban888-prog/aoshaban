@@ -45,7 +45,7 @@
     document.querySelectorAll("#sPresets button").forEach(b => b.setAttribute("aria-pressed", b.dataset.a1 === s.a1 && b.dataset.a2 === s.a2 ? "true" : "false"));
     $("sFont").value = s.font; $("sFontSize").value = String(s.fontSize);
     document.querySelectorAll("input[name=sRadius]").forEach(r => { r.checked = r.value === s.radius; });
-    $("sTheme").value = s.theme; $("sStart").value = s.startPage;
+    $("sTheme").value = s.theme; $("sStart").value = s.startPage; if (!$("sStart").value) $("sStart").value = "home";
     $("sHomePrayer").checked = s.home.prayer; $("sHomeTasks").checked = s.home.tasks;
     $("sState").textContent = dirty ? "تغييرات غير محفوظة" : "";
     $("sSave").disabled = !dirty || !db;

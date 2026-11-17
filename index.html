@@ -21,10 +21,10 @@
     <nav class="nav">
       <a href="#/home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>الرئيسية</a>
       <a href="#/tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>المهام</a>
-      <div class="nav-label">الحوكمة</div>
-      <a href="#/governance/library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>اللوائح والسياسات</a>
-      <a href="#/governance/associations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg>الجمعيات</a>
-      <a href="#/governance/compliance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>متطلبات الامتثال</a>
+      <button class="nav-group" type="button" id="govBtn" aria-expanded="false" aria-controls="govSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10M19 21V10M9.5 21V10M14.5 21V10"/><path d="M2 10 12 3l10 7z"/></svg><span>الحوكمة</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-sub" id="govSub" hidden>
+        <a class="sub" href="#/governance/library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>اللوائح والسياسات</a>
+      </div>
       <div class="nav-label">الإدارة</div>
       <a href="#/admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>التمكين التقني</a>
     </nav>
@@ -279,14 +279,6 @@
     </main>
   </div>
     </section>
-    <section class="view" data-view="governance/associations" hidden>
-      <header class="page-h"><div><p class="crumb">الحوكمة</p><h1>الجمعيات</h1></div></header>
-      <div class="empty-state"><h2>يُبنى في المرحلة القادمة</h2><p>بيانات كل جمعية وكليشتها وإعداداتها في صفحة مستقلة</p></div>
-    </section>
-    <section class="view" data-view="governance/compliance" hidden>
-      <header class="page-h"><div><p class="crumb">الحوكمة</p><h1>متطلبات الامتثال</h1></div></header>
-      <div class="empty-state"><h2>يُبنى في المرحلة القادمة</h2><p>قائمة متطلبات لكل جمعية وحالة كل متطلب، مربوطة باللوائح والمهام</p></div>
-    </section>
     <section class="view admin" data-view="admin" hidden>
       <header class="page-h">
         <div><p class="crumb">الإدارة</p><h1>التمكين التقني</h1></div>
@@ -341,7 +333,7 @@
             <label><input type="radio" name="sRadius" value="small"><span>حاد</span></label>
             <label><input type="radio" name="sRadius" value="medium"><span>متوسط</span></label>
             <label><input type="radio" name="sRadius" value="large"><span>دائري</span></label></div></div>
-          <div class="s-row"><label for="sStart">الصفحة عند الفتح</label><select class="select" id="sStart"><option value="home">الرئيسية</option><option value="tasks">المهام</option><option value="governance/library">اللوائح والسياسات</option><option value="governance/associations">الجمعيات</option><option value="governance/compliance">متطلبات الامتثال</option></select></div>
+          <div class="s-row"><label for="sStart">الصفحة عند الفتح</label><select class="select" id="sStart"><option value="home">الرئيسية</option><option value="tasks">المهام</option><option value="governance/library">اللوائح والسياسات</option></select></div>
           <div class="s-row"><span class="lbl">الرئيسية تعرض</span>
             <label class="s-check"><input type="checkbox" id="sHomeTasks"> لوحة المهام</label>
             <label class="s-check"><input type="checkbox" id="sHomePrayer"> أوقات الصلاة</label></div>
