@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261117z"></script>
-<link rel="stylesheet" href="css/library.css?v=20261117z">
-<link rel="stylesheet" href="css/app.css?v=20261117z">
+<script src="js/boot.js?v=20261118a"></script>
+<link rel="stylesheet" href="css/library.css?v=20261118a">
+<link rel="stylesheet" href="css/app.css?v=20261118a">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -70,6 +70,7 @@
       <div class="nav-sub" id="admSub" data-sec="admin" hidden>
         <a class="sub" href="#/admin">الإعدادات العامة</a>
         <a class="sub" href="#/admin/requests">إدارة الطلبات الإدارية</a>
+        <a class="sub" href="#/admin/permissions">صلاحيات المستخدمين</a>
       </div>
     </nav>
     <div class="side-foot">
@@ -386,7 +387,7 @@
             <div class="s-row"><label for="hrSignRole">صفة المعتمد</label><input class="input" id="hrSignRole" placeholder="مثال: المدير التنفيذي"></div>
             <div class="s-row"><label for="hrSignName">اسم المعتمد</label><input class="input" id="hrSignName"></div>
             <p class="muted-text">الصفة والاسم تُحفظ في هذا المتصفح وتظهر في كل خطاب</p>
-            <div class="hr-sep">الختم والتوقيع</div>
+            <div id="hrSealSection"><div class="hr-sep">الختم والتوقيع</div>
             <p class="muted-text" id="hrSealSignin">سجّل الدخول لإضافة الختم والتوقيع</p>
             <div id="hrSealBox" hidden>
               <div class="s-row"><span class="lbl">التوقيع</span><div class="seal-pick"><div class="seal-prev" id="hrSigPrev"></div><div class="logo-btns"><label class="btn small">رفع صورة<input type="file" id="hrSigFile" accept="image/png,image/webp,image/*" hidden></label><button class="btn small ghost" type="button" id="hrSigClear">إزالة</button></div></div></div>
@@ -397,7 +398,7 @@
               <label class="s-check"><input type="checkbox" id="hrShowStamp" checked> إظهار الختم في هذا الخطاب</label>
               <p class="muted-text"><b>اسحب التوقيع والختم على الورقة</b> لتغيير مكانهما، واسحب أي زاوية من زواياهما لتكبيرهما أو تصغيرهما. يُحفظ المكان والحجم لكل الخطابات. <button class="linkbtn" type="button" id="hrSealReset">إرجاع المكان الافتراضي</button></p>
               <p class="muted-text">ارفع صورتين PNG بخلفية شفافة. تُحفظان لكل الخطابات ويراهما من يملك صلاحية الدخول</p>
-            </div>
+            </div></div>
           </details>
         </section>
 
@@ -534,6 +535,16 @@
         </section>
       </div>
     </section>
+    <section class="view" data-view="admin/permissions" hidden>
+      <header class="page-h"><div><p class="crumb">التمكين التقني</p><h1>صلاحيات المستخدمين</h1></div></header>
+      <p class="muted-text" id="pmSignin">سجّل الدخول لضبط الصلاحيات</p>
+      <p class="muted-text" id="pmNoAdmin" hidden>هذه الصفحة للمديرين فقط</p>
+      <div id="pmBox" hidden>
+        <p class="muted-text pm-intro">لكل مستخدم بطاقة: اختر قالباً جاهزاً أو علّم الصلاحيات واحدة واحدة، والتغيير يُحفظ ويُطبّق فوراً. ما تُقفله يختفي من واجهة المستخدم. لإضافة مستخدم أو تغيير دوره إلى «مدير»: الإعدادات العامة ← المستخدمون</p>
+        <div class="pm-list" id="pmList"></div>
+        <p class="muted-text" id="pmEmpty" hidden>لا يوجد مستخدمون بعد</p>
+      </div>
+    </section>
     <section class="view" data-view="admin/requests" hidden>
       <header class="page-h"><div><p class="crumb">التمكين التقني</p><h1>إدارة الطلبات الإدارية</h1></div></header>
       <p class="muted-text" id="raSignin">سجّل الدخول لضبط الطلبات الإدارية</p>
@@ -555,11 +566,6 @@
             <div class="ra-tpls" id="raWfTpls"></div>
             <div class="hr-actions" style="margin-top:16px"><button class="btn primary" type="button" id="raWfSave">حفظ المسار</button><button class="btn" type="button" id="raWfCancel">إلغاء</button></div>
           </div>
-        </section>
-        <section class="card wide" aria-labelledby="ra2">
-          <div class="card-h"><h2 id="ra2">صلاحيات المستخدمين</h2></div>
-          <p class="muted-text">«يصدر مباشرة» يحفظ ويطبع الخطاب برقم صادر دون اعتماد، ومن دونها يرفع الطلب للاعتماد. والأقسام تحدد ما يظهر للمستخدم. المدير يملك كل الصلاحيات</p>
-          <div class="table-wrap"><table class="u-table"><thead><tr><th>الحساب</th><th>الدور</th><th>الخطابات</th><th>الأقسام</th></tr></thead><tbody id="raPerms"></tbody></table></div>
         </section>
         <section class="card" aria-labelledby="ra3">
           <div class="card-h"><h2 id="ra3">خيارات الاعتماد</h2></div>
@@ -936,18 +942,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261117z"></script>
-<script src="js/library.js?v=20261117z"></script>
+<script src="js/ui.js?v=20261118a"></script>
+<script src="js/library.js?v=20261118a"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/home.js?v=20261117z"></script>
-<script src="js/tasks.js?v=20261117z"></script>
-<script src="js/slider.js?v=20261117z"></script>
-<script src="js/settings.js?v=20261117z"></script>
-<script src="js/fonts.js?v=20261117z"></script>
-<script src="js/hr.js?v=20261117z"></script>
-<script src="js/requests.js?v=20261117z"></script>
-<script src="js/table-tools.js?v=20261117z"></script>
-<script src="js/login.js?v=20261117z"></script>
-<script src="js/shell.js?v=20261117z"></script>
+<script src="js/home.js?v=20261118a"></script>
+<script src="js/tasks.js?v=20261118a"></script>
+<script src="js/slider.js?v=20261118a"></script>
+<script src="js/settings.js?v=20261118a"></script>
+<script src="js/fonts.js?v=20261118a"></script>
+<script src="js/hr.js?v=20261118a"></script>
+<script src="js/requests.js?v=20261118a"></script>
+<script src="js/table-tools.js?v=20261118a"></script>
+<script src="js/login.js?v=20261118a"></script>
+<script src="js/shell.js?v=20261118a"></script>
 </body>
 </html>

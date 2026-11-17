@@ -667,6 +667,23 @@ html.gate-wait .gate-loader{display:grid;place-items:center;position:fixed;inset
 .lg-foot{font-size:12px;color:var(--muted);margin:0}
 :root[data-theme="neon"] .lg-card{background:rgba(37,19,92,.85);backdrop-filter:blur(16px)}
 
+/* ---------- صلاحيات المستخدمين ---------- */
+.pm-intro{margin-bottom:16px;max-width:80ch}
+.pm-list{display:flex;flex-direction:column;gap:16px}
+.pm-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.pm-who{display:flex;flex-direction:column;min-width:0;flex:1}
+.pm-name{font-size:16px;font-weight:500}
+.pm-mail{font-size:13px;color:var(--muted)}
+.pm-role{font-size:12px;padding:3px 10px;border-radius:10px;background:var(--line-soft);color:var(--ink-2)}
+.pm-card.admin .pm-role{background:var(--accent-soft);color:var(--accent)}
+.pm-preset{width:auto;min-width:220px;height:36px;padding:0 10px;line-height:normal}
+.pm-groups{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr) minmax(0,1fr);gap:12px}
+.pm-groups fieldset{border:1px solid var(--line-soft);border-radius:var(--r);padding:8px 12px 10px;margin:0;min-width:0}
+.pm-groups legend{font-size:13px;color:var(--muted);padding:0 4px}
+.pm-groups .s-check{margin:4px 0;font-size:14px}
+.pm-card.admin .pm-groups{opacity:.6}
+@media (max-width:900px){.pm-groups{grid-template-columns:minmax(0,1fr)}}
+
 /* ---------- the violet gradient: selection, primary action, next prayer (all themes) ---------- */
 .nav a[aria-current="page"]{background:var(--grad);color:#fff;box-shadow:var(--glow)}
 .nav a[aria-current="page"] svg{color:#fff}

@@ -172,6 +172,8 @@ ${HELLO}
   try { sign = { ...sign, ...JSON.parse(localStorage.getItem(SIGN_KEY) || "{}") }; } catch {}
   const values = {};
   let manual = false, showHdr = true, showFtr = true;
+  // what this user may do here (js/requests.js → HRLetters.setPerms); all allowed until known
+  let P = { submit: true, issue: true, editText: true, editIssued: true, viewLog: true, deleteLog: true, templates: true, heads: true, seal: true };
   let editingLetter = null; // an issued letter opened from the log: saving updates it and keeps its number
   // signature and stamp images, shared by all letters (Firestore hrMeta/seal)
   // positions are millimetres from the page's top-left corner
@@ -321,7 +323,7 @@ ${HELLO}
       `<div class="lt-m lt-fl" style="font-size:${small}px">${esc(line3)}</div>`;
   }
   /* the whole A4 page; parts = { title, body, sign, hdr, ftr } (HTML), editable puts contenteditable on them */
-  function paperInner(L, head, parts, editable){
+  function paperInner(L, head, parts, editable, sealEditable = editable){
     const ce = editable ? ' contenteditable="true" spellcheck="false"' : "";
     const m = (head && head.margins) || { top: 22, bottom: 22, side: 20 };
     const fr = head && head.frame && head.frame.image ? head.frame : null;
@@ -330,7 +332,7 @@ ${HELLO}
     const frame = fr ? `<div class="lt-frame" style="top:${fr.y}mm;left:${fr.x}mm;width:${fr.w}mm"><img src="${fr.image}" alt=""><div class="lt-frame-t" style="padding:${fr.padTop}mm ${fr.padSide}mm 0;font-size:${fr.fontSize}px">${frameHtml(L, fr)}</div></div>` : "";
     const plainHead = !fr ? `<header class="lt-head">${head && head.bg ? "<span></span>" : `<div class="lt-org">${esc(L.assoc || "")}</div>`}<div class="lt-meta">${metaHtml(L)}</div></header>` : "";
     return `${hdr}${frame}<div class="lt-content" style="padding:${m.top}mm ${m.side}mm ${m.bottom}mm">${plainHead}
-      <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><div class="lt-signbox"><footer class="lt-sign"${ce}>${parts.sign}</footer></div></div>${ftr}${sealHtml(parts, editable)}`;
+      <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><div class="lt-signbox"><footer class="lt-sign"${ce}>${parts.sign}</footer></div></div>${ftr}${sealHtml(parts, sealEditable)}`;
   }
   const paperStyle = head => head && head.bg ? `background-image:url("${head.bg}")` : "";
 
@@ -362,7 +364,7 @@ ${HELLO}
     const parts = keep ? { ...keep, ...headParts(head), showHdr, showFtr, ...sw, sealPos: null, sealSize: null } :
       { title: esc(t.title), body: genBody(t.body, vals(L), !!t.html), sign: genSign(L, sw), ...headParts(head), showHdr, showFtr, ...sw };
     paper.setAttribute("style", paperStyle(head));
-    paper.innerHTML = paperInner(L, head, parts, true);
+    paper.innerHTML = paperInner(L, head, parts, P.editText, P.seal);
     fit(); placeSeal(paper);
   }
   function grab(){
@@ -720,12 +722,27 @@ ${HELLO}
       // the page exactly as it was saved; field values keep following their fields
       const head = curHead(), paper = $("hrPaper");
       paper.setAttribute("style", paperStyle(head));
-      paper.innerHTML = paperInner(draft(), head, { ...l.parts, title: clean(l.parts.title), body: clean(l.parts.body), sign: clean(l.parts.sign), hdr: clean(l.parts.hdr), ftr: clean(l.parts.ftr), sealPos: null, sealSize: null }, true);
+      paper.innerHTML = paperInner(draft(), head, { ...l.parts, title: clean(l.parts.title), body: clean(l.parts.body), sign: clean(l.parts.sign), hdr: clean(l.parts.hdr), ftr: clean(l.parts.ftr), sealPos: null, sealSize: null }, P.editText, P.seal);
       setManual(true); fit(); placeSeal(paper);
     } else { setManual(false); renderPaper(true); }
     msg(""); window.scrollTo(0, 0);
   }
 
+  function applyPerms(){
+    // tabs and tools the user may not use disappear
+    document.querySelector('[data-hrtab="tpl"]').hidden = !P.templates;
+    document.querySelector('[data-hrtab="heads"]').hidden = !P.heads;
+    const on = document.querySelector("[data-hrtab][aria-selected=true]");
+    if (on && on.hidden) setTab("new");
+    $("hrTools").hidden = !P.editText;
+    $("hrSealBox").hidden = !db || !P.seal; $("hrSealSignin").hidden = !!db || !P.seal;
+    $("hrSealSection").hidden = !P.seal;
+    $("hrBulkDel").hidden = !P.deleteLog; $("hrSelAll").closest("label").hidden = !P.deleteLog;
+    if (!P.deleteLog) picked.clear();
+    setEditing(editingLetter);
+    if (curTpl()) renderPaper("head");
+    renderLog();
+  }
   /* ---------- API for js/requests.js ---------- */
   let canIssue = true, submitOn = false;
   window.HRLetters = {
@@ -736,6 +753,7 @@ ${HELLO}
     print: L => printLetter(L),
     fit: () => fit(), place: el => placeSeal(el),
     setCanIssue(v){ canIssue = !!v; setEditing(editingLetter); },
+    setPerms(p){ P = { ...P, ...p }; canIssue = !!P.issue; submitOn = !!P.submit; applyPerms(); },
     enableSubmit(v){ submitOn = !!v; setEditing(editingLetter); },
     templates: () => templates.filter(t => !String(t.id).startsWith("local") && !String(t.id).startsWith("letter-")),
   };
@@ -760,7 +778,7 @@ ${HELLO}
   function filteredLetters(){
     const q = $("hrLogQ").value.trim(), fr = $("hrFRef").value.trim(), fe = $("hrFEmp").value.trim();
     const ft = $("hrFTitle").value, fa = $("hrFAssoc").value, fd = $("hrFDate").value;
-    return letters.filter(l => (!q || [l.ref, l.employee, l.title, l.assoc].some(x => (x || "").includes(q)))
+    return letters.filter(l => (P.viewLog || l.createdBy === me) && (!q || [l.ref, l.employee, l.title, l.assoc].some(x => (x || "").includes(q)))
       && (!fr || (l.ref || "").includes(fr)) && (!fe || (l.employee || "").includes(fe))
       && (!ft || l.title === ft) && (!fa || l.assoc === fa) && inDate(l, fd))
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
@@ -783,15 +801,19 @@ ${HELLO}
       const tr = document.createElement("tr"); if (picked.has(l.id)) tr.classList.add("sel");
       tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small" type="button">تعديل</button> <button class="btn small" type="button">طباعة</button> <button class="btn small ghost" type="button">حذف</button></td>`;
       const td = tr.querySelectorAll("td");
+      const [cbx] = tr.querySelectorAll(".hr-pick"), btns = tr.querySelectorAll("button");
+      if (!P.deleteLog){ cbx.remove(); btns[2].remove(); }
+      if (!P.editIssued) btns[0].remove();
       td[0].querySelector("bdi").textContent = l.ref;
       td[1].textContent = `${hijri(parseDay(l.date))} هـ`;
       td[2].textContent = l.title; td[3].textContent = l.employee || "—"; td[4].textContent = l.assoc || "";
-      const cb = tr.querySelector(".hr-pick"); cb.checked = picked.has(l.id);
-      cb.addEventListener("change", () => { if (cb.checked) picked.add(l.id); else picked.delete(l.id); tr.classList.toggle("sel", cb.checked); syncBulk(rows); });
-      const [eb, pb, db2] = tr.querySelectorAll("button");
-      eb.addEventListener("click", () => openLetter(l));
+      const cb = tr.querySelector(".hr-pick"); if (cb) cb.checked = picked.has(l.id);
+      if (cb) cb.addEventListener("change", () => { if (cb.checked) picked.add(l.id); else picked.delete(l.id); tr.classList.toggle("sel", cb.checked); syncBulk(rows); });
+      const bl = [...tr.querySelectorAll("button")];
+      const eb = bl.find(b => b.textContent === "تعديل"), pb = bl.find(b => b.textContent === "طباعة"), db2 = bl.find(b => b.textContent === "حذف");
+      if (eb && eb.textContent === "تعديل") eb.addEventListener("click", () => openLetter(l));
       pb.addEventListener("click", () => printLetter(l));
-      db2.addEventListener("click", async () => { if (await UI.confirm(`حذف الخطاب ${l.ref} من السجل؟ لن يُعاد استخدام رقمه.`, { ok: "حذف", danger: true })) db.collection("hrLetters").doc(l.id).delete().then(() => UI.toast("حُذف الخطاب")).catch(() => UI.toast("تعذّر الحذف", "err")); });
+      if (db2) db2.addEventListener("click", async () => { if (await UI.confirm(`حذف الخطاب ${l.ref} من السجل؟ لن يُعاد استخدام رقمه.`, { ok: "حذف", danger: true })) db.collection("hrLetters").doc(l.id).delete().then(() => UI.toast("حُذف الخطاب")).catch(() => UI.toast("تعذّر الحذف", "err")); });
       body.append(tr);
     });
     syncBulk(rows);
@@ -970,7 +992,7 @@ ${HELLO}
     });
     $("hrSigH").value = seal.sigH; $("hrSigHv").textContent = seal.sigH + "mm";
     $("hrStampW").value = seal.stampW; $("hrStampWv").textContent = seal.stampW + "mm";
-    $("hrSealSignin").hidden = !!db; $("hrSealBox").hidden = !db;
+    $("hrSealSignin").hidden = !!db || !P.seal; $("hrSealBox").hidden = !db || !P.seal;
   }
   async function saveSeal(patch){
     seal = { ...seal, ...patch }; renderSealForm(); renderPaper("sign");

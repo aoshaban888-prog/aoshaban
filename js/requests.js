@@ -10,6 +10,24 @@
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const SECTIONS = [["tasks", "المهام"], ["governance", "الحوكمة"], ["hr", "الموارد البشرية"]];
+  // permissions inside the letters pages; members start with «submit» only
+  const PERMS = [
+    ["submit", "رفع الخطاب للاعتماد"], ["issue", "إصدار الخطاب مباشرة برقم"], ["editText", "تعديل نص الخطاب وتنسيقه"],
+    ["editIssued", "تعديل الخطابات الصادرة"], ["viewLog", "عرض سجل كل الخطابات"], ["deleteLog", "حذف الخطابات من السجل"],
+  ];
+  const SETUP = [["templates", "إدارة القوالب"], ["heads", "إدارة الكليشات"], ["seal", "إدارة الختم والتوقيع"]];
+  const ALL_KEYS = [...PERMS, ...SETUP].map(x => x[0]);
+  const PRESETS = [
+    ["employee", "موظف: يرفع للاعتماد فقط", ["submit"]],
+    ["issuer", "موظف بإصدار مباشر", ["submit", "issue", "editText"]],
+    ["officer", "مسؤول الخطابات: كل الصلاحيات", ALL_KEYS],
+  ];
+  // a user's permissions: admins have all; older records with canIssue keep it
+  function permsOf(u){
+    if (!u || u.role === "admin") return Object.fromEntries(ALL_KEYS.map(k => [k, true]));
+    const base = { submit: true, issue: !!u.canIssue };
+    return Object.fromEntries(ALL_KEYS.map(k => [k, !!({ ...base, ...(u.perms || {}) })[k]]));
+  }
   const STATUS = { pending: "قيد الاعتماد", returned: "أُعيد للتعديل", rejected: "مرفوض", approved: "معتمد", cancelled: "مسحوب" };
   const ACTION = { submit: "رفع الطلب", resubmit: "أعاد رفع الطلب", approve: "اعتمد", final: "اعتمد نهائياً وأصدر الخطاب", return: "أعاد الطلب للتعديل", reject: "رفض الطلب", cancel: "سحب الطلب", edit: "عدّل الخطاب" };
   let db = null, me = "", myName = "", my = { role: "member", canIssue: false, sections: null };
@@ -29,8 +47,7 @@
       el.classList.toggle("sec-off", hide);
       if (el.classList.contains("nav-sub") && hide) el.hidden = true;
     });
-    window.HRLetters && HRLetters.setCanIssue(isAdmin() || !!my.canIssue);
-    window.HRLetters && HRLetters.enableSubmit(true);
+    window.HRLetters && HRLetters.setPerms(permsOf(my));
     $("rqAllTab").hidden = !isAdmin();
     guard(location.hash.replace(/^#\/?/, ""));
   }
@@ -233,24 +250,48 @@
       db2.addEventListener("click", async () => { if (await UI.confirm(`حذف مسار «${w.name}»؟ الطلبات الجارية تكمل على مسارها.`, { ok: "حذف", danger: true })) saveWorkflows(workflows.filter(x => x.id !== w.id), "حُذف المسار"); });
       ul.append(li);
     });
-    // permissions
-    const body = $("raPerms"); body.innerHTML = "";
-    users.slice().sort((a, b) => (b.role === "admin") - (a.role === "admin") || a.id.localeCompare(b.id)).forEach(u => {
-      const tr = document.createElement("tr"); const adm = u.role === "admin";
-      tr.innerHTML = `<td><bdi class="u-mail"></bdi><span class="u-name"></span></td><td>${adm ? "مدير" : "مستخدم"}</td><td><label class="s-check"><input type="checkbox" data-k="canIssue"> يصدر مباشرة</label></td><td class="ra-secs"></td>`;
-      tr.querySelector(".u-mail").textContent = u.id; tr.querySelector(".u-name").textContent = u.name || "";
-      const ci = tr.querySelector('[data-k="canIssue"]'); ci.checked = adm || !!u.canIssue; ci.disabled = adm;
-      ci.addEventListener("change", () => setPerm(u.id, { canIssue: ci.checked }));
-      const secs = u.sections || SECTIONS.map(s => s[0]);
-      SECTIONS.forEach(([k, label]) => {
-        const l = document.createElement("label"); l.className = "s-check"; l.innerHTML = `<input type="checkbox"> ${label}`;
-        const cb = l.querySelector("input"); cb.checked = adm || secs.includes(k); cb.disabled = adm;
-        cb.addEventListener("change", () => { const cur = new Set(u.sections || SECTIONS.map(s => s[0])); cb.checked ? cur.add(k) : cur.delete(k); setPerm(u.id, { sections: [...cur] }); });
-        tr.querySelector(".ra-secs").append(l);
-      });
-      body.append(tr);
-    });
     $("raOptEdit").checked = opts.approverEdit !== false; $("raOptNote").checked = opts.noteRequired !== false;
+  }
+  /* ---------- التمكين التقني ← صلاحيات المستخدمين ---------- */
+  function renderPerms(){
+    const list = $("pmList"); if (!list) return;
+    $("pmSignin").hidden = !!db; $("pmNoAdmin").hidden = !db || isAdmin(); $("pmBox").hidden = !db || !isAdmin();
+    if (!isAdmin()) return;
+    list.innerHTML = "";
+    users.slice().sort((a, b) => (b.role === "admin") - (a.role === "admin") || (a.name || a.id).localeCompare(b.name || b.id)).forEach(u => {
+      const adm = u.role === "admin", P = permsOf(u), secs = u.sections || SECTIONS.map(x => x[0]);
+      const card = document.createElement("article"); card.className = "card pm-card" + (adm ? " admin" : "");
+      card.innerHTML = `<header class="pm-h"><div class="pm-who"><span class="pm-name"></span><bdi class="pm-mail"></bdi></div><span class="pm-role"></span><select class="select pm-preset" aria-label="قالب صلاحيات"></select></header>
+        <div class="pm-groups"><fieldset><legend>الأقسام</legend><div class="pm-sec"></div></fieldset><fieldset><legend>الخطابات</legend><div class="pm-let"></div></fieldset><fieldset><legend>إعدادات الخطابات</legend><div class="pm-set"></div></fieldset></div>`;
+      card.querySelector(".pm-name").textContent = u.name || u.id.split("@")[0];
+      card.querySelector(".pm-mail").textContent = u.id;
+      card.querySelector(".pm-role").textContent = adm ? "مدير · كل الصلاحيات" : "مستخدم";
+      const sel = card.querySelector(".pm-preset");
+      sel.append(new Option("قالب جاهز…", ""));
+      PRESETS.forEach(([k, label]) => sel.append(new Option(label, k)));
+      const match = PRESETS.find(([, , keys]) => ALL_KEYS.every(k => P[k] === keys.includes(k)));
+      sel.value = match ? match[0] : "";
+      sel.hidden = adm;
+      sel.addEventListener("change", () => {
+        const pr = PRESETS.find(x => x[0] === sel.value); if (!pr) return;
+        setPerm(u.id, { perms: Object.fromEntries(ALL_KEYS.map(k => [k, pr[2].includes(k)])), canIssue: pr[2].includes("issue") });
+      });
+      const box = (host, key, label, checked, onChange) => {
+        const l = document.createElement("label"); l.className = "s-check"; l.innerHTML = '<input type="checkbox"> <span></span>';
+        l.querySelector("span").textContent = label;
+        const cb = l.querySelector("input"); cb.checked = checked; cb.disabled = adm;
+        cb.addEventListener("change", () => onChange(cb.checked));
+        host.append(l);
+      };
+      SECTIONS.forEach(([k, label]) => box(card.querySelector(".pm-sec"), k, label, adm || secs.includes(k), on => {
+        const cur = new Set(u.sections || SECTIONS.map(x => x[0])); on ? cur.add(k) : cur.delete(k); setPerm(u.id, { sections: [...cur] });
+      }));
+      const setOne = (k, on) => { const next = { ...permsOf(u), [k]: on }; setPerm(u.id, { perms: next, canIssue: !!next.issue }); };
+      PERMS.forEach(([k, label]) => box(card.querySelector(".pm-let"), k, label, P[k], on => setOne(k, on)));
+      SETUP.forEach(([k, label]) => box(card.querySelector(".pm-set"), k, label, P[k], on => setOne(k, on)));
+      list.append(card);
+    });
+    $("pmEmpty").hidden = users.length > 0;
   }
   async function setPerm(email, patch){
     try { await db.collection("allowed").doc(email).update(patch); UI.toast("حُفظت الصلاحية"); }
@@ -331,16 +372,16 @@
     db = d.db; me = ((d.user && d.user.email) || "").toLowerCase(); myName = (d.user && d.user.displayName) || me.split("@")[0];
     try { const a = await db.collection("allowed").doc(me).get(); if (a.exists) my = { ...my, ...a.data() }; } catch (e){ console.error(e); }
     applyAccess();
-    db.collection("allowed").doc(me).onSnapshot(a => { if (a.exists){ my = { role: "member", canIssue: false, sections: null, ...a.data() }; applyAccess(); renderAdmin(); renderList(); } }, () => {});
+    db.collection("allowed").doc(me).onSnapshot(a => { if (a.exists){ my = { role: "member", canIssue: false, sections: null, ...a.data() }; applyAccess(); renderAdmin(); renderList(); renderPerms(); } }, () => {});
     db.collection("settings").doc("workflows").onSnapshot(x => { workflows = (x.exists && x.data().list) || []; renderAdmin(); }, () => {});
     db.collection("settings").doc("requests").onSnapshot(x => { if (x.exists) opts = { ...opts, ...x.data() }; renderAdmin(); if (current) show(current.id, true); }, () => {});
     db.collection("requests").onSnapshot(s => { requests = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); }, e => console.error(e));
     db.collection("hrTemplates").onSnapshot(s => { templates = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.order || 0) - (b.order || 0)); renderAdmin(); }, () => {});
-    if (isAdmin()) db.collection("allowed").onSnapshot(s => { users = s.docs.map(x => ({ id: x.id, ...x.data() })); renderAdmin(); }, () => {});
-    renderAdmin(); renderList();
+    if (isAdmin()) db.collection("allowed").onSnapshot(s => { users = s.docs.map(x => ({ id: x.id, ...x.data() })); renderAdmin(); renderPerms(); }, () => {});
+    renderAdmin(); renderList(); renderPerms();
   }
   window.Requests = { submit };
-  renderAdmin(); renderList();
+  renderAdmin(); renderList(); renderPerms();
   if (window.appDb && window.appUser) connect({ db: window.appDb, user: window.appUser });
   window.addEventListener("app:db", e => connect(e.detail));
 })();
