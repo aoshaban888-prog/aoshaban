@@ -47,6 +47,7 @@
     document.querySelectorAll("input[name=sRadius]").forEach(r => { r.checked = r.value === s.radius; });
     $("sTheme").value = s.theme; $("sStart").value = s.startPage; if (!$("sStart").value) $("sStart").value = "home";
     $("sHomePrayer").checked = s.home.prayer; $("sHomeTasks").checked = s.home.tasks;
+    $("sHomeSlider").checked = s.home.slider !== false; $("slSeconds").value = String(s.sliderSeconds || 6);
     $("sState").textContent = dirty ? "تغييرات غير محفوظة" : "";
     $("sSave").disabled = !dirty || !db;
   }
@@ -84,6 +85,8 @@
     $("sStart").addEventListener("change", e => change({ startPage: e.target.value }));
     $("sHomePrayer").addEventListener("change", e => change({ home: { prayer: e.target.checked } }));
     $("sHomeTasks").addEventListener("change", e => change({ home: { tasks: e.target.checked } }));
+    $("sHomeSlider").addEventListener("change", e => change({ home: { slider: e.target.checked } }));
+    $("slSeconds").addEventListener("change", e => change({ sliderSeconds: +e.target.value }));
     [["sLogoFile", "logo"], ["sLogoDarkFile", "logoDark"]].forEach(([inp, key]) => {
       $(inp).addEventListener("change", async e => {
         const f = e.target.files[0]; e.target.value = ""; if (!f) return;

@@ -6,8 +6,8 @@
     siteName: "مكتب الحوكمة", showName: true, logo: "", logoDark: "", logoSize: 32,
     a1: "#7c3aed", a2: "#c026d3",
     font: "IBM Plex Sans Arabic", fontSize: 15, radius: "medium",
-    theme: "system", startPage: "home",
-    home: { prayer: true, tasks: true },
+    theme: "system", startPage: "home", sliderSeconds: 6,
+    home: { prayer: true, tasks: true, slider: true },
   };
   // Google Fonts families drawn for Arabic, with the weights each one has
   const FONTS = {

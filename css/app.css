@@ -247,6 +247,41 @@ bdi{unicode-bidi:isolate}
   .u-add{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }
 
+/* ---------- home slider ---------- */
+.slider{position:relative;border-radius:var(--r-card);overflow:hidden;margin-bottom:20px;background:var(--raised);box-shadow:var(--shadow-sm)}
+.slider:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.sl-viewport{overflow:hidden}
+.sl-track{display:flex;transition:transform 700ms var(--ease);will-change:transform}
+.sl-slide{flex:0 0 100%;min-width:100%;height:clamp(200px,26vw,320px);background:var(--grad);background-size:cover;background-position:center;position:relative}
+.sl-text{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:8px;padding:32px 40px 40px;color:#fff;background:linear-gradient(to left,rgba(0,0,0,.62),rgba(0,0,0,.22) 55%,rgba(0,0,0,0) 85%)}
+.sl-text h2{font-size:26px;font-weight:500;line-height:1.35;margin:0;max-width:28ch}
+.sl-text p{font-size:15px;line-height:1.7;margin:0;max-width:56ch;color:rgba(255,255,255,.88)}
+.sl-btn{display:inline-flex;align-items:center;height:36px;padding:0 16px;margin-top:8px;border-radius:var(--r);background:#fff;color:#111;font-size:14px;font-weight:500;text-decoration:none;transition:background-color 140ms var(--ease)}
+.sl-btn:hover{background:rgba(255,255,255,.88)}
+.sl-nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.88);color:#111;display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity 180ms var(--ease),background-color 140ms var(--ease)}
+.sl-nav:hover{background:#fff}
+.sl-nav.prev{inset-inline-start:12px}
+.sl-nav.next{inset-inline-end:12px}
+.slider:hover .sl-nav,.slider:focus-within .sl-nav{opacity:1}
+@media (hover:none){.sl-nav{display:none}}
+.sl-dots{position:absolute;bottom:16px;inset-inline-end:20px;display:flex;gap:6px}
+.sl-dot{width:8px;height:8px;border-radius:4px;border:0;padding:0;background:rgba(255,255,255,.5);cursor:pointer;transition:width 260ms var(--ease),background-color 260ms var(--ease)}
+.sl-dot[aria-current="true"]{width:24px;background:#fff}
+.sl-empty{margin:0 0 20px}
+.sl-admin{list-style:none;margin:12px 0 0;padding:0}
+.sl-admin li{display:flex;align-items:center;gap:12px;min-height:72px;border-top:1px solid var(--line-soft);flex-wrap:wrap}
+.sl-admin li:first-child{border-top:0}
+.sl-thumb{width:96px;height:54px;border-radius:var(--r-sm);background:var(--grad);background-size:cover;background-position:center;flex:none}
+.sl-on{margin:0}
+.sl-move{display:inline-flex;gap:2px}
+.sl-editor{margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft)}
+.sl-editor h3{font-size:15px;font-weight:500;margin:0 0 12px}
+.sl-img-pick{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sl-img-prev{width:192px;height:108px;border:1px dashed var(--line);border-radius:var(--r);background:var(--grad);background-size:cover;background-position:center}
+.sl-img-prev.has{border-style:solid}
+@media (max-width:900px){.sl-text{padding:20px 20px 36px}.sl-text h2{font-size:20px}.sl-text p{font-size:14px}}
+@media (prefers-reduced-motion:reduce){.sl-track,.sl-dot{transition:none}}
+
 /* ---------- الموارد البشرية ← الخطابات ---------- */
 .seg-tabs{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
 .seg-tabs button{border:0;background:none;height:32px;padding:0 14px;border-radius:var(--r-sm);font-size:14px;color:var(--ink-2);cursor:pointer}

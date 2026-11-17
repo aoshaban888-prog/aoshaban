@@ -53,6 +53,13 @@
         <div><p class="crumb" id="hHijri"></p><h1 id="hDate"></h1></div>
         <div class="clock" aria-label="الوقت الآن"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div>
       </header>
+      <section class="slider" id="slider" aria-roledescription="سلايدر" aria-label="الشرائح" tabindex="0" hidden>
+        <div class="sl-viewport"><div class="sl-track" id="slTrack" aria-live="off"></div></div>
+        <button class="sl-nav prev" id="slPrev" type="button" aria-label="الشريحة السابقة"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        <button class="sl-nav next" id="slNext" type="button" aria-label="الشريحة التالية"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+        <div class="sl-dots" id="slDots"></div>
+      </section>
+      <p class="muted-text sl-empty" id="sliderEmpty" hidden>السلايدر فارغ. أضف شرائح من <a class="link" href="#/admin">التمكين التقني</a></p>
       <div class="home-grid">
         <section class="card tasks-card" aria-labelledby="tH">
           <div class="card-h"><h2 id="tH">المهام</h2><span class="meta" id="tCount"></span><a href="#/tasks" class="link">كل المهام</a></div>
@@ -402,6 +409,28 @@
             <label class="s-check"><input type="checkbox" id="sHomePrayer"> أوقات الصلاة</label></div>
         </section>
 
+        <section class="card wide" aria-labelledby="s6"><div class="card-h"><h2 id="s6">السلايدر</h2><button class="btn small" type="button" id="slAdd" hidden>شريحة جديدة</button></div>
+          <div class="s-row"><label for="slSeconds">مدة كل شريحة</label><select class="select" id="slSeconds"><option value="4">4 ثوانٍ</option><option value="6">6 ثوانٍ</option><option value="8">8 ثوانٍ</option><option value="10">10 ثوانٍ</option><option value="15">15 ثانية</option></select></div>
+          <label class="s-check"><input type="checkbox" id="sHomeSlider"> إظهار السلايدر في الرئيسية</label>
+          <p class="muted-text">المدة والإظهار يُحفظان مع «حفظ التغييرات». الشرائح نفسها تُحفظ فوراً</p>
+          <p class="muted-text" id="slAdminSignin">سجّل الدخول لإضافة الشرائح</p>
+          <p class="s-msg" id="slMsg" role="status"></p>
+          <ul class="sl-admin" id="slList"></ul>
+          <p class="muted-text" id="slAdminEmpty" hidden>لا توجد شرائح بعد</p>
+          <div class="sl-editor" id="slEditor" hidden>
+            <h3 id="slEdHead">شريحة جديدة</h3>
+            <form id="slEdForm">
+              <div class="s-row"><span class="lbl">الصورة</span><div class="sl-img-pick"><div class="sl-img-prev" id="slImgPrev"></div><div class="logo-btns"><label class="btn small">اختيار صورة<input type="file" id="slImg" accept="image/*" hidden></label><button class="btn small ghost" type="button" id="slClearImg">إزالة</button></div></div></div>
+              <div class="s-row"><label for="slTitle">العنوان</label><input class="input" id="slTitle" maxlength="80"></div>
+              <div class="s-row"><label for="slText">النص</label><textarea class="input" id="slText" rows="2" maxlength="220"></textarea></div>
+              <div class="s-row"><label for="slLink">الرابط <span class="muted-text">اختياري</span></label><input class="input" id="slLink" dir="ltr" placeholder="#/hr/letters أو https://..."></div>
+              <div class="s-row"><label for="slLinkLabel">نص الزر</label><input class="input" id="slLinkLabel" maxlength="30" placeholder="التفاصيل"></div>
+              <p class="muted-text">الصورة تُصغَّر تلقائياً. الأنسب صورة عريضة (16:9). بدون صورة تظهر الشريحة بلون الموقع</p>
+              <div class="hr-actions"><button class="btn primary" type="submit">حفظ الشريحة</button><button class="btn" type="button" id="slEdCancel">إلغاء</button></div>
+            </form>
+          </div>
+        </section>
+
         <section class="card wide" aria-labelledby="s5"><div class="card-h"><h2 id="s5">المستخدمون والصلاحيات</h2></div>
           <p class="muted-text" id="uSignin">سجّل الدخول لإدارة المستخدمين</p>
           <div id="uNoAdmin" class="u-help" hidden>
@@ -667,6 +696,7 @@
 <script src="js/library.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
 <script src="js/home.js"></script>
+<script src="js/slider.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/fonts.js"></script>
 <script src="js/hr.js"></script>
