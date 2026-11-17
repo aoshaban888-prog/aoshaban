@@ -292,7 +292,7 @@ ${HELLO}
   }
   function metaHtml(L){
     const d = parseDay(L.date);
-    return `<div class="lt-m"><span>اليوم:</span> ${weekday(d)}</div><div class="lt-m"><span>التاريخ:</span> ${hijri(d)} هـ</div><div class="lt-m"><span>الموافق:</span> ${greg(d)} م</div><div class="lt-m"><span>الرقم:</span> <bdi>${esc(L.ref || "يُعطى عند الحفظ")}</bdi></div>`;
+    return `<div class="lt-m"><span>اليوم:</span> ${weekday(d)}</div><div class="lt-m"><span>التاريخ:</span> ${hijri(d)} هـ</div><div class="lt-m"><span>الموافق:</span> ${greg(d)} م</div><div class="lt-m"><span>الرقم:</span> <bdi>${esc(L.ref ? String(L.ref).split("/")[0] : "يُعطى عند الحفظ")}</bdi></div>`;
   }
   // inside the date frame: the recipient, the outgoing number, then the day and the Gregorian date
   // measure text with a canvas so the size is the same on screen, in print and when reprinting
