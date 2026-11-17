@@ -253,7 +253,7 @@ bdi{unicode-bidi:isolate}
 .ui-dialog h2{font-size:18px;font-weight:500;margin:0 0 8px}
 .ui-dialog > p{margin:0 0 20px;color:var(--ink-2);font-size:15px;line-height:1.7}
 .ui-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.danger{background:#c8321f;border-color:#c8321f;color:#fff}
 .btn.danger:hover{filter:brightness(1.08)}
 .danger-text{color:var(--danger)!important;margin-inline-start:auto}
 .ui-toasts{position:fixed;z-index:210;bottom:24px;inset-inline-start:50%;transform:translateX(50%);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
@@ -533,6 +533,14 @@ bdi{unicode-bidi:isolate}
 .hr-q{max-width:240px;margin-inline-start:auto;height:36px}
 .table-wrap{overflow-x:auto}
 .hr-table td:first-child{white-space:nowrap}
+.hr-filters th{padding:4px 6px 10px;font-weight:400}
+.hr-filters .input,.hr-filters .select{height:32px;padding:0 8px;font-size:13px;line-height:normal;min-width:0;width:100%}
+.hr-selcol{text-align:end;white-space:nowrap}
+.hr-selall{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2);cursor:pointer}
+.hr-selall input,.hr-pick{width:16px;height:16px;accent-color:var(--accent);margin:0;vertical-align:middle;cursor:pointer}
+.hr-table tr.sel td{background:var(--accent-soft)}
+.hr-bulk{display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:8px;border-radius:var(--r);background:var(--accent-soft);font-size:14px}
+.hr-bulk span{margin-inline-end:auto;font-weight:500}
 .hr-table .u-act{width:auto;white-space:nowrap}
 .hr-tpls{list-style:none;margin:0;padding:0}
 .hr-tpls li{display:flex;align-items:center;gap:8px;min-height:52px;border-top:1px solid var(--line-soft)}

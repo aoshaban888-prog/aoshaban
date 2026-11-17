@@ -651,27 +651,72 @@ ${HELLO}
   }
 
   /* ---------- log ---------- */
+  const picked = new Set();
+  function fillLogFilters(){
+    const fill = (id, vals) => { const sel = $(id), keep = sel.value, first = sel.options[0].cloneNode(true); sel.innerHTML = ""; sel.append(first);
+      [...new Set(vals.filter(Boolean))].sort((x, y) => x.localeCompare(y)).forEach(v => sel.append(new Option(v, v))); sel.value = keep; };
+    fill("hrFTitle", letters.map(l => l.title)); fill("hrFAssoc", letters.map(l => l.assoc));
+  }
+  function inDate(l, f){
+    if (!f) return true;
+    const d = parseDay(l.date), now = new Date(), day = 86400000;
+    if (f === "today") return ymd(d) === ymd(now);
+    if (f === "week") return now - d <= 7 * day && d <= now;
+    if (f === "month") return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    if (f === "year") return hijriYear(d) === hijriYear(now);
+    return true;
+  }
+  function filteredLetters(){
+    const q = $("hrLogQ").value.trim(), fr = $("hrFRef").value.trim(), fe = $("hrFEmp").value.trim();
+    const ft = $("hrFTitle").value, fa = $("hrFAssoc").value, fd = $("hrFDate").value;
+    return letters.filter(l => (!q || [l.ref, l.employee, l.title, l.assoc].some(x => (x || "").includes(q)))
+      && (!fr || (l.ref || "").includes(fr)) && (!fe || (l.employee || "").includes(fe))
+      && (!ft || l.title === ft) && (!fa || l.assoc === fa) && inDate(l, fd))
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  }
+  function syncBulk(rows){
+    [...picked].forEach(id => { if (!letters.some(l => l.id === id)) picked.delete(id); });
+    const vis = rows.filter(l => picked.has(l.id)).length;
+    $("hrBulk").hidden = picked.size === 0;
+    $("hrBulkN").textContent = `محدد ${picked.size}`;
+    const all = $("hrSelAll"); all.checked = rows.length > 0 && vis === rows.length; all.indeterminate = vis > 0 && vis < rows.length;
+  }
   function renderLog(){
     const body = $("hrLogList"); if (!body) return;
-    const q = $("hrLogQ").value.trim();
-    const rows = letters.filter(l => !q || [l.ref, l.employee, l.title, l.assoc].some(x => (x || "").includes(q)))
-      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    fillLogFilters();
+    const rows = filteredLetters();
     body.innerHTML = "";
     $("hrLogEmpty").hidden = rows.length > 0;
     $("hrLogEmpty").textContent = letters.length ? "لا توجد نتائج" : "لم يصدر أي خطاب بعد";
     rows.forEach(l => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><button class="btn small" type="button">طباعة</button> <button class="btn small ghost" type="button">حذف</button></td>`;
+      const tr = document.createElement("tr"); if (picked.has(l.id)) tr.classList.add("sel");
+      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small" type="button">طباعة</button> <button class="btn small ghost" type="button">حذف</button></td>`;
       const td = tr.querySelectorAll("td");
       td[0].querySelector("bdi").textContent = l.ref;
       td[1].textContent = `${hijri(parseDay(l.date))} هـ`;
       td[2].textContent = l.title; td[3].textContent = l.employee || "—"; td[4].textContent = l.assoc || "";
+      const cb = tr.querySelector(".hr-pick"); cb.checked = picked.has(l.id);
+      cb.addEventListener("change", () => { if (cb.checked) picked.add(l.id); else picked.delete(l.id); tr.classList.toggle("sel", cb.checked); syncBulk(rows); });
       const [pb, db2] = tr.querySelectorAll("button");
       pb.addEventListener("click", () => printLetter(l));
       db2.addEventListener("click", async () => { if (await UI.confirm(`حذف الخطاب ${l.ref} من السجل؟ لن يُعاد استخدام رقمه.`, { ok: "حذف", danger: true })) db.collection("hrLetters").doc(l.id).delete().then(() => UI.toast("حُذف الخطاب")).catch(() => UI.toast("تعذّر الحذف", "err")); });
       body.append(tr);
     });
+    syncBulk(rows);
   }
+  ["hrFRef", "hrFEmp"].forEach(id => $(id).addEventListener("input", renderLog));
+  ["hrFTitle", "hrFAssoc", "hrFDate"].forEach(id => $(id).addEventListener("change", renderLog));
+  $("hrFReset").addEventListener("click", () => { ["hrFRef", "hrFEmp", "hrFTitle", "hrFAssoc", "hrFDate", "hrLogQ"].forEach(id => { $(id).value = ""; }); renderLog(); });
+  $("hrSelAll").addEventListener("change", e => { filteredLetters().forEach(l => { if (e.target.checked) picked.add(l.id); else picked.delete(l.id); }); renderLog(); });
+  $("hrBulkClear").addEventListener("click", () => { picked.clear(); renderLog(); });
+  $("hrBulkDel").addEventListener("click", async () => {
+    const ids = [...picked]; if (!ids.length || !db) return;
+    if (!(await UI.confirm(`حذف ${ids.length} ${ids.length === 1 ? "خطاب" : ids.length === 2 ? "خطابين" : "خطابات"} من السجل؟ لن يُعاد استخدام أرقامها.`, { ok: "حذف المحدد", danger: true }))) return;
+    try {
+      for (let i = 0; i < ids.length; i += 400){ const batch = db.batch(); ids.slice(i, i + 400).forEach(id => batch.delete(db.collection("hrLetters").doc(id))); await batch.commit(); }
+      picked.clear(); UI.toast(`حُذف ${ids.length} من السجل`);
+    } catch (e){ console.error(e); UI.toast("تعذّر الحذف", "err"); }
+  });
 
   /* ---------- templates ---------- */
   let editing = null;
