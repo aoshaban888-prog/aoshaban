@@ -625,7 +625,7 @@ bdi{unicode-bidi:isolate}
 .ra-stage .input{height:34px;padding:0 10px;line-height:normal}
 .ra-apps,.ra-tpls{display:flex;flex-wrap:wrap;gap:4px 16px}
 .ra-apps .s-check,.ra-tpls .s-check,.ra-secs .s-check{margin:0}
-.ra-secs{display:flex;flex-wrap:wrap;gap:4px 12px}
+.ra-secs .s-check{display:inline-flex;margin:2px 0 2px 12px}
 .ra-btns{display:flex;gap:2px}
 @media (max-width:1100px){.rq-layout{grid-template-columns:minmax(0,1fr)}.ra-stage{grid-template-columns:28px minmax(0,1fr)}.ra-stage .ra-apps,.ra-stage .ra-btns{grid-column:2}}
 
