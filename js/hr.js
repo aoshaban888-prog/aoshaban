@@ -15,9 +15,12 @@
   const CATS = ["التعريف والشهادات", "الدعم والمخاطبات", "التوظيف", "الانضباط وانتهاء الخدمة", "أخرى"];
   const SUFFIXES = ["المحترمين", "المكرمين", "وفقهم الله", "حفظهم الله", "المحترم", "حفظه الله", ""];
   const PREFIXES = [["السادة", "المحترمين"], ["سعادة", "المحترم"], ["معالي", "المحترم"], ["فضيلة", "حفظه الله"], ["المكرم", "المحترم"], ["", ""]];
-  const TPL_VERSION = 2;
+  const TPL_VERSION = 3;
   const HELLO = "السلام عليكم ورحمة الله وبركاته، وبعد:";
-  const THANKS = "وتقبلوا وافر التحية والتقدير،";
+  // the closing line is a field with a list of phrases, like the recipient
+  const CLOSING = "عبارة الختام";
+  const CLOSINGS = ["وتقبلوا وافر التحية والتقدير،،", "نشكر تعاونكم معنا،،", "والله يحفظكم ويرعاكم،،", "شاكرين لكم،،", "هذا وللأهمية،،", ""];
+  const THANKS = `{{${CLOSING}}}`;
 
   const DEFAULT_TEMPLATES = [
     { order: 1, category: "التعريف والشهادات", title: "تعريف بالراتب", body:
@@ -181,7 +184,7 @@ ${HELLO}
 
   /* ---------- fields ---------- */
   function fieldsOf(body){ const out = []; for (const m of (body || "").matchAll(FIELD_RX)){ const f = m[1]; if (!AUTO.has(f) && !out.includes(f)) out.push(f); } return out; }
-  const kind = f => f === RECIP ? "recip" : /تاريخ/.test(f) ? "date" : /راتب|بدل|مبلغ|البدلات|تكلفة|عدد/.test(f) ? "number" : /وصف|سبب|موضوع|هدف/.test(f) ? "long" : "text";
+  const kind = f => f === RECIP ? "recip" : f === CLOSING ? "closing" : /تاريخ/.test(f) ? "date" : /راتب|بدل|مبلغ|البدلات|تكلفة|عدد/.test(f) ? "number" : /وصف|سبب|موضوع|هدف/.test(f) ? "long" : "text";
   function fieldValue(f, vals){
     const v = (vals[f] ?? "").toString().trim();
     if (!v) return null;
@@ -200,6 +203,7 @@ ${HELLO}
   /* ---------- letter parts ---------- */
   function fieldHtml(raw, vals){
     if (raw === RECIP) return recipHtml(vals);
+    if (raw === CLOSING){ const v = vals[CLOSING] ?? CLOSINGS[0]; return `<span class="lt-v" data-f="${esc(CLOSING)}">${esc(v)}</span>`; }
     const v = AUTO.has(raw) ? (vals[raw] || "").trim() || null : fieldValue(raw, vals);
     return v ? `<span class="lt-v" data-f="${esc(raw)}">${esc(v)}</span>` : `<span class="lt-blank" data-f="${esc(raw)}">${esc(raw)}</span>`;
   }
@@ -212,7 +216,12 @@ ${HELLO}
   }
   function genBody(body, vals){
     const fill = text => esc(text).replace(FIELD_RX, (_, f) => fieldHtml(f.replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">"), vals));
-    return (body || "").split(/\n\s*\n/).map(p => `<p>${fill(p).replace(/\n/g, "<br>")}</p>`).join("");
+    const cls = p => { const t = p.trim();
+      if (new RegExp(`^\\{\\{\\s*${RECIP}\\s*\\}\\}$`).test(t)) return ' class="lt-recip"';
+      if (new RegExp(`^\\{\\{\\s*${CLOSING}\\s*\\}\\}$`).test(t)) return ' class="lt-close"';
+      if (/^السلام عليكم ورحمة الله وبركاته/.test(t)) return ' class="lt-hello"';
+      return ""; };
+    return (body || "").split(/\n\s*\n/).map(p => `<p${cls(p)}>${fill(p).replace(/\n/g, "<br>")}</p>`).join("");
   }
   const sealOn = p => ({ sig: !!(p.showSig !== false && seal.sig), stamp: !!(p.showStamp !== false && seal.stamp) });
   const genSign = (L, p = {}) => { const o = sealOn(p);
@@ -363,6 +372,13 @@ ${HELLO}
         // the closing title follows the prefix until it is picked by hand
         sel.addEventListener("change", () => { values[f + "#p"] = sel.value; if (values[f + "#s"] == null) suf.value = defSuf(); renderPaper(); });
         suf.addEventListener("change", () => { values[f + "#s"] = suf.value; renderPaper(); });
+      } else if (k === "closing"){
+        row.innerHTML = `<label for="${id}"></label><select class="select" id="${id}"></select>`;
+        const sel = row.querySelector("select");
+        CLOSINGS.forEach(x => sel.append(new Option(x ? x.replace(/،+$/, "") : "بدون", x)));
+        sel.value = values[f] ?? CLOSINGS[0];
+        sel.addEventListener("change", () => { values[f] = sel.value; renderPaper(); });
+        row.querySelector("label").textContent = f; box.append(row); return;
       } else {
         row.innerHTML = `<label for="${id}"></label>` + (k === "long" ? `<textarea class="input" id="${id}" rows="2"></textarea>` : `<input class="input" id="${id}" type="${k === "date" ? "date" : k === "number" ? "number" : "text"}"${k === "number" ? ' inputmode="decimal" min="0" step="any"' : ""}>`);
       }
@@ -643,7 +659,12 @@ ${HELLO}
       const batch = db.batch(); const titles = new Set(templates.map(t => t.title));
       DEFAULT_TEMPLATES.filter(t => (t.since || 1) > v && !titles.has(t.title)).forEach(t => { const { since, ...rest } = t; batch.set(db.collection("hrTemplates").doc(), { ...rest, builtin: true, updatedAt: new Date().toISOString() }); });
       const OLD = /إلى:\s*\{\{\s*الجهة الموجه لها\s*\}\}[ \t]*(المحترمين)?/g;
-      templates.forEach(t => { if (OLD.test(t.body)){ OLD.lastIndex = 0; batch.update(db.collection("hrTemplates").doc(t.id), { body: t.body.replace(OLD, "{{الجهة الموجه لها}}") }); } OLD.lastIndex = 0; });
+      const CL = /^[ \t]*وتقبلوا وافر التحية والتقدير[،,]*[ \t]*$/m;
+      templates.forEach(t => {
+        let b = t.body.replace(OLD, "{{الجهة الموجه لها}}");
+        if (v < 3) b = b.replace(CL, THANKS);
+        if (b !== t.body) batch.update(db.collection("hrTemplates").doc(t.id), { body: b });
+      });
       batch.set(ref, { v: TPL_VERSION });
       await batch.commit();
     } catch (e){ console.error("templates migrate", e); }
