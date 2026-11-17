@@ -447,9 +447,67 @@ ${HELLO}
       if (a === "delrow"){ if (table.rows.length > 1) tr.remove(); else table.remove(); }
       if (a === "delcol"){ if (tr.children.length > 1) table.querySelectorAll("tr").forEach(r => r.children[ci] && r.children[ci].remove()); else table.remove(); }
       if (a === "del") table.remove();
+      if (a === "up"){ const prev = table.previousElementSibling; if (prev) prev.before(table); }
+      if (a === "down"){ const next = table.nextElementSibling; if (next) next.after(table); }
       afterEdit();
     });
   });
+  /* table borders: drag between two columns to change their widths, or under a row to change its height */
+  const EDGE = 5;
+  function tableEdge(e){
+    const td = e.target.closest && e.target.closest(".lt-table td, .lt-table th");
+    if (!td || !$("hrPaper").contains(td) || !td.closest("[contenteditable=true]")) return null;
+    const r = td.getBoundingClientRect();
+    // right to left: a cell's left edge borders the next cell in the row
+    if (e.clientX - r.left <= EDGE && td.nextElementSibling) return { type: "col", td };
+    if (r.right - e.clientX <= EDGE && td.previousElementSibling) return { type: "col", td: td.previousElementSibling };
+    if (r.bottom - e.clientY <= EDGE) return { type: "row", td };
+    return null;
+  }
+  function ensureCols(table){
+    let cg = table.querySelector("colgroup");
+    const first = table.rows[0]; if (!first) return [];
+    const n = first.cells.length;
+    if (!cg || cg.children.length !== n){
+      if (cg) cg.remove();
+      const tw = table.getBoundingClientRect().width;
+      cg = document.createElement("colgroup");
+      [...first.cells].forEach(c => { const col = document.createElement("col"); col.style.width = (c.getBoundingClientRect().width / tw * 100).toFixed(2) + "%"; cg.append(col); });
+      table.prepend(cg);
+    }
+    table.style.tableLayout = "fixed";
+    return [...cg.children];
+  }
+  $("hrPaper").addEventListener("mousemove", e => {
+    if (e.buttons) return;
+    const ed = tableEdge(e);
+    $("hrPaper").classList.toggle("rs-col", !!ed && ed.type === "col");
+    $("hrPaper").classList.toggle("rs-row", !!ed && ed.type === "row");
+  });
+  $("hrPaper").addEventListener("pointerdown", e => {
+    const ed = tableEdge(e); if (!ed) return;
+    e.preventDefault(); e.stopPropagation();
+    const el = e.target; try { el.setPointerCapture(e.pointerId); } catch {}
+    const k = parseFloat(getComputedStyle($("hrPaper")).getPropertyValue("--k")) || 1;
+    const table = ed.td.closest("table"), sx = e.clientX, sy = e.clientY;
+    let move;
+    if (ed.type === "col"){
+      const cols = ensureCols(table), i = [...ed.td.parentNode.children].indexOf(ed.td);
+      const tw = table.getBoundingClientRect().width;
+      const cells = [...table.rows[0].cells], w0 = cells[i].getBoundingClientRect().width, w1 = cells[i + 1].getBoundingClientRect().width;
+      move = ev => {
+        const d = Math.max(20 - w0, Math.min(w1 - 20, sx - ev.clientX)); // dragging left widens this column
+        cols[i].style.width = ((w0 + d) / tw * 100).toFixed(2) + "%";
+        cols[i + 1].style.width = ((w1 - d) / tw * 100).toFixed(2) + "%";
+      };
+    } else {
+      const tr = ed.td.parentNode, h0 = tr.getBoundingClientRect().height;
+      move = ev => { tr.style.height = Math.max(18, (h0 + ev.clientY - sy) / k) + "px"; };
+    }
+    const up = () => { el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); afterEdit(); };
+    el.addEventListener("pointermove", move); el.addEventListener("pointerup", up);
+  }, true);
+
   $("hrHdrBtn").addEventListener("click", () => { showHdr = !showHdr; $("hrHdrBtn").setAttribute("aria-pressed", showHdr ? "true" : "false"); renderPaper("head"); });
   $("hrFtrBtn").addEventListener("click", () => { showFtr = !showFtr; $("hrFtrBtn").setAttribute("aria-pressed", showFtr ? "true" : "false"); renderPaper("head"); });
 
