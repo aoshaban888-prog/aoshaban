@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261118k"></script>
-<link rel="stylesheet" href="css/library.css?v=20261118k">
-<link rel="stylesheet" href="css/app.css?v=20261118k">
+<script src="js/boot.js?v=20261118m"></script>
+<link rel="stylesheet" href="css/library.css?v=20261118m">
+<link rel="stylesheet" href="css/app.css?v=20261118m">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -524,7 +524,22 @@
       </header>
       <p class="muted-text" id="rqSignin">سجّل الدخول لعرض الطلبات</p>
       <div class="rq-layout" id="rqLayout" hidden>
-        <section class="card rq-list-card" aria-label="قائمة الطلبات"><ul class="rq-list" id="rqList"></ul><p class="muted-text" id="rqEmpty" hidden></p></section>
+        <section class="card rq-list-card" aria-label="قائمة الطلبات">
+          <div class="rq-filters">
+            <input class="input" id="rqQ" type="search" placeholder="بحث: الخطاب، الموظف، الجمعية، الرقم" aria-label="بحث في الطلبات">
+            <div class="rq-frow">
+              <select class="select" id="rqFStatus" aria-label="الحالة"><option value="">كل الحالات</option><option value="pending">قيد الاعتماد</option><option value="approved">معتمد</option><option value="returned">أُعيد للتعديل</option><option value="rejected">مرفوض</option><option value="cancelled">مسحوب</option></select>
+              <select class="select" id="rqFTitle" aria-label="نوع الخطاب"><option value="">كل الخطابات</option></select>
+            </div>
+            <div class="rq-frow">
+              <select class="select" id="rqFBy" aria-label="مقدّم الطلب"><option value="">كل المقدّمين</option></select>
+              <select class="select" id="rqFDate" aria-label="التاريخ"><option value="">كل التواريخ</option><option value="today">اليوم</option><option value="week">آخر 7 أيام</option><option value="month">هذا الشهر</option></select>
+            </div>
+            <div class="rq-fbar"><span class="rq-fn" id="rqCount"></span><button class="linkbtn" type="button" id="rqFReset">مسح الفلاتر</button></div>
+            <div class="rq-bulk" id="rqBulk" hidden><label class="s-check"><input type="checkbox" id="rqSelAll"> تحديد الكل</label><button class="btn small danger" type="button" id="rqBulkDel" disabled>حذف المحدد</button></div>
+          </div>
+          <ul class="rq-list" id="rqList"></ul><p class="muted-text" id="rqEmpty" hidden></p>
+        </section>
         <section class="card rq-detail" id="rqDetail" hidden aria-label="تفاصيل الطلب">
           <div class="rq-head"><h2 id="rqTitle"></h2><span class="rq-chip" id="rqStatus"></span></div>
           <dl class="rq-meta" id="rqMeta"></dl>
@@ -954,18 +969,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261118k"></script>
-<script src="js/library.js?v=20261118k"></script>
+<script src="js/ui.js?v=20261118m"></script>
+<script src="js/library.js?v=20261118m"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/home.js?v=20261118k"></script>
-<script src="js/tasks.js?v=20261118k"></script>
-<script src="js/slider.js?v=20261118k"></script>
-<script src="js/settings.js?v=20261118k"></script>
-<script src="js/fonts.js?v=20261118k"></script>
-<script src="js/hr.js?v=20261118k"></script>
-<script src="js/requests.js?v=20261118k"></script>
-<script src="js/table-tools.js?v=20261118k"></script>
-<script src="js/login.js?v=20261118k"></script>
-<script src="js/shell.js?v=20261118k"></script>
+<script src="js/home.js?v=20261118m"></script>
+<script src="js/tasks.js?v=20261118m"></script>
+<script src="js/slider.js?v=20261118m"></script>
+<script src="js/settings.js?v=20261118m"></script>
+<script src="js/fonts.js?v=20261118m"></script>
+<script src="js/hr.js?v=20261118m"></script>
+<script src="js/requests.js?v=20261118m"></script>
+<script src="js/table-tools.js?v=20261118m"></script>
+<script src="js/login.js?v=20261118m"></script>
+<script src="js/shell.js?v=20261118m"></script>
 </body>
 </html>

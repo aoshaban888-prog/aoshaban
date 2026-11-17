@@ -35,7 +35,7 @@
   let workflows = [], opts = { approverEdit: true, noteRequired: true }, requests = [], users = [], templates = [];
   let tab = "inbox", current = null;
   const isAdmin = () => my.role === "admin";
-  const fmt = iso => { if (!iso) return ""; const d = new Date(iso); return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(d); };
+  const fmt = iso => { if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return ""; return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(d); };
   const stageOf = r => (r.stages || [])[r.stageIndex || 0];
   const amApprover = r => r.status === "pending" && !!stageOf(r) && (stageOf(r).approvers || []).some(a => a.email === me);
 
@@ -94,10 +94,53 @@
     renderList();
   }
   document.querySelectorAll("[data-rqtab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.rqtab)));
-  function visible(){
-    const list = tab === "inbox" ? requests.filter(amApprover) : tab === "mine" ? requests.filter(r => r.submittedBy === me) : isAdmin() ? requests : [];
-    return list.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  const rqPicked = new Set();
+  function inTab(){ return tab === "inbox" ? requests.filter(amApprover) : tab === "mine" ? requests.filter(r => r.submittedBy === me) : isAdmin() ? requests : []; }
+  function fillFilters(){
+    const fill = (id, pairs) => { const sel = $(id), keep = sel.value, first = sel.options[0].cloneNode(true); sel.innerHTML = ""; sel.append(first);
+      pairs.forEach(([v, t]) => sel.append(new Option(t, v))); sel.value = [...sel.options].some(o => o.value === keep) ? keep : ""; };
+    const base = inTab();
+    fill("rqFTitle", [...new Set(base.map(r => r.title).filter(Boolean))].sort().map(t => [t, t]));
+    const by = new Map(); base.forEach(r => by.set(r.submittedBy, r.submitterName || r.submittedBy));
+    fill("rqFBy", [...by].sort((a, b) => a[1].localeCompare(b[1])));
   }
+  function inDate(iso, f){
+    if (!f) return true; const d = new Date(iso || 0), now = new Date();
+    if (f === "today") return d.toDateString() === now.toDateString();
+    if (f === "week") return now - d <= 7 * 86400000;
+    if (f === "month") return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    return true;
+  }
+  function visible(){
+    const q = $("rqQ").value.trim(), fs = $("rqFStatus").value, ft = $("rqFTitle").value, fb = $("rqFBy").value, fd = $("rqFDate").value;
+    return inTab().filter(r => (!q || [r.title, r.employee, r.assoc, r.ref, r.submitterName, r.letter && r.letter.fields && r.letter.fields["الجهة الموجه لها"]].some(x => (x || "").includes(q)))
+      && (!fs || r.status === fs) && (!ft || r.title === ft) && (!fb || r.submittedBy === fb) && inDate(r.submittedAt || r.updatedAt, fd))
+      .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  }
+  function syncRqBulk(list){
+    [...rqPicked].forEach(id => { if (!requests.some(r => r.id === id)) rqPicked.delete(id); });
+    $("rqBulk").hidden = !isAdmin();
+    const vis = list.filter(r => rqPicked.has(r.id)).length;
+    $("rqSelAll").checked = list.length > 0 && vis === list.length; $("rqSelAll").indeterminate = vis > 0 && vis < list.length;
+    $("rqBulkDel").disabled = rqPicked.size === 0; $("rqBulkDel").textContent = rqPicked.size ? `حذف المحدد (${rqPicked.size})` : "حذف المحدد";
+  }
+  async function deleteRequests(ids){
+    if (!ids.length || !isAdmin()) return;
+    const approved = ids.filter(id => (requests.find(r => r.id === id) || {}).status === "approved").length;
+    const txt = `حذف ${ids.length === 1 ? "الطلب" : ids.length + " طلبات"} نهائياً؟` + (approved ? " الخطابات الصادرة منها تبقى في سجل الخطابات." : "");
+    if (!(await UI.confirm(txt, { ok: "حذف", danger: true }))) return;
+    try {
+      for (let i = 0; i < ids.length; i += 400){ const b = db.batch(); ids.slice(i, i + 400).forEach(id => b.delete(db.collection("requests").doc(id))); await b.commit(); }
+      ids.forEach(id => rqPicked.delete(id));
+      if (current && ids.includes(current.id)){ current = null; $("rqDetail").hidden = true; }
+      UI.toast(ids.length === 1 ? "حُذف الطلب" : `حُذف ${ids.length} طلبات`);
+    } catch (e){ console.error(e); UI.toast("تعذّر الحذف", "err"); }
+  }
+  ["rqQ"].forEach(id => $(id).addEventListener("input", () => renderList()));
+  ["rqFStatus", "rqFTitle", "rqFBy", "rqFDate"].forEach(id => $(id).addEventListener("change", () => renderList()));
+  $("rqFReset").addEventListener("click", () => { ["rqQ", "rqFStatus", "rqFTitle", "rqFBy", "rqFDate"].forEach(id => { $(id).value = ""; }); renderList(); });
+  $("rqSelAll").addEventListener("change", e => { visible().forEach(r => { e.target.checked ? rqPicked.add(r.id) : rqPicked.delete(r.id); }); renderList(); });
+  $("rqBulkDel").addEventListener("click", () => deleteRequests([...rqPicked]));
   function badge(){
     const n = requests.filter(amApprover).length;
     $("rqInboxN").textContent = n ? String(n) : ""; $("rqBadge").textContent = n ? String(n) : ""; $("rqBadge").hidden = !n;
@@ -106,7 +149,10 @@
     badge();
     const ul = $("rqList"); if (!ul) return;
     $("rqSignin").hidden = !!db; $("rqLayout").hidden = !db;
+    fillFilters();
     const list = visible(); ul.innerHTML = "";
+    const all = inTab().length;
+    $("rqCount").textContent = list.length === all ? `${all} طلب` : `${list.length} من ${all}`;
     $("rqEmpty").hidden = list.length > 0;
     $("rqEmpty").textContent = tab === "inbox" ? "لا توجد طلبات بانتظار اعتمادك" : tab === "mine" ? "لم ترفع أي طلب بعد" : "لا توجد طلبات";
     list.forEach(r => {
@@ -118,10 +164,17 @@
       li.querySelector(".rq-chip").textContent = st;
       li.querySelector(".rq-sub span").textContent = `${r.submitterName || r.submittedBy}${r.assoc ? " · " + r.assoc : ""}${r.ref ? " · " + r.ref : ""}`;
       li.querySelector(".rq-when").textContent = fmt(r.updatedAt);
+      if (isAdmin()){
+        const cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "rq-pick"; cb.setAttribute("aria-label", "تحديد الطلب"); cb.checked = rqPicked.has(r.id);
+        cb.addEventListener("click", e => e.stopPropagation());
+        cb.addEventListener("change", () => { cb.checked ? rqPicked.add(r.id) : rqPicked.delete(r.id); li.classList.toggle("picked", cb.checked); syncRqBulk(list); });
+        li.querySelector(".rq-top").prepend(cb); li.classList.toggle("picked", cb.checked);
+      }
       li.addEventListener("click", () => show(r.id));
       li.addEventListener("keydown", e => { if (e.key === "Enter") show(r.id); });
       ul.append(li);
     });
+    syncRqBulk(list);
     if (current){ const fresh = requests.find(r => r.id === current.id); if (fresh) show(fresh.id, true); else { current = null; $("rqDetail").hidden = true; } }
   }
   function show(id, quiet){
@@ -171,6 +224,7 @@
     add("معاينة كاملة", "ghost", () => HRLetters.preview({ ...HRLetters.finalize(r.letter), ref: r.ref }, { title: r.title, print: r.status === "approved", pdf: r.status === "approved" }));
     if (r.status === "approved") add("طباعة الخطاب", "primary", () => HRLetters.print({ ...HRLetters.finalize(r.letter), ref: r.ref }));
     if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...HRLetters.finalize(r.letter), ref: r.ref }));
+    if (isAdmin()) add("حذف الطلب", "ghost danger-text", () => deleteRequests([r.id]));
     $("rqNoteWrap").hidden = !amApprover(r);
     // preview
     const pv = HRLetters.paper({ ...HRLetters.finalize(r.letter), ref: r.ref });
