@@ -140,15 +140,19 @@
     people.sort((a, b) => (b.role === "admin") - (a.role === "admin") || a.id.localeCompare(b.id));
     people.forEach(p => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td><bdi class="u-mail"></bdi><span class="u-name"></span></td><td><select class="select u-role" aria-label="الدور"><option value="admin">مدير</option><option value="member">مستخدم</option></select></td><td class="u-act"><button class="btn small ghost" type="button">إزالة</button></td>`;
+      tr.innerHTML = `<td><bdi class="u-mail"></bdi><span class="u-name"></span></td><td><select class="select u-role" aria-label="الدور"><option value="admin">مدير</option><option value="member">مستخدم</option></select></td><td class="u-act"><button class="btn small ghost u-reset" type="button" title="يرسل له رابطاً لتعيين كلمة مرور">كلمة المرور</button> <button class="btn small ghost" type="button">إزالة</button></td>`;
+      tr.querySelector(".u-reset").addEventListener("click", async () => {
+        try { await firebase.auth().sendPasswordResetEmail(p.id); UI.toast(`أُرسل رابط تعيين كلمة المرور إلى ${p.id}`); }
+        catch (err){ UI.toast(err && err.code === "auth/user-not-found" ? "ليس له حساب بريد وكلمة مرور؛ يدخل بقوقل أو أضفه بكلمة مرور" : "تعذّر الإرسال", "err"); }
+      });
       tr.querySelector(".u-mail").textContent = p.id;
       tr.querySelector(".u-name").textContent = p.name || "";
       const sel = tr.querySelector("select"); sel.value = p.role === "admin" ? "admin" : "member";
       const me = p.id === myEmail;
-      sel.disabled = me; tr.querySelector("button").disabled = me;
+      sel.disabled = me;
       if (me) tr.querySelector(".u-act").innerHTML = '<span class="muted-text">أنت</span>';
       sel.addEventListener("change", () => db.collection("allowed").doc(p.id).update({ role: sel.value }).catch(err => { console.error(err); uMsg("تعذّر تغيير الدور", "err"); }));
-      const rm = tr.querySelector("button");
+      const rm = [...tr.querySelectorAll("button")].find(b => !b.classList.contains("u-reset"));
       if (rm && !me) rm.addEventListener("click", async () => {
         if (!(await UI.confirm(`إزالة ${p.id}؟ لن يتمكن من فتح الموقع بعدها.`, { ok: "إزالة", danger: true }))) return;
         db.collection("allowed").doc(p.id).delete().catch(err => { console.error(err); uMsg("تعذّرت الإزالة", "err"); });
@@ -161,9 +165,25 @@
     e.preventDefault();
     const email = $("uEmail").value.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ uMsg("اكتب بريداً صحيحاً", "err"); return; }
+    const pass = $("uPass").value;
+    if (pass && pass.length < 6){ uMsg("كلمة المرور 6 أحرف على الأقل", "err"); return; }
+    let note = "يقدر يسجّل الدخول الآن بحساب قوقل هذا";
     try {
+      if (pass){
+        // a second Firebase app makes the account without signing the admin out
+        const main = firebase.app(), sec = firebase.apps.find(a => a.name === "creator") || firebase.initializeApp(main.options, "creator");
+        try {
+          const cred = await sec.auth().createUserWithEmailAndPassword(email, pass);
+          await cred.user.sendEmailVerification();
+          note = "أُنشئ حسابه وأُرسل له رابط تفعيل على بريده. بعد التفعيل يدخل بالبريد وكلمة المرور";
+        } catch (err){
+          if (err && err.code === "auth/email-already-in-use") note = "له حساب دخول من قبل؛ أُضيفت صلاحيته فقط";
+          else if (err && err.code === "auth/operation-not-allowed"){ uMsg("فعّل الدخول بالبريد وكلمة المرور في Firebase أولاً (Authentication ← Sign-in method ← Email/Password)", "err"); return; }
+          else throw err;
+        } finally { await sec.auth().signOut().catch(() => {}); }
+      }
       await db.collection("allowed").doc(email).set({ name: $("uName").value.trim(), role: $("uRole").value, addedAt: new Date().toISOString(), addedBy: myEmail });
-      $("uEmail").value = ""; $("uName").value = ""; uMsg("أُضيف. يقدر يسجّل الدخول الآن بحساب قوقل هذا", "ok");
+      $("uEmail").value = ""; $("uName").value = ""; $("uPass").value = ""; uMsg("أُضيف. " + note, "ok");
     } catch (err){ console.error(err); uMsg(err && err.code === "permission-denied" ? "تحتاج صلاحية مدير لإضافة أشخاص" : "تعذّرت الإضافة", "err"); }
   }
   function watchPeople(){

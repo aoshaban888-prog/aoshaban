@@ -58,6 +58,7 @@
   }
   function cache(s){ try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {} }
   let cached = null; try { cached = JSON.parse(localStorage.getItem(KEY) || "null"); } catch {}
+  if (/^https?:/.test(location.protocol)) document.documentElement.classList.add("gate-wait");
   window.SiteSettings = { DEFAULTS, FONTS, RADIUS, merge, apply, cache, loadFont: n => { if (FONTS[n]) loadFont(n); } };
   apply(cached);
 })();

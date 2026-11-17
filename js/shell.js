@@ -70,6 +70,12 @@
   document.addEventListener("click", e => { if (!acct.contains(e.target)) setMenu(false); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") setMenu(false); });
   acctMenu.addEventListener("click", e => { if (e.target.closest("a")) setMenu(false); });
+  document.getElementById("acctPass").addEventListener("click", async () => {
+    const u = window.appAuth && window.appAuth.user; if (!u || !window.firebase) return;
+    if (!u.providerData.some(p => p.providerId === "password")){ UI.alert("تدخل بحساب قوقل، فكلمة المرور تُدار من حساب قوقل نفسه"); return; }
+    try { await firebase.auth().sendPasswordResetEmail(u.email); UI.toast("أرسلنا رابط تغيير كلمة المرور إلى بريدك"); } catch (e){ UI.toast("تعذّر الإرسال", "err"); }
+    setMenu(false);
+  });
   document.getElementById("acctOut").addEventListener("click", () => {
     const a = window.appAuth; if (a && a.signOut) a.signOut(); else location.reload();
   });
