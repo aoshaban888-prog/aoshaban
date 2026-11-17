@@ -351,10 +351,12 @@ ${HELLO}
     const defs = defaultsOf(t.body);
     const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"], ...(values[f + "#s"] != null ? [[f + "#s", values[f + "#s"]]] : [])] : [[f, values[f] ?? defs[f] ?? (f === CLOSING ? CLOSINGS[0] : "")]]));
     return { ref: editingLetter && editingLetter.kind !== "request" ? editingLetter.ref : undefined, title: t.title, body: t.body, html: !!t.html, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
-             fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim(), showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked };
+             fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim(), showSig: !pendSign() && $("hrShowSig").checked, showStamp: !pendSign() && $("hrShowStamp").checked };
   }
   const vals = L => ({ ...L.fields, [ASSOC_FIELD]: L.assoc, "صفة المعتمد": L.signRole, "اسم المعتمد": L.signName });
   function headParts(head){ return { hdr: head ? head.hdr || "" : "", ftr: head ? head.ftr || "" : "" }; }
+  // users who can only submit: no signer, signature or stamp anywhere until the final approval
+  const pendSign = () => !P.issue && !P.admin;
   const PENDING_SIGN = '<div class="lt-pend">الاعتماد والتوقيع والختم تظهر بعد الاعتماد النهائي</div>';
   function renderPaper(force){
     const paper = $("hrPaper"), t = curTpl(), head = curHead(), L = draft();
@@ -368,7 +370,7 @@ ${HELLO}
     }
     const keep = force === "head" || force === "sign" ? grab() : null;
     // users who can only submit see no signer, signature or stamp until the final approval
-    const pend = !P.issue && !P.admin;
+    const pend = pendSign();
     const sw = pend ? { showSig: false, showStamp: false } : { showSig: L.showSig, showStamp: L.showStamp };
     const signHtml = pend ? PENDING_SIGN : genSign(L, sw);
     if (keep && (force === "sign" || pend)) keep.sign = signHtml;
@@ -380,7 +382,7 @@ ${HELLO}
   }
   function grab(){
     const p = $("hrPaper"), g = sel => { const el = p.querySelector(sel); return el ? clean(el.innerHTML) : ""; };
-    return { title: g(".lt-title"), body: g(".lt-body"), sign: g(".lt-sign"), hdr: g(".lt-hdr"), ftr: g(".lt-ftr"), showHdr, showFtr, showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked, sealPos: sealNow(), sealSize: sealSizeNow() };
+    return { title: g(".lt-title"), body: g(".lt-body"), sign: g(".lt-sign"), hdr: g(".lt-hdr"), ftr: g(".lt-ftr"), showHdr, showFtr, showSig: !pendSign() && $("hrShowSig").checked, showStamp: !pendSign() && $("hrShowStamp").checked, sealPos: sealNow(), sealSize: sealSizeNow() };
   }
   function sealNow(){
     const p = $("hrPaper"), box = k => p.querySelector(`.lt-sb[data-k="${k}"]`);
