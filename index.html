@@ -280,9 +280,64 @@
     </main>
   </div>
     </section>
-    <section class="view" data-view="governance/hr" hidden>
-      <header class="page-h"><div><p class="crumb">الحوكمة</p><h1>الموارد البشرية</h1></div></header>
-      <div class="empty-state"><h2>يُبنى قريباً</h2><p>هذا القسم جاهز في القائمة، ومحتواه يُضاف في الخطوة القادمة</p></div>
+    <section class="view hr" data-view="governance/hr" hidden>
+      <header class="page-h">
+        <div><p class="crumb">الحوكمة · الموارد البشرية</p><h1>الخطابات</h1></div>
+        <div class="actions"><div class="seg-tabs" role="tablist" aria-label="الخطابات">
+          <button type="button" role="tab" data-hrtab="new" aria-selected="true">خطاب جديد</button>
+          <button type="button" role="tab" data-hrtab="log" aria-selected="false">السجل</button>
+          <button type="button" role="tab" data-hrtab="tpl" aria-selected="false">القوالب</button>
+        </div></div>
+      </header>
+      <p class="muted-text s-signin" id="hrSignin">سجّل الدخول لحفظ الخطابات وترقيمها. تقدر تعاين وتطبع قبل تسجيل الدخول</p>
+
+      <div class="hr-new" id="hrNew">
+        <section class="card hr-form" aria-label="بيانات الخطاب">
+          <div class="s-row"><label for="hrTpl">نوع الخطاب</label><select class="select" id="hrTpl"></select></div>
+          <div class="s-row"><label for="hrAssoc">الجمعية</label><input class="input" id="hrAssoc" list="hrAssocList" autocomplete="off"><datalist id="hrAssocList"></datalist></div>
+          <div class="s-row"><label for="hrDate">تاريخ الخطاب</label><input class="input" id="hrDate" type="date"></div>
+          <div class="hr-sep">بيانات الخطاب</div>
+          <div id="hrFields"></div>
+          <details class="hr-sign">
+            <summary>الاعتماد والتوقيع</summary>
+            <div class="s-row"><label for="hrSignRole">صفة المعتمد</label><input class="input" id="hrSignRole" placeholder="مثال: المدير التنفيذي"></div>
+            <div class="s-row"><label for="hrSignName">اسم المعتمد</label><input class="input" id="hrSignName"></div>
+            <p class="muted-text">تُحفظ في هذا المتصفح وتظهر في كل خطاب</p>
+          </details>
+          <div class="hr-actions">
+            <button class="btn primary" type="button" id="hrSave">حفظ وطباعة</button>
+            <button class="btn" type="button" id="hrPrint">طباعة بدون حفظ</button>
+            <button class="btn small ghost" type="button" id="hrClear">تفريغ الخانات</button>
+          </div>
+          <p class="s-msg" id="hrMsg" role="status"></p>
+          <p class="muted-text">للحفظ كملف PDF اختر «حفظ بتنسيق PDF» في نافذة الطباعة</p>
+        </section>
+        <div class="hr-paper-wrap"><article class="hr-paper" id="hrPaper" aria-label="معاينة الخطاب"></article></div>
+      </div>
+
+      <section class="card" id="hrLog" hidden aria-label="سجل الخطابات">
+        <div class="card-h"><h2>الخطابات الصادرة</h2><input class="input hr-q" id="hrLogQ" type="search" placeholder="بحث" aria-label="بحث في السجل"></div>
+        <div class="table-wrap"><table class="u-table hr-table"><thead><tr><th>الرقم</th><th>التاريخ</th><th>الخطاب</th><th>الموظف</th><th>الجمعية</th><th></th></tr></thead><tbody id="hrLogList"></tbody></table></div>
+        <p class="muted-text" id="hrLogEmpty">لم يصدر أي خطاب بعد</p>
+      </section>
+
+      <div id="hrTpls" hidden>
+        <section class="card">
+          <div class="card-h"><h2>قوالب الخطابات</h2><button class="btn small" type="button" id="hrNewTpl">قالب جديد</button></div>
+          <ul class="hr-tpls" id="hrTplList"></ul>
+        </section>
+        <section class="card hr-editor" id="hrEditor" hidden>
+          <div class="card-h"><h2 id="hrEdHead">قالب جديد</h2></div>
+          <form id="hrEdForm">
+            <div class="s-row"><label for="hrEdTitle">عنوان الخطاب</label><input class="input" id="hrEdTitle" required maxlength="80"></div>
+            <div class="s-row"><label for="hrEdCat">التصنيف</label><select class="select" id="hrEdCat"></select></div>
+            <label class="lbl" for="hrEdBody">نص الخطاب</label>
+            <textarea class="input hr-ed-body" id="hrEdBody" rows="16" required></textarea>
+            <p class="muted-text">اكتب الخانات بين قوسين مزدوجين، مثل <bdi>{{اسم الموظف}}</bdi> أو <bdi>{{تاريخ التعيين}}</bdi>، فتظهر خانةً في النموذج. الخانة التي فيها كلمة «تاريخ» تصير تقويماً، و«راتب» أو «بدل» تصير رقماً. <bdi>{{اسم الجمعية}}</bdi> و<bdi>{{صفة المعتمد}}</bdi> تُعبّأ تلقائياً. اترك سطراً فارغاً بين الفقرات</p>
+            <div class="hr-actions"><button class="btn primary" type="submit">حفظ القالب</button><button class="btn" type="button" id="hrEdCancel">إلغاء</button></div>
+          </form>
+        </section>
+      </div>
     </section>
     <section class="view admin" data-view="admin" hidden>
       <header class="page-h">
@@ -372,6 +427,7 @@
   </div>
 </div>
 
+<div id="hrPrintArea" aria-hidden="true"></div>
 <div class="fp-fly" id="fpFly" role="menu" hidden></div>
 <div id="docxStyles"></div>
 <div id="stage" aria-hidden="true"></div>
@@ -610,6 +666,7 @@
 <script src="js/home.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/fonts.js"></script>
+<script src="js/hr.js"></script>
 <script src="js/shell.js"></script>
 </body>
 </html>

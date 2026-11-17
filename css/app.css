@@ -247,6 +247,54 @@ bdi{unicode-bidi:isolate}
   .u-add{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }
 
+/* ---------- الموارد البشرية ← الخطابات ---------- */
+.seg-tabs{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.seg-tabs button{border:0;background:none;height:32px;padding:0 14px;border-radius:var(--r-sm);font-size:14px;color:var(--ink-2);cursor:pointer}
+.seg-tabs button:hover{color:var(--ink)}
+.seg-tabs button[aria-selected="true"]{background:var(--grad);color:#fff}
+.hr-new{display:grid;grid-template-columns:minmax(320px,400px) minmax(0,1fr);gap:20px;align-items:start}
+.hr-form .s-row{grid-template-columns:120px minmax(0,1fr)}
+.hr-form textarea.input{min-height:0;resize:vertical}
+.hr-sep{font-size:13px;color:var(--muted);margin:20px 0 12px;padding-top:16px;border-top:1px solid var(--line-soft)}
+.hr-sign{margin:8px 0 16px;border-top:1px solid var(--line-soft);padding-top:12px}
+.hr-sign summary{cursor:pointer;font-size:14px;color:var(--ink-2);margin-bottom:12px}
+.hr-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
+.hr-paper-wrap{background:var(--desk);border-radius:var(--r-card);padding:24px;overflow:auto;position:sticky;top:16px}
+.hr-paper{width:100%;max-width:794px;aspect-ratio:210/297;margin-inline:auto;background:#fff;color:#111;box-shadow:0 1px 3px rgba(0,0,0,.12),0 8px 24px rgba(0,0,0,.08);padding:7% 8%;font-family:var(--font-ui);font-size:14px;line-height:1.9;display:flex;flex-direction:column;overflow:hidden}
+.lt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-bottom:12px;border-bottom:1px solid #d6d6d6;margin-bottom:24px}
+.lt-org{font-size:17px;font-weight:600;line-height:1.5}
+.lt-meta{margin:0;font-size:13px;display:grid;gap:2px}
+.lt-meta div{display:flex;gap:8px}
+.lt-meta dt{color:#666;min-width:52px}
+.lt-meta dd{margin:0}
+.lt-title{font-size:18px;font-weight:600;text-align:center;margin:0 0 24px}
+.lt-body p{margin:0 0 12px;text-align:justify;white-space:pre-wrap}
+.lt-v{font-weight:600}
+.lt-blank{color:#a0a0a0;border-bottom:1px dotted #a0a0a0;padding:0 4px}
+.lt-sign{margin-top:auto;align-self:flex-end;text-align:center;min-width:220px;padding-top:32px;line-height:1.8}
+.lt-role{font-weight:600}
+.lt-line{margin-top:16px;color:#444}
+.lt-stamp{margin-top:8px;color:#999;font-size:12px}
+.lt-empty{color:#999;text-align:center;margin:auto}
+.hr-q{max-width:240px;margin-inline-start:auto;height:36px}
+.table-wrap{overflow-x:auto}
+.hr-table td:first-child{white-space:nowrap}
+.hr-table .u-act{width:auto;white-space:nowrap}
+.hr-tpls{list-style:none;margin:0;padding:0}
+.hr-tpls li{display:flex;align-items:center;gap:8px;min-height:52px;border-top:1px solid var(--line-soft)}
+.hr-tpls li:first-child{border-top:0}
+.hr-editor{margin-top:20px}
+.hr-ed-body{width:100%;font-family:var(--font-ui);line-height:1.9;margin:8px 0}
+#hrPrintArea{display:none}
+@media (max-width:1100px){.hr-new{grid-template-columns:minmax(0,1fr)}.hr-paper-wrap{position:static;padding:12px}}
+@media print{
+  @page{size:A4;margin:0}
+  body.printing-hr > *:not(#hrPrintArea){display:none!important}
+  body.printing-hr{background:#fff!important}
+  body.printing-hr #hrPrintArea{display:block}
+  #hrPrintArea .hr-paper{box-shadow:none;max-width:none;width:210mm;height:297mm;aspect-ratio:auto;padding:22mm 20mm}
+}
+
 /* ---------- the violet gradient: selection, primary action, next prayer (all themes) ---------- */
 .nav a[aria-current="page"]{background:var(--grad);color:#fff;box-shadow:var(--glow)}
 .nav a[aria-current="page"] svg{color:#fff}
