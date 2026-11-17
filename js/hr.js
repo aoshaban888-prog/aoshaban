@@ -292,12 +292,20 @@ ${HELLO}
     const w = measureCtx.measureText(text).width, avail = widthMm * 96 / 25.4 * 0.96;
     return w > avail ? Math.max(6, Math.floor(base * avail / w * 10) / 10) : base;
   }
+  // three centred lines: the recipient (bold), the number, then the day and date; each stays on one line,
+  // and the number and date lines always share one size so the block looks even
   function frameHtml(L, fr){
     const d = parseDay(L.date), f = L.fields || {};
     const name = (f[RECIP] || "").trim();
-    const size = name && fr ? fitSize(name, fr.fontSize, fr.w - 2 * fr.padSide) : null;
+    const ref = L.ref || "يُعطى عند الحفظ";
+    const line2 = `الرقم: ${ref}`, line3 = `${weekday(d)} ${greg(d)} م`;
+    const base = fr ? fr.fontSize : 12, room = fr ? fr.w - 2 * fr.padSide : 60;
+    const nameSize = name ? fitSize(name, base + 1, room) : base;
+    const small = Math.min(fitSize(line2, base, room), fitSize(line3, base, room));
     const to = name ? esc(name) : `<span class="lt-blank">${esc(RECIP)}</span>`;
-    return `<div class="lt-m lt-fto"${size ? ` style="font-size:${size}px"` : ""}>${to}</div><div class="lt-m"><span>الرقم:</span> <bdi>${esc(L.ref || "يُعطى عند الحفظ")}</bdi></div><div class="lt-m">${weekday(d)} ${greg(d)} م</div>`;
+    return `<div class="lt-m lt-fto" style="font-size:${nameSize}px">${to}</div>` +
+      `<div class="lt-m lt-fl" style="font-size:${small}px"><span>الرقم:</span> <bdi>${esc(ref)}</bdi></div>` +
+      `<div class="lt-m lt-fl" style="font-size:${small}px">${esc(line3)}</div>`;
   }
   /* the whole A4 page; parts = { title, body, sign, hdr, ftr } (HTML), editable puts contenteditable on them */
   function paperInner(L, head, parts, editable){
