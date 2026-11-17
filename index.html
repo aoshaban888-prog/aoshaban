@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
+<script>try{var t=localStorage.getItem("app-theme")||localStorage.getItem("assoc-policies-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="css/library.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
@@ -24,10 +25,13 @@
     </nav>
     <div class="side-foot">
       <div class="store-note" id="storeNote"><span class="dot"></span><span>جارٍ الاتصال بالمكتبة…</span></div>
-      <div class="side-row"><span class="muted">المظهر</span><button class="theme-btn" id="themeBtn" type="button" aria-label="تبديل الخلفية بين الفاتحة والداكنة" title="خلفية فاتحة أو داكنة">
-        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
-        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
-      </button></div>
+      <div class="side-row"><span class="muted">المظهر</span>
+        <div class="theme-pick" role="radiogroup" aria-label="المظهر">
+          <button type="button" role="radio" data-theme-set="light">فاتح</button>
+          <button type="button" role="radio" data-theme-set="dark">داكن</button>
+          <button type="button" role="radio" data-theme-set="neon">نيون</button>
+        </div>
+      </div>
     </div>
   </aside>
   <div class="scrim"></div>

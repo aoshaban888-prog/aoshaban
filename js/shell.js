@@ -29,4 +29,19 @@
   document.querySelector(".scrim").addEventListener("click", () => app.classList.remove("nav-open"));
   document.addEventListener("keydown", e => { if (e.key === "Escape") app.classList.remove("nav-open"); });
   route();
+
+  /* theme: light, dark or neon; with nothing chosen the page follows the system */
+  const root = document.documentElement;
+  const sysTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  function paintPick(){
+    const cur = root.getAttribute("data-theme") || sysTheme();
+    document.querySelectorAll("[data-theme-set]").forEach(b => b.setAttribute("aria-checked", b.dataset.themeSet === cur ? "true" : "false"));
+  }
+  document.querySelectorAll("[data-theme-set]").forEach(b => b.addEventListener("click", () => {
+    root.setAttribute("data-theme", b.dataset.themeSet);
+    try { localStorage.setItem("app-theme", b.dataset.themeSet); } catch {}
+    paintPick();
+  }));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paintPick);
+  paintPick();
 })();

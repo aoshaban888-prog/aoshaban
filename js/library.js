@@ -170,18 +170,7 @@ function syncEmbedOption(){
 syncEmbedOption();
 $("font").addEventListener("change", () => { try { localStorage.setItem("assoc-policies-font2", $("font").value); } catch {} syncEmbedOption(); });
 
-/* theme toggle */
-(function theme(){
-  const root = document.documentElement;
-  let saved = null; try { saved = localStorage.getItem("assoc-policies-theme"); } catch {}
-  if (saved === "dark" || saved === "light") root.setAttribute("data-theme", saved);
-  $("themeBtn").addEventListener("click", () => {
-    const cur = root.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    const next = cur === "dark" ? "light" : "dark";
-    root.setAttribute("data-theme", next);
-    try { localStorage.setItem("assoc-policies-theme", next); } catch {}
-  });
-})();
+/* theme: handled by js/shell.js (light / dark / neon) */
 
 const state = {
   policies: [], selectedId: null, dirty: false,
