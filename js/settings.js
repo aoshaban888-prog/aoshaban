@@ -37,7 +37,8 @@
   /* ---------- form ---------- */
   function fill(){
     const s = draft;
-    $("sName").value = s.siteName; $("sShowName").checked = s.showName;
+    if (document.activeElement !== $("sName")) $("sName").value = s.siteName;
+    $("sShowName").checked = s.showName;
     $("sLogoSize").value = s.logoSize; $("sLogoSizeV").textContent = s.logoSize + "px";
     showLogo("sLogoPrev", s.logo); showLogo("sLogoDarkPrev", s.logoDark);
     $("sA1").value = s.a1; $("sA2").value = s.a2;
@@ -73,7 +74,7 @@
       $("sPresets").append(b);
     });
     Object.keys(S.FONTS).forEach(f => $("sFont").append(new Option(f, f)));
-    $("sName").addEventListener("input", e => change({ siteName: e.target.value.trim() || S.DEFAULTS.siteName }));
+    $("sName").addEventListener("input", e => change({ siteName: e.target.value.trim() ? e.target.value : S.DEFAULTS.siteName }));
     $("sShowName").addEventListener("change", e => change({ showName: e.target.checked }));
     $("sLogoSize").addEventListener("input", e => change({ logoSize: +e.target.value }));
     $("sA1").addEventListener("input", e => change({ a1: e.target.value }));
@@ -125,6 +126,7 @@
     if (!db) return;
     const btn = $("sSave"); btn.disabled = true; setMsg("جارٍ الحفظ…");
     try {
+      draft = S.merge({ ...draft, siteName: draft.siteName.trim() || S.DEFAULTS.siteName });
       await db.collection("settings").doc("site").set({ ...draft, updatedAt: new Date().toISOString(), updatedBy: myEmail });
       saved = S.merge(draft); dirty = false; S.cache(saved); setMsg("حُفظت الإعدادات وطُبّقت على الموقع", "ok");
     } catch (e){ console.error(e); setMsg(e && e.code === "permission-denied" ? "لا تملك صلاحية حفظ الإعدادات" : "تعذّر الحفظ. حاول مرة أخرى", "err"); }
