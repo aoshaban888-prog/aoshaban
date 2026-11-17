@@ -190,7 +190,8 @@ ${HELLO}
   const fmtDateField = s => { const d = new Date(s + "T12:00:00"); return isNaN(d) ? s : `${hijri(d)} هـ الموافق ${greg(d)} م`; };
 
   /* ---------- fields ---------- */
-  const splitField = raw => { const i = raw.indexOf("|"); return i < 0 ? { name: raw.trim(), def: null } : { name: raw.slice(0, i).trim(), def: raw.slice(i + 1).trim() }; };
+  const unmark = raw => raw.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  const splitField = r => { const raw = unmark(r); const i = raw.indexOf("|"); return i < 0 ? { name: raw.trim(), def: null } : { name: raw.slice(0, i).trim(), def: raw.slice(i + 1).trim() }; };
   function fieldsOf(body){ const out = []; for (const m of (body || "").matchAll(FIELD_RX)){ const f = splitField(m[1]).name; if (!AUTO.has(f) && !out.includes(f)) out.push(f); } return out; }
   function defaultsOf(body){ const d = {}; for (const m of (body || "").matchAll(FIELD_RX)){ const { name, def } = splitField(m[1]); if (def != null && !(name in d)) d[name] = def; } return d; }
   const kind = f => f === RECIP ? "recip" : f === CLOSING ? "closing" : /إنجازات|قائمة|بنود|نقاط/.test(f) ? "list" : /تاريخ/.test(f) ? "date" : /راتب|بدل|مبلغ|البدلات|تكلفة|عدد|إجمالي/.test(f) ? "number" : /وصف|سبب|موضوع|هدف|رسالة/.test(f) ? "long" : "text";
@@ -229,15 +230,24 @@ ${HELLO}
       if (el.outerHTML !== html){ const t = document.createElement("template"); t.innerHTML = html; el.replaceWith(t.content); }
     });
   }
-  function genBody(body, vals){
-    const fill = text => esc(text).replace(FIELD_RX, (_, f) => fieldHtml(f.replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">"), vals));
-    const cls = p => { const t = p.trim();
-      if (new RegExp(`^\\{\\{\\s*${RECIP}\\s*(\\|[^}]*)?\\}\\}$`).test(t)) return ' class="lt-recip"';
-      if (new RegExp(`^\\{\\{\\s*${CLOSING}\\s*(\\|[^}]*)?\\}\\}$`).test(t)) return ' class="lt-close"';
-      if (/^السلام عليكم ورحمة الله وبركاته/.test(t)) return ' class="lt-hello"';
-      return ""; };
-    return (body || "").split(/\n\s*\n/).map(p => `<p${cls(p)}>${fill(p).replace(/\n/g, "<br>")}</p>`).join("");
+  // recipient, greeting and closing paragraphs get their own look (bold; the closing centred)
+  function clsOf(text){
+    const t = text.trim();
+    if (new RegExp(`^\\{\\{\\s*${RECIP}\\s*(\\|[^}]*)?\\}\\}$`).test(t)) return "lt-recip";
+    if (new RegExp(`^\\{\\{\\s*${CLOSING}\\s*(\\|[^}]*)?\\}\\}$`, "s").test(t)) return "lt-close";
+    if (/^السلام عليكم ورحمة الله وبركاته/.test(t)) return "lt-hello";
+    return "";
   }
+  function genBody(body, vals, isHtml){
+    if (isHtml){
+      const tpl = document.createElement("template"); tpl.innerHTML = clean(body);
+      tpl.content.querySelectorAll("p,div,h3,h4").forEach(p => { const c = clsOf(p.textContent); if (c) p.classList.add(c); });
+      return tpl.innerHTML.replace(FIELD_RX, (_, f) => fieldHtml(f, vals));
+    }
+    const fill = text => esc(text).replace(FIELD_RX, (_, f) => fieldHtml(f, vals));
+    return (body || "").split(/\n\s*\n/).map(p => { const c = clsOf(p); return `<p${c ? ` class="${c}"` : ""}>${fill(p).replace(/\n/g, "<br>")}</p>`; }).join("");
+  }
+  const plainToHtml = text => (text || "").split(/\n\s*\n/).map(p => `<p>${esc(p).replace(/\n/g, "<br>")}</p>`).join("") || "<p><br></p>";
   const sealOn = p => ({ sig: !!(p.showSig !== false && seal.sig), stamp: !!(p.showStamp !== false && seal.stamp) });
   const genSign = (L, p = {}) => { const o = sealOn(p);
     return `<div class="lt-role">${esc(L.signRole || "")}</div><div class="lt-name">${esc(L.signName || "")}</div>` +
@@ -327,8 +337,8 @@ ${HELLO}
   function draft(){
     const t = curTpl() || { title: "", body: "" };
     const defs = defaultsOf(t.body);
-    const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"], ...(values[f + "#s"] != null ? [[f + "#s", values[f + "#s"]]] : [])] : [[f, values[f] ?? defs[f] ?? ""]]));
-    return { title: t.title, body: t.body, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
+    const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"], ...(values[f + "#s"] != null ? [[f + "#s", values[f + "#s"]]] : [])] : [[f, values[f] ?? defs[f] ?? (f === CLOSING ? CLOSINGS[0] : "")]]));
+    return { title: t.title, body: t.body, html: !!t.html, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
              fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim(), showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked };
   }
   const vals = L => ({ ...L.fields, [ASSOC_FIELD]: L.assoc, "صفة المعتمد": L.signRole, "اسم المعتمد": L.signName });
@@ -347,7 +357,7 @@ ${HELLO}
     const sw = { showSig: L.showSig, showStamp: L.showStamp };
     if (keep && force === "sign") keep.sign = genSign(L, sw);
     const parts = keep ? { ...keep, ...headParts(head), showHdr, showFtr, ...sw, sealPos: null, sealSize: null } :
-      { title: esc(t.title), body: genBody(t.body, vals(L)), sign: genSign(L, sw), ...headParts(head), showHdr, showFtr, ...sw };
+      { title: esc(t.title), body: genBody(t.body, vals(L), !!t.html), sign: genSign(L, sw), ...headParts(head), showHdr, showFtr, ...sw };
     paper.setAttribute("style", paperStyle(head));
     paper.innerHTML = paperInner(L, head, parts, true);
     fit(); placeSeal(paper);
@@ -432,9 +442,11 @@ ${HELLO}
   }
   function msg(t, k){ $("hrMsg").textContent = t || ""; $("hrMsg").className = "s-msg" + (k ? " " + k : ""); }
 
-  /* ---------- toolbar (works on whatever editable part of the paper has the caret) ---------- */
+  /* ---------- toolbars: one over the letter, one in the template editor; each works on the editable area with the caret ---------- */
   let range = null;
-  const inPaper = n => n && $("hrPaper").contains(n.nodeType === 1 ? n : n.parentNode) && (n.nodeType === 1 ? n : n.parentNode).closest("[contenteditable=true]");
+  const EDIT_ROOTS = () => [$("hrPaper"), $("hrEdBody")].filter(Boolean);
+  const elOf = n => n && (n.nodeType === 1 ? n : n.parentNode);
+  const inPaper = n => { const el = elOf(n); return !!el && EDIT_ROOTS().some(r => r.contains(el)) && !!el.closest("[contenteditable=true]"); };
   document.addEventListener("selectionchange", () => {
     const s = getSelection(); if (s.rangeCount && inPaper(s.anchorNode)){ range = s.getRangeAt(0).cloneRange(); syncTools(); }
   });
@@ -447,77 +459,90 @@ ${HELLO}
   }
   function afterEdit(){
     const s = getSelection(); if (s.rangeCount && inPaper(s.anchorNode)) range = s.getRangeAt(0).cloneRange();
-    if (!manual) setManual(true);
+    if (range && $("hrPaper").contains(range.startContainer) && !manual) setManual(true);
     syncTools();
   }
   function setSize(px){
     if (!restore()) return;
     document.execCommand("styleWithCSS", false, false);
     document.execCommand("fontSize", false, "7");
-    $("hrPaper").querySelectorAll('font[size="7"]').forEach(f => { const s = document.createElement("span"); s.style.fontSize = px + "px"; s.innerHTML = f.innerHTML; f.replaceWith(s); });
+    EDIT_ROOTS().forEach(r => r.querySelectorAll('font[size="7"]').forEach(f => { const s = document.createElement("span"); s.style.fontSize = px + "px"; s.innerHTML = f.innerHTML; f.replaceWith(s); }));
     afterEdit();
   }
-  function cellNow(){ const s = getSelection(); const n = s.rangeCount ? s.anchorNode : null; return n && inPaper(n) ? (n.nodeType === 1 ? n : n.parentNode).closest("td,th") : null; }
+  function cellNow(){ const s = getSelection(); const n = s.rangeCount ? s.anchorNode : null; return n && inPaper(n) ? elOf(n).closest("td,th") : null; }
   function syncTools(){
     const td = cellNow();
-    document.querySelectorAll("#hrTools [data-tbl]").forEach(b => { b.disabled = !td; });
+    document.querySelectorAll(".hr-tools [data-tbl]").forEach(b => { b.disabled = !td; });
     ["bold", "italic", "underline", "strikeThrough", "justifyRight", "justifyCenter", "justifyLeft", "justifyFull", "insertUnorderedList", "insertOrderedList"].forEach(c => {
-      const b = document.querySelector(`#hrTools [data-cmd="${c}"]`); if (b) { let on = false; try { on = document.queryCommandState(c); } catch {} b.setAttribute("aria-pressed", on ? "true" : "false"); }
+      let on = false; try { on = document.queryCommandState(c); } catch {}
+      document.querySelectorAll(`.hr-tools [data-cmd="${c}"]`).forEach(b => b.setAttribute("aria-pressed", on ? "true" : "false"));
     });
   }
   function fontList(){
     const set = new Set(Object.keys((window.SiteSettings && SiteSettings.FONTS) || {}));
     (window.appFonts || []).forEach(f => set.add(f.group || f.family));
     ["Sakkal Majalla", "Traditional Arabic", "Arial", "Times New Roman"].forEach(f => set.add(f));
-    const sel = $("hrFont"); const keep = sel.value; sel.innerHTML = ""; sel.append(new Option("الخط", ""));
-    [...set].forEach(f => { const o = new Option(f, f); o.style.fontFamily = `"${f}"`; sel.append(o); });
-    sel.value = keep;
+    ["hrFont", "hrEdFont"].forEach(id => {
+      const sel = $(id); if (!sel) return;
+      const keep = sel.value; sel.innerHTML = ""; sel.append(new Option("الخط", ""));
+      [...set].forEach(f => { const o = new Option(f, f); o.style.fontFamily = `"${f}"`; sel.append(o); });
+      sel.value = keep;
+    });
   }
   window.addEventListener("app:fonts", fontList);
-  document.querySelectorAll("#hrTools button[data-cmd]").forEach(b => {
-    b.addEventListener("mousedown", e => e.preventDefault());
-    b.addEventListener("click", () => exec(b.dataset.cmd, b.dataset.val));
-  });
-  $("hrFont").addEventListener("change", e => { const f = e.target.value; if (!f) return; if (window.SiteSettings) SiteSettings.loadFont(f); exec("fontName", f); e.target.value = ""; });
-  $("hrSize").addEventListener("change", e => { const v = +e.target.value; if (v) setSize(v); e.target.value = ""; });
-  $("hrBlock").addEventListener("change", e => { const v = e.target.value; if (v) exec("formatBlock", v); e.target.value = ""; });
-  $("hrColor").addEventListener("input", e => exec("foreColor", e.target.value));
-  $("hrHilite").addEventListener("input", e => exec("hiliteColor", e.target.value));
-  // table: pick a size from a grid
-  const grid = $("hrTblGrid");
-  for (let r = 1; r <= 8; r++) for (let c = 1; c <= 8; c++){ const i = document.createElement("i"); i.dataset.r = r; i.dataset.c = c; grid.append(i); }
-  grid.addEventListener("mouseover", e => {
-    const i = e.target.closest("i"); if (!i) return;
-    grid.querySelectorAll("i").forEach(x => x.classList.toggle("on", +x.dataset.r <= +i.dataset.r && +x.dataset.c <= +i.dataset.c));
-    $("hrTblSize").textContent = `${i.dataset.c} × ${i.dataset.r}`;
-  });
-  grid.addEventListener("mousedown", e => e.preventDefault());
-  grid.addEventListener("click", e => {
-    const i = e.target.closest("i"); if (!i) return;
-    const r = +i.dataset.r, c = +i.dataset.c;
-    const row = `<tr>${"<td><br></td>".repeat(c)}</tr>`;
-    exec("insertHTML", `<table class="lt-table"><tbody>${row.repeat(r)}</tbody></table><p><br></p>`);
-    $("hrTblPop").hidden = true;
-  });
-  $("hrTblBtn").addEventListener("mousedown", e => e.preventDefault());
-  $("hrTblBtn").addEventListener("click", () => { $("hrTblPop").hidden = !$("hrTblPop").hidden; });
-  document.addEventListener("click", e => { if (!e.target.closest("#hrTblPop,#hrTblBtn")) $("hrTblPop").hidden = true; });
-  document.querySelectorAll("#hrTools [data-tbl]").forEach(b => {
-    b.addEventListener("mousedown", e => e.preventDefault());
-    b.addEventListener("click", () => {
-      const td = cellNow(); if (!td) return;
-      const tr = td.parentNode, table = td.closest("table"), ci = [...tr.children].indexOf(td);
-      const a = b.dataset.tbl;
-      if (a === "row"){ const n = tr.cloneNode(true); n.querySelectorAll("td,th").forEach(x => { x.innerHTML = "<br>"; }); tr.after(n); }
-      if (a === "col") table.querySelectorAll("tr").forEach(r => { const x = document.createElement("td"); x.innerHTML = "<br>"; (r.children[ci] || r.lastChild).after(x); });
-      if (a === "delrow"){ if (table.rows.length > 1) tr.remove(); else table.remove(); }
-      if (a === "delcol"){ if (tr.children.length > 1) table.querySelectorAll("tr").forEach(r => r.children[ci] && r.children[ci].remove()); else table.remove(); }
-      if (a === "del") table.remove();
-      if (a === "up"){ const prev = table.previousElementSibling; if (prev) prev.before(table); }
-      if (a === "down"){ const next = table.nextElementSibling; if (next) next.after(table); }
-      afterEdit();
+  // the template editor gets a copy of the letter toolbar, without the header and footer buttons
+  (function copyToolbar(){
+    const src = $("hrTools"), host = $("hrEdTools"); if (!src || !host) return;
+    host.innerHTML = src.innerHTML.replace(/id="hr/g, 'id="hrEd');
+    host.querySelectorAll("#hrEdHdrBtn,#hrEdFtrBtn").forEach(b => b.remove());
+  })();
+  function bindToolbar(P){
+    const T = $(P + "Tools"); if (!T) return;
+    T.querySelectorAll("button[data-cmd]").forEach(b => {
+      b.addEventListener("mousedown", e => e.preventDefault());
+      b.addEventListener("click", () => exec(b.dataset.cmd, b.dataset.val));
     });
-  });
+    $(P + "Font").addEventListener("change", e => { const f = e.target.value; if (!f) return; if (window.SiteSettings) SiteSettings.loadFont(f); exec("fontName", f); e.target.value = ""; });
+    $(P + "Size").addEventListener("change", e => { const v = +e.target.value; if (v) setSize(v); e.target.value = ""; });
+    $(P + "Block").addEventListener("change", e => { const v = e.target.value; if (v) exec("formatBlock", v); e.target.value = ""; });
+    $(P + "Color").addEventListener("input", e => exec("foreColor", e.target.value));
+    $(P + "Hilite").addEventListener("input", e => exec("hiliteColor", e.target.value));
+    // table: pick a size from a grid
+    const grid = $(P + "TblGrid"), pop = $(P + "TblPop"), btn = $(P + "TblBtn");
+    for (let r = 1; r <= 8; r++) for (let c = 1; c <= 8; c++){ const i = document.createElement("i"); i.dataset.r = r; i.dataset.c = c; grid.append(i); }
+    grid.addEventListener("mouseover", e => {
+      const i = e.target.closest("i"); if (!i) return;
+      grid.querySelectorAll("i").forEach(x => x.classList.toggle("on", +x.dataset.r <= +i.dataset.r && +x.dataset.c <= +i.dataset.c));
+      $(P + "TblSize").textContent = `${i.dataset.c} × ${i.dataset.r}`;
+    });
+    grid.addEventListener("mousedown", e => e.preventDefault());
+    grid.addEventListener("click", e => {
+      const i = e.target.closest("i"); if (!i) return;
+      const row = `<tr>${"<td><br></td>".repeat(+i.dataset.c)}</tr>`;
+      exec("insertHTML", `<table class="lt-table"><tbody>${row.repeat(+i.dataset.r)}</tbody></table><p><br></p>`);
+      pop.hidden = true;
+    });
+    btn.addEventListener("mousedown", e => e.preventDefault());
+    btn.addEventListener("click", () => { pop.hidden = !pop.hidden; });
+    document.addEventListener("click", e => { if (!e.target.closest(`#${P}TblPop,#${P}TblBtn`)) pop.hidden = true; });
+    T.querySelectorAll("[data-tbl]").forEach(b => {
+      b.addEventListener("mousedown", e => e.preventDefault());
+      b.addEventListener("click", () => {
+        const td = cellNow(); if (!td) return;
+        const tr = td.parentNode, table = td.closest("table"), ci = [...tr.children].indexOf(td);
+        const a = b.dataset.tbl;
+        if (a === "row"){ const n = tr.cloneNode(true); n.querySelectorAll("td,th").forEach(x => { x.innerHTML = "<br>"; }); tr.after(n); }
+        if (a === "col") table.querySelectorAll("tr").forEach(r => { const x = document.createElement("td"); x.innerHTML = "<br>"; (r.children[ci] || r.lastChild).after(x); });
+        if (a === "delrow"){ if (table.rows.length > 1) tr.remove(); else table.remove(); }
+        if (a === "delcol"){ if (tr.children.length > 1) table.querySelectorAll("tr").forEach(r => r.children[ci] && r.children[ci].remove()); else table.remove(); }
+        if (a === "del") table.remove();
+        if (a === "up"){ const prev = table.previousElementSibling; if (prev) prev.before(table); }
+        if (a === "down"){ const next = table.nextElementSibling; if (next) next.after(table); }
+        afterEdit();
+      });
+    });
+  }
+  bindToolbar("hr"); bindToolbar("hrEd");
   /* table borders: drag between two columns to change their widths, or under a row to change its height */
   const EDGE = 5;
   function tableEdge(e){
@@ -589,7 +614,7 @@ ${HELLO}
   function printLetter(L){ // from the log: the saved page
     const head = heads.find(h => h.id === L.headId) || null;
     const parts = L.parts ? { ...L.parts, title: clean(L.parts.title), body: clean(L.parts.body), sign: clean(L.parts.sign), hdr: clean(L.parts.hdr), ftr: clean(L.parts.ftr) }
-      : { title: esc(L.title), body: genBody(L.body, vals(L)), sign: genSign(L, L), ...headParts(head) };
+      : { title: esc(L.title), body: genBody(L.body, vals(L), !!L.html), sign: genSign(L, L), ...headParts(head) };
     printParts(L, head, parts);
   }
   async function saveAndPrint(){
@@ -660,14 +685,18 @@ ${HELLO}
     if (!db){ UI.alert("سجّل الدخول لتعديل القوالب"); return; }
     editing = t || null;
     $("hrEdTitle").value = t ? t.title : ""; $("hrEdCat").value = t && CATS.includes(t.category) ? t.category : "أخرى";
-    $("hrEdBody").value = t ? t.body : "";
+    $("hrEdBody").innerHTML = t ? (t.html ? clean(t.body) : plainToHtml(t.body)) : "<p><br></p>";
+    fillFieldMenu();
     $("hrEditor").hidden = false; $("hrEdHead").textContent = t ? "تعديل القالب" : "قالب جديد";
     $("hrEdTitle").focus();
   }
   async function saveTpl(e){
     e.preventDefault();
-    const data = { title: $("hrEdTitle").value.trim(), category: $("hrEdCat").value, body: $("hrEdBody").value.replace(/\r/g, ""), updatedAt: new Date().toISOString() };
-    if (!data.title || !data.body.trim()) return;
+    const ed = $("hrEdBody");
+    ed.querySelectorAll('font[size="7"]').forEach(f => f.removeAttribute("size"));
+    const data = { title: $("hrEdTitle").value.trim(), category: $("hrEdCat").value, body: clean(ed.innerHTML), html: true, updatedAt: new Date().toISOString() };
+    if (!data.title){ UI.toast("اكتب عنوان الخطاب", "err"); return; }
+    if (!ed.textContent.trim()){ UI.toast("اكتب نص الخطاب", "err"); return; }
     try {
       if (editing) await db.collection("hrTemplates").doc(editing.id).update(data);
       else await db.collection("hrTemplates").add({ ...data, order: Date.now() });
@@ -864,6 +893,24 @@ ${HELLO}
   $("hrNewTpl").addEventListener("click", () => openEditor(null));
   $("hrEdCancel").addEventListener("click", () => { $("hrEditor").hidden = true; editing = null; });
   $("hrEdForm").addEventListener("submit", saveTpl);
+  // insert a field ({{...}}) where the caret is in the template editor
+  const COMMON_FIELDS = [RECIP, CLOSING, ASSOC_FIELD, "اسم الموظف", "رقم الهوية", "الجنسية", "المسمى الوظيفي", "تاريخ التعيين", "تاريخ انتهاء الخدمة", "الراتب الأساسي", "البدلات", "إجمالي الراتب", "صفة المعتمد", "اسم المعتمد"];
+  function fillFieldMenu(){
+    const sel = $("hrEdField"); sel.innerHTML = ""; sel.append(new Option("+ إدراج خانة", ""));
+    const own = fieldsOf($("hrEdBody").innerHTML);
+    [...new Set([...COMMON_FIELDS, ...own])].forEach(f => sel.append(new Option(f, f)));
+  }
+  function insertField(name){
+    name = (name || "").trim(); if (!name) return;
+    const ed = $("hrEdBody");
+    if (!(range && ed.contains(range.startContainer))){ ed.focus(); const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false); range = r; }
+    restore(); document.execCommand("insertText", false, `{{${name}}}`); afterEdit(); fillFieldMenu();
+  }
+  $("hrEdField").addEventListener("mousedown", () => { const s = getSelection(); if (s.rangeCount && $("hrEdBody").contains(s.anchorNode)) range = s.getRangeAt(0).cloneRange(); });
+  $("hrEdField").addEventListener("change", e => { insertField(e.target.value); e.target.value = ""; });
+  $("hrEdNewBtn").addEventListener("mousedown", e => e.preventDefault());
+  $("hrEdNewBtn").addEventListener("click", () => { insertField($("hrEdNew").value); $("hrEdNew").value = ""; });
+  $("hrEdNew").addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); insertField($("hrEdNew").value); $("hrEdNew").value = ""; } });
   CATS.forEach(c => $("hrEdCat").append(new Option(c, c)));
   $("hrDate").value = ymd(new Date());
   $("hrSignName").value = sign.name; $("hrSignRole").value = sign.role;
