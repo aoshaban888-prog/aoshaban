@@ -1,18 +1,28 @@
-/* الموارد البشرية ← الخطابات: letter templates with {{fields}}, an A4 preview, print / save as PDF,
-   and a log of issued letters with an automatic outgoing number (001/1448, restarting each Hijri year).
-   Firestore: hrTemplates/{id} { title, category, body, order }   hrLetters/{id} { ref, no, year, ... }   hrMeta/counter { year, last } */
+/* الموارد البشرية ← الخطابات
+   - templates with {{fields}} build the letter; the letter itself is then editable on the A4 paper with a toolbar
+     (fonts, sizes, colors, alignment, lists, tables, header and footer)
+   - letterheads (الكليشات): an A4 background image, margins, header and footer text, and a date frame image
+     whose day, dates and number are written inside it
+   - print / save as PDF, and a log of issued letters with an outgoing number (001/1448, restarting each Hijri year)
+   Firestore: hrTemplates, hrLetters, hrHeads, hrMeta/counter, hrMeta/templates */
 (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const clean = h => window.DOMPurify ? DOMPurify.sanitize(h || "", { ADD_ATTR: ["contenteditable"] }) : (h || "");
   const FIELD_RX = /\{\{\s*([^{}]+?)\s*\}\}/g;
-  const ASSOC_FIELD = "اسم الجمعية";
-  const CATS = ["التعريف والشهادات", "التوظيف", "الانضباط وانتهاء الخدمة", "أخرى"];
+  const ASSOC_FIELD = "اسم الجمعية", RECIP = "الجهة الموجه لها";
+  const AUTO = new Set([ASSOC_FIELD, "صفة المعتمد", "اسم المعتمد"]);
+  const CATS = ["التعريف والشهادات", "الدعم والمخاطبات", "التوظيف", "الانضباط وانتهاء الخدمة", "أخرى"];
+  const PREFIXES = [["السادة", "المحترمين"], ["سعادة", "المحترم"], ["معالي", "المحترم"], ["فضيلة", "حفظه الله"], ["المكرم", "المحترم"], ["", ""]];
+  const TPL_VERSION = 2;
+  const HELLO = "السلام عليكم ورحمة الله وبركاته، وبعد:";
+  const THANKS = "وتقبلوا وافر التحية والتقدير،";
 
   const DEFAULT_TEMPLATES = [
     { order: 1, category: "التعريف والشهادات", title: "تعريف بالراتب", body:
-`إلى: {{الجهة الموجه لها}}                                    المحترمين
+`{{الجهة الموجه لها}}
 
-السلام عليكم ورحمة الله وبركاته، وبعد:
+${HELLO}
 
 تشهد {{اسم الجمعية}} بأن الموظف/ـة {{اسم الموظف}}، {{الجنسية}} الجنسية، ويحمل هوية رقم {{رقم الهوية}}، يعمل لديها بوظيفة {{المسمى الوظيفي}} منذ تاريخ {{تاريخ التعيين}}، ولا يزال على رأس العمل حتى تاريخه.
 
@@ -20,27 +30,61 @@
 
 وقد أُعطي هذا التعريف بناءً على طلبه، دون أدنى مسؤولية على الجمعية.
 
-وتقبلوا وافر التحية والتقدير،` },
+${THANKS}` },
     { order: 2, category: "التعريف والشهادات", title: "تعريف بدون راتب", body:
-`إلى: {{الجهة الموجه لها}}                                    المحترمين
+`{{الجهة الموجه لها}}
 
-السلام عليكم ورحمة الله وبركاته، وبعد:
+${HELLO}
 
 تشهد {{اسم الجمعية}} بأن الموظف/ـة {{اسم الموظف}}، {{الجنسية}} الجنسية، ويحمل هوية رقم {{رقم الهوية}}، يعمل لديها بوظيفة {{المسمى الوظيفي}} منذ تاريخ {{تاريخ التعيين}}، ولا يزال على رأس العمل حتى تاريخه.
 
 وقد أُعطي هذا التعريف بناءً على طلبه، دون أدنى مسؤولية على الجمعية.
 
-وتقبلوا وافر التحية والتقدير،` },
+${THANKS}` },
     { order: 3, category: "التعريف والشهادات", title: "شهادة خبرة", body:
 `تشهد {{اسم الجمعية}} بأن {{اسم الموظف}}، {{الجنسية}} الجنسية، ويحمل هوية رقم {{رقم الهوية}}، قد عمل لديها بوظيفة {{المسمى الوظيفي}} خلال الفترة من {{تاريخ التعيين}} إلى {{تاريخ انتهاء الخدمة}}.
 
 وكان خلال فترة عمله مثالاً للجد والانضباط وحسن التعامل، وقد أدّى المهام الموكلة إليه على الوجه المطلوب.
 
 وقد أُعطيت له هذه الشهادة بناءً على طلبه دون أدنى مسؤولية على الجمعية، متمنين له دوام التوفيق والسداد.` },
-    { order: 4, category: "التوظيف", title: "عرض وظيفي", body:
+    { order: 4, since: 2, category: "التعريف والشهادات", title: "إلى من يهمه الأمر", body:
+`إلى من يهمه الأمر
+
+${HELLO}
+
+تفيد {{اسم الجمعية}} بأن {{موضوع الإفادة}}.
+
+وقد أُعطيت هذه الإفادة بناءً على طلب صاحب الشأن، دون أدنى مسؤولية على الجمعية.
+
+${THANKS}` },
+    { order: 5, since: 2, category: "الدعم والمخاطبات", title: "طلب دعم عيني", body:
+`{{الجهة الموجه لها}}
+
+${HELLO}
+
+تتقدم {{اسم الجمعية}} بخالص الشكر والتقدير لكم على دعمكم المتواصل للعمل الخيري، ويسرها أن تتقدم إليكم بطلب دعم عيني يتمثل في: {{وصف الدعم العيني}}، بكمية {{الكمية}}، وذلك لصالح {{الفئة المستفيدة}}.
+
+وتأمل الجمعية أن يحظى طلبها بموافقتكم الكريمة، علماً بأن الدعم سيُوجَّه وفق الأنظمة المعتمدة ويُوثَّق بما يحقق الشفافية.
+
+شاكرين لكم حسن تعاونكم، وجعله الله في موازين حسناتكم.
+
+${THANKS}` },
+    { order: 6, since: 2, category: "الدعم والمخاطبات", title: "طلب دعم مشروع", body:
+`{{الجهة الموجه لها}}
+
+${HELLO}
+
+يسر {{اسم الجمعية}} أن تتقدم إليكم بطلب دعم مشروع «{{اسم المشروع}}»، الذي يهدف إلى {{هدف المشروع}}، ويستفيد منه {{عدد المستفيدين}} مستفيداً، بتكلفة إجمالية قدرها {{تكلفة المشروع}} ريال، ومدة تنفيذ {{مدة التنفيذ}}.
+
+ومرفق لكم ملف المشروع متضمناً تفاصيله وميزانيته ومؤشرات قياس أثره.
+
+وتأمل الجمعية أن يحظى المشروع بدعمكم الكريم، شاكرين لكم حرصكم على دعم العمل الخيري.
+
+${THANKS}` },
+    { order: 7, category: "التوظيف", title: "عرض وظيفي", body:
 `المكرم/ {{اسم الموظف}}                                    المحترم
 
-السلام عليكم ورحمة الله وبركاته، وبعد:
+${HELLO}
 
 يسر {{اسم الجمعية}} أن تقدم لكم عرضها للعمل لديها بوظيفة {{المسمى الوظيفي}}، وفق الشروط التالية:
 
@@ -53,8 +97,8 @@
 
 نأمل إفادتنا بموافقتكم على هذا العرض في موعد أقصاه {{آخر موعد للرد}}، ويُعد العرض لاغياً بعد ذلك.
 
-وتقبلوا وافر التحية والتقدير،` },
-    { order: 5, category: "التوظيف", title: "قرار تعيين", body:
+${THANKS}` },
+    { order: 8, category: "التوظيف", title: "قرار تعيين", body:
 `إن {{صفة المعتمد}}، بناءً على الصلاحيات المخولة له، وعلى ما تقتضيه مصلحة العمل،
 
 يقرر ما يلي:
@@ -64,45 +108,45 @@
 ثانياً: يخضع الموظف لفترة تجربة مدتها تسعون يوماً وفق نظام العمل.
 
 ثالثاً: يُبلّغ هذا القرار لمن يلزم لإنفاذه.` },
-    { order: 6, category: "التوظيف", title: "مباشرة عمل", body:
+    { order: 9, category: "التوظيف", title: "مباشرة عمل", body:
 `نفيد بأن الموظف/ـة {{اسم الموظف}}، هوية رقم {{رقم الهوية}}، قد باشر عمله لدى {{اسم الجمعية}} بوظيفة {{المسمى الوظيفي}} اعتباراً من تاريخ {{تاريخ المباشرة}}.
 
 وعليه جرى التوقيع.` },
-    { order: 7, category: "الانضباط وانتهاء الخدمة", title: "لفت نظر", body:
+    { order: 10, category: "الانضباط وانتهاء الخدمة", title: "لفت نظر", body:
 `المكرم/ {{اسم الموظف}}                                    المحترم
 الوظيفة: {{المسمى الوظيفي}}
 
-السلام عليكم ورحمة الله وبركاته، وبعد:
+${HELLO}
 
 نود لفت نظركم إلى ما بدر منكم بتاريخ {{تاريخ المخالفة}}، وهو: {{وصف المخالفة}}، مما يتعارض مع لائحة تنظيم العمل المعتمدة في الجمعية.
 
 ونأمل منكم الالتزام وعدم تكرار ذلك مستقبلاً، علماً بأن تكرار المخالفة يعرّضكم للجزاءات المنصوص عليها في اللائحة.
 
 والله الموفق،` },
-    { order: 8, category: "الانضباط وانتهاء الخدمة", title: "إنذار كتابي", body:
+    { order: 11, category: "الانضباط وانتهاء الخدمة", title: "إنذار كتابي", body:
 `المكرم/ {{اسم الموظف}}                                    المحترم
 الوظيفة: {{المسمى الوظيفي}}
 
-السلام عليكم ورحمة الله وبركاته، وبعد:
+${HELLO}
 
 إشارة إلى ما بدر منكم بتاريخ {{تاريخ المخالفة}}، وهو: {{وصف المخالفة}}، وبعد الاطلاع على إفادتكم، فإن الجمعية توجه إليكم بموجب هذا الخطاب الإنذار الكتابي {{رقم الإنذار}}، وفق لائحة تنظيم العمل المعتمدة.
 
 ونهيب بكم الالتزام التام بأنظمة العمل ولوائحه، علماً بأن تكرار المخالفة يعرّضكم لجزاء أشد.
 
 والله الموفق،` },
-    { order: 9, category: "الانضباط وانتهاء الخدمة", title: "قبول استقالة", body:
+    { order: 12, category: "الانضباط وانتهاء الخدمة", title: "قبول استقالة", body:
 `المكرم/ {{اسم الموظف}}                                    المحترم
 
-السلام عليكم ورحمة الله وبركاته، وبعد:
+${HELLO}
 
 إشارة إلى استقالتكم المقدمة بتاريخ {{تاريخ تقديم الاستقالة}}، نفيدكم بقبولها، على أن يكون آخر يوم عمل لكم {{تاريخ انتهاء الخدمة}}، وستُصرف مستحقاتكم النظامية وفق نظام العمل بعد إخلاء طرفكم.
 
 شاكرين لكم ما قدمتموه خلال فترة عملكم، ومتمنين لكم التوفيق.` },
-    { order: 10, category: "الانضباط وانتهاء الخدمة", title: "إنهاء خدمة", body:
+    { order: 13, category: "الانضباط وانتهاء الخدمة", title: "إنهاء خدمة", body:
 `المكرم/ {{اسم الموظف}}                                    المحترم
 الوظيفة: {{المسمى الوظيفي}}
 
-السلام عليكم ورحمة الله وبركاته، وبعد:
+${HELLO}
 
 نشعركم بإنهاء خدمتكم لدى {{اسم الجمعية}} اعتباراً من تاريخ {{تاريخ انتهاء الخدمة}}، وذلك {{سبب الإنهاء}}، استناداً إلى المادة {{رقم المادة}} من نظام العمل.
 
@@ -111,11 +155,12 @@
 والله الموفق،` },
   ];
 
-  let db = null, me = "", templates = [], letters = [], assocs = [], seeding = false;
-  const SIGN_KEY = "app-hr-sign";
+  let db = null, me = "", templates = [], letters = [], heads = [], seeding = false, migrated = false;
+  const SIGN_KEY = "app-hr-sign", HEAD_KEY = "app-hr-head";
   let sign = { name: "", role: "" };
   try { sign = { ...sign, ...JSON.parse(localStorage.getItem(SIGN_KEY) || "{}") }; } catch {}
   const values = {};
+  let manual = false, showHdr = true, showFtr = true;
 
   /* ---------- dates ---------- */
   const pad = n => String(n).padStart(2, "0");
@@ -123,12 +168,13 @@
   const parseDay = s => s ? new Date(s + "T12:00:00") : new Date();
   const hijri = d => new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn", { day: "2-digit", month: "2-digit", year: "numeric" }).format(d).replace(/\s*هـ$/, "");
   const greg = d => `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+  const weekday = d => new Intl.DateTimeFormat("ar-SA", { weekday: "long" }).format(d);
   const hijriYear = d => +new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn", { year: "numeric" }).format(d).replace(/\D/g, "");
   const fmtDateField = s => { const d = new Date(s + "T12:00:00"); return isNaN(d) ? s : `${hijri(d)} هـ الموافق ${greg(d)} م`; };
 
   /* ---------- fields ---------- */
-  function fieldsOf(body){ const out = []; for (const m of (body || "").matchAll(FIELD_RX)){ const f = m[1]; if (f !== ASSOC_FIELD && f !== "صفة المعتمد" && f !== "اسم المعتمد" && !out.includes(f)) out.push(f); } return out; }
-  const kind = f => /تاريخ/.test(f) ? "date" : /راتب|بدل|مبلغ|البدلات/.test(f) ? "number" : /وصف|سبب/.test(f) ? "long" : "text";
+  function fieldsOf(body){ const out = []; for (const m of (body || "").matchAll(FIELD_RX)){ const f = m[1]; if (!AUTO.has(f) && !out.includes(f)) out.push(f); } return out; }
+  const kind = f => f === RECIP ? "recip" : /تاريخ/.test(f) ? "date" : /راتب|بدل|مبلغ|البدلات|تكلفة|عدد/.test(f) ? "number" : /وصف|سبب|موضوع|هدف/.test(f) ? "long" : "text";
   function fieldValue(f, vals){
     const v = (vals[f] ?? "").toString().trim();
     if (!v) return null;
@@ -136,34 +182,86 @@
     if (kind(f) === "number" && !isNaN(+v)) return (+v).toLocaleString("en-US");
     return v;
   }
+  function recipHtml(vals){
+    const name = (vals[RECIP] || "").trim(); const pre = vals[RECIP + "#p"] ?? "السادة";
+    if (!name) return `<span class="lt-blank">${esc(RECIP)}</span>`;
+    const suffix = (PREFIXES.find(p => p[0] === pre) || ["", ""])[1];
+    return `<span class="lt-to"><span>${pre ? esc(pre) + "/ " : ""}<span class="lt-v">${esc(name)}</span></span>${suffix ? `<span>${esc(suffix)}</span>` : ""}</span>`;
+  }
 
-  /* ---------- render a letter (preview, print, reprint) ---------- */
-  function letterHtml(L){
-    const vals = { ...L.fields, [ASSOC_FIELD]: L.assoc, "صفة المعتمد": L.signRole, "اسم المعتمد": L.signName };
-    const fill = text => esc(text).replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_, f) => {
+  /* ---------- letter parts ---------- */
+  function genBody(body, vals){
+    const fill = text => esc(text).replace(FIELD_RX, (_, f) => {
       const raw = f.replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-      const v = raw === ASSOC_FIELD || raw === "صفة المعتمد" || raw === "اسم المعتمد" ? (vals[raw] || "").trim() || null : fieldValue(raw, vals);
+      if (raw === RECIP) return recipHtml(vals);
+      const v = AUTO.has(raw) ? (vals[raw] || "").trim() || null : fieldValue(raw, vals);
       return v ? `<span class="lt-v">${esc(v)}</span>` : `<span class="lt-blank">${esc(raw)}</span>`;
     });
-    const body = (L.body || "").split(/\n\s*\n/).map(p => `<p>${fill(p).replace(/\n/g, "<br>")}</p>`).join("");
-    const d = parseDay(L.date);
-    return `<header class="lt-head"><div class="lt-org">${esc(L.assoc || "")}</div>
-      <dl class="lt-meta"><div><dt>الرقم</dt><dd><bdi>${esc(L.ref || "يُعطى عند الحفظ")}</bdi></dd></div>
-      <div><dt>التاريخ</dt><dd>${hijri(d)} هـ</dd></div><div><dt>الموافق</dt><dd>${greg(d)} م</dd></div></dl></header>
-      <h2 class="lt-title">${esc(L.title || "")}</h2>
-      <div class="lt-body">${body}</div>
-      <footer class="lt-sign"><div class="lt-role">${esc(L.signRole || "")}</div><div class="lt-name">${esc(L.signName || "")}</div>
-      <div class="lt-line">التوقيع: ...................................</div><div class="lt-stamp">الختم</div></footer>`;
+    return (body || "").split(/\n\s*\n/).map(p => `<p>${fill(p).replace(/\n/g, "<br>")}</p>`).join("");
   }
+  const genSign = L => `<div class="lt-role">${esc(L.signRole || "")}</div><div class="lt-name">${esc(L.signName || "")}</div><div class="lt-line">التوقيع: ...................................</div><div class="lt-stamp">الختم</div>`;
+  function metaHtml(L){
+    const d = parseDay(L.date);
+    return `<div class="lt-m"><span>اليوم:</span> ${weekday(d)}</div><div class="lt-m"><span>التاريخ:</span> ${hijri(d)} هـ</div><div class="lt-m"><span>الموافق:</span> ${greg(d)} م</div><div class="lt-m"><span>الرقم:</span> <bdi>${esc(L.ref || "يُعطى عند الحفظ")}</bdi></div>`;
+  }
+  /* the whole A4 page; parts = { title, body, sign, hdr, ftr } (HTML), editable puts contenteditable on them */
+  function paperInner(L, head, parts, editable){
+    const ce = editable ? ' contenteditable="true" spellcheck="false"' : "";
+    const m = (head && head.margins) || { top: 22, bottom: 22, side: 20 };
+    const fr = head && head.frame && head.frame.image ? head.frame : null;
+    const hdr = parts.showHdr !== false && (parts.hdr || editable) ? `<div class="lt-hdr" style="top:6mm;inset-inline:${m.side}mm;min-height:${Math.max(8, m.top - 10)}mm"${ce} data-ph="ترويسة أعلى الصفحة">${parts.hdr || ""}</div>` : "";
+    const ftr = parts.showFtr !== false && (parts.ftr || editable) ? `<div class="lt-ftr" style="bottom:6mm;inset-inline:${m.side}mm;min-height:${Math.max(8, m.bottom - 10)}mm"${ce} data-ph="تذييل أسفل الصفحة">${parts.ftr || ""}</div>` : "";
+    const frame = fr ? `<div class="lt-frame" style="top:${fr.y}mm;left:${fr.x}mm;width:${fr.w}mm"><img src="${fr.image}" alt=""><div class="lt-frame-t" style="padding:${fr.padTop}mm ${fr.padSide}mm 0;font-size:${fr.fontSize}px">${metaHtml(L)}</div></div>` : "";
+    const plainHead = !fr ? `<header class="lt-head">${head && head.bg ? "<span></span>" : `<div class="lt-org">${esc(L.assoc || "")}</div>`}<div class="lt-meta">${metaHtml(L)}</div></header>` : "";
+    return `${hdr}${frame}<div class="lt-content" style="padding:${m.top}mm ${m.side}mm ${m.bottom}mm">${plainHead}
+      <h2 class="lt-title"${ce}>${parts.title}</h2><div class="lt-body"${ce}>${parts.body}</div><footer class="lt-sign"${ce}>${parts.sign}</footer></div>${ftr}`;
+  }
+  const paperStyle = head => head && head.bg ? `background-image:url("${head.bg}")` : "";
 
-  /* ---------- new letter form ---------- */
+  /* ---------- new letter: form + editable paper ---------- */
   const curTpl = () => templates.find(t => t.id === $("hrTpl").value) || null;
+  const curHead = () => heads.find(h => h.id === $("hrHead").value) || null;
   function draft(){
     const t = curTpl() || { title: "", body: "" };
-    return { title: t.title, body: t.body, templateId: t.id || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
-             fields: Object.fromEntries(fieldsOf(t.body).map(f => [f, values[f] || ""])), signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim() };
+    const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"]] : [[f, values[f] || ""]]));
+    return { title: t.title, body: t.body, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
+             fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim() };
   }
-  function renderPreview(){ $("hrPaper").innerHTML = curTpl() ? letterHtml(draft()) : '<p class="lt-empty">اختر نوع الخطاب</p>'; }
+  const vals = L => ({ ...L.fields, [ASSOC_FIELD]: L.assoc, "صفة المعتمد": L.signRole, "اسم المعتمد": L.signName });
+  function headParts(head){ return { hdr: head ? head.hdr || "" : "", ftr: head ? head.ftr || "" : "" }; }
+  function renderPaper(force){
+    const paper = $("hrPaper"), t = curTpl(), head = curHead(), L = draft();
+    if (!t){ paper.removeAttribute("style"); paper.innerHTML = '<p class="lt-empty">اختر نوع الخطاب</p>'; fit(); return; }
+    if (manual && !force){ // keep the edited text, only refresh the date and number
+      paper.querySelectorAll(".lt-meta,.lt-frame-t").forEach(el => { el.innerHTML = metaHtml(L); });
+      return;
+    }
+    const keep = force === "head" ? grab() : null;
+    const parts = keep ? { ...keep, ...headParts(head), showHdr, showFtr } :
+      { title: esc(t.title), body: genBody(t.body, vals(L)), sign: genSign(L), ...headParts(head), showHdr, showFtr };
+    paper.setAttribute("style", paperStyle(head));
+    paper.innerHTML = paperInner(L, head, parts, true);
+    fit();
+  }
+  function grab(){
+    const p = $("hrPaper"), g = sel => { const el = p.querySelector(sel); return el ? clean(el.innerHTML) : ""; };
+    return { title: g(".lt-title"), body: g(".lt-body"), sign: g(".lt-sign"), hdr: g(".lt-hdr"), ftr: g(".lt-ftr"), showHdr, showFtr };
+  }
+  function setManual(on){ manual = on; $("hrManual").hidden = !on; }
+  $("hrPaper").addEventListener("input", e => { if (!manual && e.target.closest(".lt-title,.lt-body,.lt-sign,.lt-hdr,.lt-ftr")) setManual(true); });
+
+  // the page is drawn at its real size (210×297mm) and scaled to fit the preview column
+  function fit(){
+    document.querySelectorAll(".hr-paper-wrap").forEach(w => {
+      const p = w.querySelector(".hr-paper"); if (!p) return;
+      const k = Math.min(1, (w.clientWidth - 32) / p.offsetWidth);
+      p.style.setProperty("--k", k);
+      w.style.height = (p.offsetHeight * k + 32) + "px";
+    });
+  }
+  new ResizeObserver(fit).observe($("hrNew"));
+  window.addEventListener("app:view", e => { if (e.detail === "hr/letters") setTimeout(fit, 30); });
+
   function renderFields(){
     const box = $("hrFields"); box.innerHTML = "";
     const t = curTpl(); if (!t) return;
@@ -171,10 +269,18 @@
       const row = document.createElement("div"); row.className = "s-row";
       const id = "hrf-" + Math.random().toString(36).slice(2, 8);
       const k = kind(f);
-      row.innerHTML = `<label for="${id}"></label>` + (k === "long" ? `<textarea class="input" id="${id}" rows="2"></textarea>` : `<input class="input" id="${id}" type="${k === "date" ? "date" : k === "number" ? "number" : "text"}"${k === "number" ? ' inputmode="decimal" min="0" step="any"' : ""}>`);
+      if (k === "recip"){
+        row.innerHTML = `<label for="${id}"></label><div class="hr-recip"><select class="select" aria-label="الصفة"></select><input class="input" id="${id}" type="text"></div>`;
+        const sel = row.querySelector("select");
+        PREFIXES.forEach(([p]) => sel.append(new Option(p || "بدون", p)));
+        sel.value = values[f + "#p"] ?? "السادة";
+        sel.addEventListener("change", () => { values[f + "#p"] = sel.value; renderPaper(); });
+      } else {
+        row.innerHTML = `<label for="${id}"></label>` + (k === "long" ? `<textarea class="input" id="${id}" rows="2"></textarea>` : `<input class="input" id="${id}" type="${k === "date" ? "date" : k === "number" ? "number" : "text"}"${k === "number" ? ' inputmode="decimal" min="0" step="any"' : ""}>`);
+      }
       row.querySelector("label").textContent = f;
       const inp = row.querySelector("input,textarea"); inp.value = values[f] || "";
-      inp.addEventListener("input", () => { values[f] = inp.value; renderPreview(); });
+      inp.addEventListener("input", () => { values[f] = inp.value; renderPaper(); });
       box.append(row);
     });
   }
@@ -186,24 +292,124 @@
       ts.forEach(t => g.append(new Option(t.title, t.id))); sel.append(g);
     });
     if (templates.some(t => t.id === keep)) sel.value = keep;
-    renderFields(); renderPreview();
+    renderFields(); if (!manual) renderPaper();
+  }
+  function fillHeadSelect(){
+    const sel = $("hrHead"); const keep = sel.value || (() => { try { return localStorage.getItem(HEAD_KEY) || ""; } catch { return ""; } })();
+    sel.innerHTML = ""; sel.append(new Option("بدون كليشة", ""));
+    heads.forEach(h => sel.append(new Option(h.name, h.id)));
+    sel.value = heads.some(h => h.id === keep) ? keep : "";
+    renderPaper("head");
   }
   function msg(t, k){ $("hrMsg").textContent = t || ""; $("hrMsg").className = "s-msg" + (k ? " " + k : ""); }
 
+  /* ---------- toolbar (works on whatever editable part of the paper has the caret) ---------- */
+  let range = null;
+  const inPaper = n => n && $("hrPaper").contains(n.nodeType === 1 ? n : n.parentNode) && (n.nodeType === 1 ? n : n.parentNode).closest("[contenteditable=true]");
+  document.addEventListener("selectionchange", () => {
+    const s = getSelection(); if (s.rangeCount && inPaper(s.anchorNode)){ range = s.getRangeAt(0).cloneRange(); syncTools(); }
+  });
+  function restore(){ if (!range) return false; const s = getSelection(); s.removeAllRanges(); s.addRange(range); return true; }
+  function exec(cmd, val){
+    if (!restore()) return;
+    document.execCommand("styleWithCSS", false, cmd !== "fontSize");
+    document.execCommand(cmd, false, val ?? null);
+    afterEdit();
+  }
+  function afterEdit(){
+    const s = getSelection(); if (s.rangeCount && inPaper(s.anchorNode)) range = s.getRangeAt(0).cloneRange();
+    if (!manual) setManual(true);
+    syncTools();
+  }
+  function setSize(px){
+    if (!restore()) return;
+    document.execCommand("styleWithCSS", false, false);
+    document.execCommand("fontSize", false, "7");
+    $("hrPaper").querySelectorAll('font[size="7"]').forEach(f => { const s = document.createElement("span"); s.style.fontSize = px + "px"; s.innerHTML = f.innerHTML; f.replaceWith(s); });
+    afterEdit();
+  }
+  function cellNow(){ const s = getSelection(); const n = s.rangeCount ? s.anchorNode : null; return n && inPaper(n) ? (n.nodeType === 1 ? n : n.parentNode).closest("td,th") : null; }
+  function syncTools(){
+    const td = cellNow();
+    document.querySelectorAll("#hrTools [data-tbl]").forEach(b => { b.disabled = !td; });
+    ["bold", "italic", "underline", "strikeThrough", "justifyRight", "justifyCenter", "justifyLeft", "justifyFull", "insertUnorderedList", "insertOrderedList"].forEach(c => {
+      const b = document.querySelector(`#hrTools [data-cmd="${c}"]`); if (b) { let on = false; try { on = document.queryCommandState(c); } catch {} b.setAttribute("aria-pressed", on ? "true" : "false"); }
+    });
+  }
+  function fontList(){
+    const set = new Set(Object.keys((window.SiteSettings && SiteSettings.FONTS) || {}));
+    (window.appFonts || []).forEach(f => set.add(f.group || f.family));
+    ["Sakkal Majalla", "Traditional Arabic", "Arial", "Times New Roman"].forEach(f => set.add(f));
+    const sel = $("hrFont"); const keep = sel.value; sel.innerHTML = ""; sel.append(new Option("الخط", ""));
+    [...set].forEach(f => { const o = new Option(f, f); o.style.fontFamily = `"${f}"`; sel.append(o); });
+    sel.value = keep;
+  }
+  window.addEventListener("app:fonts", fontList);
+  document.querySelectorAll("#hrTools button[data-cmd]").forEach(b => {
+    b.addEventListener("mousedown", e => e.preventDefault());
+    b.addEventListener("click", () => exec(b.dataset.cmd, b.dataset.val));
+  });
+  $("hrFont").addEventListener("change", e => { const f = e.target.value; if (!f) return; if (window.SiteSettings) SiteSettings.loadFont(f); exec("fontName", f); e.target.value = ""; });
+  $("hrSize").addEventListener("change", e => { const v = +e.target.value; if (v) setSize(v); e.target.value = ""; });
+  $("hrBlock").addEventListener("change", e => { const v = e.target.value; if (v) exec("formatBlock", v); e.target.value = ""; });
+  $("hrColor").addEventListener("input", e => exec("foreColor", e.target.value));
+  $("hrHilite").addEventListener("input", e => exec("hiliteColor", e.target.value));
+  // table: pick a size from a grid
+  const grid = $("hrTblGrid");
+  for (let r = 1; r <= 8; r++) for (let c = 1; c <= 8; c++){ const i = document.createElement("i"); i.dataset.r = r; i.dataset.c = c; grid.append(i); }
+  grid.addEventListener("mouseover", e => {
+    const i = e.target.closest("i"); if (!i) return;
+    grid.querySelectorAll("i").forEach(x => x.classList.toggle("on", +x.dataset.r <= +i.dataset.r && +x.dataset.c <= +i.dataset.c));
+    $("hrTblSize").textContent = `${i.dataset.c} × ${i.dataset.r}`;
+  });
+  grid.addEventListener("mousedown", e => e.preventDefault());
+  grid.addEventListener("click", e => {
+    const i = e.target.closest("i"); if (!i) return;
+    const r = +i.dataset.r, c = +i.dataset.c;
+    const row = `<tr>${"<td><br></td>".repeat(c)}</tr>`;
+    exec("insertHTML", `<table class="lt-table"><tbody>${row.repeat(r)}</tbody></table><p><br></p>`);
+    $("hrTblPop").hidden = true;
+  });
+  $("hrTblBtn").addEventListener("mousedown", e => e.preventDefault());
+  $("hrTblBtn").addEventListener("click", () => { $("hrTblPop").hidden = !$("hrTblPop").hidden; });
+  document.addEventListener("click", e => { if (!e.target.closest("#hrTblPop,#hrTblBtn")) $("hrTblPop").hidden = true; });
+  document.querySelectorAll("#hrTools [data-tbl]").forEach(b => {
+    b.addEventListener("mousedown", e => e.preventDefault());
+    b.addEventListener("click", () => {
+      const td = cellNow(); if (!td) return;
+      const tr = td.parentNode, table = td.closest("table"), ci = [...tr.children].indexOf(td);
+      const a = b.dataset.tbl;
+      if (a === "row"){ const n = tr.cloneNode(true); n.querySelectorAll("td,th").forEach(x => { x.innerHTML = "<br>"; }); tr.after(n); }
+      if (a === "col") table.querySelectorAll("tr").forEach(r => { const x = document.createElement("td"); x.innerHTML = "<br>"; (r.children[ci] || r.lastChild).after(x); });
+      if (a === "delrow"){ if (table.rows.length > 1) tr.remove(); else table.remove(); }
+      if (a === "delcol"){ if (tr.children.length > 1) table.querySelectorAll("tr").forEach(r => r.children[ci] && r.children[ci].remove()); else table.remove(); }
+      if (a === "del") table.remove();
+      afterEdit();
+    });
+  });
+  $("hrHdrBtn").addEventListener("click", () => { showHdr = !showHdr; $("hrHdrBtn").setAttribute("aria-pressed", showHdr ? "true" : "false"); renderPaper("head"); });
+  $("hrFtrBtn").addEventListener("click", () => { showFtr = !showFtr; $("hrFtrBtn").setAttribute("aria-pressed", showFtr ? "true" : "false"); renderPaper("head"); });
+
   /* ---------- print ---------- */
-  function printLetter(L){
+  function printParts(L, head, parts){
     const area = $("hrPrintArea");
-    area.innerHTML = `<article class="hr-paper print">${letterHtml(L)}</article>`;
+    area.innerHTML = `<article class="hr-paper print" style='${paperStyle(head)}'>${paperInner(L, head, parts, false)}</article>`;
     document.body.classList.add("printing-hr");
     const done = () => { document.body.classList.remove("printing-hr"); area.innerHTML = ""; window.removeEventListener("afterprint", done); };
     window.addEventListener("afterprint", done);
-    setTimeout(() => window.print(), 50);
+    setTimeout(() => window.print(), 80);
+  }
+  function printLetter(L){ // from the log: the saved page
+    const head = heads.find(h => h.id === L.headId) || null;
+    const parts = L.parts ? { ...L.parts, title: clean(L.parts.title), body: clean(L.parts.body), sign: clean(L.parts.sign), hdr: clean(L.parts.hdr), ftr: clean(L.parts.ftr) }
+      : { title: esc(L.title), body: genBody(L.body, vals(L)), sign: genSign(L), ...headParts(head) };
+    printParts(L, head, parts);
   }
   async function saveAndPrint(){
     if (!db){ msg("سجّل الدخول لحفظ الخطاب", "err"); return; }
     const t = curTpl(); if (!t){ msg("اختر نوع الخطاب", "err"); return; }
     const L = draft();
-    if (!L.assoc){ msg("اكتب اسم الجمعية", "err"); $("hrAssoc").focus(); return; }
+    if (!L.assoc && !curHead()){ msg("اكتب اسم الجمعية أو اختر كليشة", "err"); $("hrAssoc").focus(); return; }
     const btn = $("hrSave"); btn.disabled = true; msg("جارٍ الحفظ…");
     try {
       const year = hijriYear(parseDay(L.date));
@@ -215,11 +421,12 @@
         return last + 1;
       });
       L.no = no; L.year = year; L.ref = `${String(no).padStart(3, "0")}/${year}`;
-      L.employee = L.fields["اسم الموظف"] || "";
+      L.employee = L.fields["اسم الموظف"] || ""; L.parts = grab();
       L.createdAt = new Date().toISOString(); L.createdBy = me;
       await db.collection("hrLetters").add(L);
-      msg(`حُفظ الخطاب برقم ${L.ref}`, "ok");
-      printLetter(L);
+      renderPaper(); // show the number on the page
+      msg(""); UI.toast(`حُفظ الخطاب برقم ${L.ref}`);
+      printParts(L, curHead(), L.parts);
     } catch (e){ console.error(e); msg("تعذّر حفظ الخطاب. حاول مرة أخرى", "err"); }
     finally { btn.disabled = false; }
   }
@@ -280,23 +487,120 @@
       $("hrEditor").hidden = true; editing = null; UI.toast("حُفظ القالب");
     } catch (err){ console.error(err); UI.toast("تعذّر حفظ القالب", "err"); }
   }
+  // older saved templates: add the new standard letters once, and drop "إلى:" before the recipient
+  async function migrate(){
+    if (migrated) return; migrated = true;
+    try {
+      const ref = db.collection("hrMeta").doc("templates");
+      const m = await ref.get(); const v = m.exists ? m.data().v || 1 : 1;
+      if (v >= TPL_VERSION) return;
+      const batch = db.batch(); const titles = new Set(templates.map(t => t.title));
+      DEFAULT_TEMPLATES.filter(t => (t.since || 1) > v && !titles.has(t.title)).forEach(t => { const { since, ...rest } = t; batch.set(db.collection("hrTemplates").doc(), { ...rest, builtin: true, updatedAt: new Date().toISOString() }); });
+      const OLD = /إلى:\s*\{\{\s*الجهة الموجه لها\s*\}\}[ \t]*(المحترمين)?/g;
+      templates.forEach(t => { if (OLD.test(t.body)){ OLD.lastIndex = 0; batch.update(db.collection("hrTemplates").doc(t.id), { body: t.body.replace(OLD, "{{الجهة الموجه لها}}") }); } OLD.lastIndex = 0; });
+      batch.set(ref, { v: TPL_VERSION });
+      await batch.commit();
+    } catch (e){ console.error("templates migrate", e); }
+  }
+
+  /* ---------- letterheads (الكليشات) ---------- */
+  let hEdit = null, hDraft = null;
+  const HDEF = () => ({ name: "", bg: "", hdr: "", ftr: "", margins: { top: 45, bottom: 30, side: 20 }, frame: { image: "", x: 15, y: 15, w: 60, padTop: 8, padSide: 6, fontSize: 12 } });
+  function renderHeads(){
+    const ul = $("hdList"); if (!ul) return; ul.innerHTML = "";
+    $("hdEmpty").hidden = heads.length > 0 || !db;
+    heads.forEach(h => {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="hd-thumb"></span><span class="f-meta"><span class="f-name"></span><span class="f-file"></span></span><button class="btn small" type="button">تعديل</button> <button class="btn small ghost" type="button">حذف</button>`;
+      if (h.bg) li.querySelector(".hd-thumb").style.backgroundImage = `url("${h.bg}")`;
+      li.querySelector(".f-name").textContent = h.name;
+      li.querySelector(".f-file").textContent = [h.bg ? "صورة كليشة" : "بدون صورة", h.frame && h.frame.image ? "إطار تاريخ" : ""].filter(Boolean).join(" · ");
+      const [eb, dbn] = li.querySelectorAll("button");
+      eb.addEventListener("click", () => openHead(h));
+      dbn.addEventListener("click", async () => { if (await UI.confirm(`حذف كليشة «${h.name}»؟`, { ok: "حذف", danger: true })) db.collection("hrHeads").doc(h.id).delete().then(() => UI.toast("حُذفت الكليشة")).catch(() => UI.toast("تعذّر الحذف", "err")); });
+      ul.append(li);
+    });
+  }
+  function openHead(h){
+    if (!db){ UI.alert("سجّل الدخول لإضافة الكليشات"); return; }
+    hEdit = h || null;
+    const d = HDEF(); hDraft = h ? { ...d, ...h, margins: { ...d.margins, ...(h.margins || {}) }, frame: { ...d.frame, ...(h.frame || {}) } } : d;
+    $("hdHead").textContent = h ? "تعديل الكليشة" : "كليشة جديدة";
+    $("hdName").value = hDraft.name; $("hdHdr").value = htmlToText(hDraft.hdr); $("hdFtr").value = htmlToText(hDraft.ftr);
+    [["hdMt", "margins", "top"], ["hdMb", "margins", "bottom"], ["hdMs", "margins", "side"], ["hdFx", "frame", "x"], ["hdFy", "frame", "y"], ["hdFw", "frame", "w"], ["hdFpt", "frame", "padTop"], ["hdFps", "frame", "padSide"], ["hdFfs", "frame", "fontSize"]]
+      .forEach(([id, g, k]) => { $(id).value = hDraft[g][k]; $(id + "v").textContent = hDraft[g][k] + (g === "frame" && k === "fontSize" ? "px" : "mm"); });
+    $("hdEditor").hidden = false; $("hdName").focus(); renderHeadPreview();
+  }
+  const htmlToText = h => { const d = document.createElement("div"); d.innerHTML = (h || "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div)>/gi, "\n"); return d.textContent.replace(/\n+$/, ""); };
+  const textToHtml = t => esc(t || "").split("\n").map(l => l || "<br>").join("<br>");
+  function renderHeadPreview(){
+    if (!hDraft) return;
+    const L = { assoc: "جمعية البر الخيرية", date: ymd(new Date()), ref: "001/1448", signRole: "المدير التنفيذي", signName: "" };
+    const parts = { title: "عنوان الخطاب", body: "<p>هذا نص تجريبي يوضح مكان المحتوى داخل الكليشة. عدّل الهوامش حتى يقع النص في المساحة الفارغة من التصميم، وحرّك إطار التاريخ حتى يطابق مكانه.</p><p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>", sign: genSign(L), hdr: hDraft.hdr, ftr: hDraft.ftr };
+    const p = $("hdPaper"); p.setAttribute("style", paperStyle(hDraft)); p.innerHTML = paperInner(L, hDraft, parts, false);
+    fit();
+  }
+  async function imgData(f, maxW, png){
+    const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const k = Math.min(1, maxW / img.width);
+    const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    const g = c.getContext("2d"); if (!png){ g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); } g.drawImage(img, 0, 0, c.width, c.height);
+    if (png){ const out = c.toDataURL("image/png"); if (out.length < 260000) return out; return c.toDataURL("image/webp", 0.9); }
+    for (const q of [0.85, 0.75, 0.62]){ const out = c.toDataURL("image/jpeg", q); if (out.length < 640000) return out; }
+    throw new Error("too_big");
+  }
+  $("hdBg").addEventListener("change", async e => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    try { hDraft.bg = await imgData(f, 1240, false); renderHeadPreview(); } catch { UI.toast("تعذّرت قراءة الصورة أو أنها كبيرة جداً", "err"); }
+  });
+  $("hdFrame").addEventListener("change", async e => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    try { hDraft.frame.image = await imgData(f, 700, true); renderHeadPreview(); } catch { UI.toast("تعذّرت قراءة الصورة", "err"); }
+  });
+  $("hdBgClear").addEventListener("click", () => { hDraft.bg = ""; renderHeadPreview(); });
+  $("hdFrameClear").addEventListener("click", () => { hDraft.frame.image = ""; renderHeadPreview(); });
+  $("hdName").addEventListener("input", e => { hDraft.name = e.target.value; });
+  $("hdHdr").addEventListener("input", e => { hDraft.hdr = textToHtml(e.target.value); renderHeadPreview(); });
+  $("hdFtr").addEventListener("input", e => { hDraft.ftr = textToHtml(e.target.value); renderHeadPreview(); });
+  [["hdMt", "margins", "top"], ["hdMb", "margins", "bottom"], ["hdMs", "margins", "side"], ["hdFx", "frame", "x"], ["hdFy", "frame", "y"], ["hdFw", "frame", "w"], ["hdFpt", "frame", "padTop"], ["hdFps", "frame", "padSide"], ["hdFfs", "frame", "fontSize"]]
+    .forEach(([id, g, k]) => $(id).addEventListener("input", e => { hDraft[g][k] = +e.target.value; $(id + "v").textContent = e.target.value + (g === "frame" && k === "fontSize" ? "px" : "mm"); renderHeadPreview(); }));
+  $("hdForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!hDraft.name.trim()){ UI.toast("اكتب اسم الكليشة", "err"); $("hdName").focus(); return; }
+    const data = { name: hDraft.name.trim(), bg: hDraft.bg, hdr: hDraft.hdr, ftr: hDraft.ftr, margins: hDraft.margins, frame: hDraft.frame, updatedAt: new Date().toISOString() };
+    if (JSON.stringify(data).length > 1000000){ UI.toast("الصور كبيرة جداً. استخدم صورة كليشة أصغر", "err"); return; }
+    try {
+      if (hEdit) await db.collection("hrHeads").doc(hEdit.id).set(data);
+      else { const r = await db.collection("hrHeads").add(data); try { localStorage.setItem(HEAD_KEY, r.id); } catch {} }
+      $("hdEditor").hidden = true; hEdit = null; hDraft = null; UI.toast("حُفظت الكليشة");
+    } catch (err){ console.error(err); UI.toast("تعذّر حفظ الكليشة", "err"); }
+  });
+  $("hdCancel").addEventListener("click", () => { $("hdEditor").hidden = true; hEdit = null; hDraft = null; });
+  $("hdNew").addEventListener("click", () => openHead(null));
 
   /* ---------- tabs and wiring ---------- */
   function setTab(t){
     document.querySelectorAll("[data-hrtab]").forEach(b => b.setAttribute("aria-selected", b.dataset.hrtab === t ? "true" : "false"));
-    $("hrNew").hidden = t !== "new"; $("hrLog").hidden = t !== "log"; $("hrTpls").hidden = t !== "tpl";
+    $("hrNew").hidden = t !== "new"; $("hrLog").hidden = t !== "log"; $("hrTpls").hidden = t !== "tpl"; $("hrHeads").hidden = t !== "heads";
+    setTimeout(fit, 20);
   }
   document.querySelectorAll("[data-hrtab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.hrtab)));
-  $("hrTpl").addEventListener("change", () => { renderFields(); renderPreview(); });
-  ["hrAssoc", "hrDate"].forEach(id => $(id).addEventListener("input", renderPreview));
+  $("hrTpl").addEventListener("change", async () => {
+    if (manual && !(await UI.confirm("تغيير نوع الخطاب يستبدل النص الذي عدّلته على الورقة. متابعة؟", { ok: "استبدال" }))) return;
+    setManual(false); renderFields(); renderPaper();
+  });
+  $("hrHead").addEventListener("change", () => { try { localStorage.setItem(HEAD_KEY, $("hrHead").value); } catch {} renderPaper("head"); });
+  ["hrAssoc", "hrDate"].forEach(id => $(id).addEventListener("input", () => renderPaper()));
   ["hrSignName", "hrSignRole"].forEach(id => $(id).addEventListener("input", () => {
     sign = { name: $("hrSignName").value, role: $("hrSignRole").value };
     try { localStorage.setItem(SIGN_KEY, JSON.stringify(sign)); } catch {}
-    renderPreview();
+    renderPaper();
   }));
+  $("hrRegen").addEventListener("click", async () => { if (await UI.confirm("إعادة بناء الخطاب من القالب والخانات؟ تضيع تعديلاتك على الورقة.", { ok: "إعادة البناء" })){ setManual(false); renderPaper(true); } });
   $("hrSave").addEventListener("click", saveAndPrint);
-  $("hrPrint").addEventListener("click", () => { if (curTpl()) printLetter(draft()); });
-  $("hrClear").addEventListener("click", () => { Object.keys(values).forEach(k => delete values[k]); renderFields(); renderPreview(); msg(""); });
+  $("hrPrint").addEventListener("click", () => { if (curTpl()) printParts(draft(), curHead(), grab()); });
+  $("hrClear").addEventListener("click", () => { Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); });
   $("hrLogQ").addEventListener("input", renderLog);
   $("hrNewTpl").addEventListener("click", () => openEditor(null));
   $("hrEdCancel").addEventListener("click", () => { $("hrEditor").hidden = true; editing = null; });
@@ -309,27 +613,29 @@
   function connect(d){
     if (db) return;
     db = d.db; me = ((d.user && d.user.email) || "").toLowerCase();
-    $("hrSignin").hidden = true;
+    $("hrSignin").hidden = true; $("hdNew").hidden = false; $("hdSignin").hidden = true;
     db.collection("hrTemplates").onSnapshot(async snap => {
-      templates = snap.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
-      if (!templates.length && !seeding){ // first use: add the standard letters
+      const list = snap.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+      if (!list.length) { if (seeding) return; } else templates = list;
+      if (!list.length && !seeding){ // first use: add the standard letters
         seeding = true;
         const batch = db.batch();
-        DEFAULT_TEMPLATES.forEach(t => batch.set(db.collection("hrTemplates").doc(), { ...t, builtin: true, updatedAt: new Date().toISOString() }));
+        DEFAULT_TEMPLATES.forEach(t => { const { since, ...rest } = t; batch.set(db.collection("hrTemplates").doc(), { ...rest, builtin: true, updatedAt: new Date().toISOString() }); });
+        batch.set(db.collection("hrMeta").doc("templates"), { v: TPL_VERSION });
         await batch.commit().catch(console.error);
         return;
       }
-      fillTplSelect(); renderTpls();
+      fillTplSelect(); renderTpls(); migrate();
     }, e => console.error(e));
     db.collection("hrLetters").onSnapshot(snap => { letters = snap.docs.map(x => ({ id: x.id, ...x.data() })); renderLog(); }, e => console.error(e));
+    db.collection("hrHeads").onSnapshot(snap => { heads = snap.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => a.name.localeCompare(b.name)); fillHeadSelect(); renderHeads(); }, e => console.error(e));
     db.collection("associations").onSnapshot(snap => {
-      assocs = snap.docs.map(x => x.data().name).filter(Boolean);
-      $("hrAssocList").innerHTML = ""; assocs.forEach(n => $("hrAssocList").append(new Option(n, n)));
+      $("hrAssocList").innerHTML = ""; snap.docs.map(x => x.data().name).filter(Boolean).forEach(n => $("hrAssocList").append(new Option(n, n)));
     }, () => {});
   }
   // before sign-in the standard letters still preview, they just can't be saved
   templates = DEFAULT_TEMPLATES.map((t, i) => ({ id: "local" + i, ...t }));
-  fillTplSelect(); renderTpls(); renderLog();
+  fontList(); fillTplSelect(); renderTpls(); renderLog(); renderHeads(); fillHeadSelect();
   if (window.appDb && window.appUser) connect({ db: window.appDb, user: window.appUser });
   window.addEventListener("app:db", e => connect(e.detail));
 })();
