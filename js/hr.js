@@ -307,7 +307,8 @@ ${HELLO}
   function frameHtml(L, fr){
     const d = parseDay(L.date), f = L.fields || {};
     const name = (f[RECIP] || "").trim();
-    const ref = L.ref || "يُعطى عند الحفظ";
+    // the frame shows the letter's number only (011), the year stays in the full reference (011/1448)
+    const ref = L.ref ? String(L.ref).split("/")[0] : "يُعطى عند الحفظ";
     const line2 = `الرقم: ${ref}`, line3 = `${weekday(d)} ${greg(d)} م`;
     const base = fr ? fr.fontSize : 12, room = fr ? fr.w - 2 * fr.padSide : 60;
     const nameSize = name ? fitSize(name, base + 1, room) : base;
