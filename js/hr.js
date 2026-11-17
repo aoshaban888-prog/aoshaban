@@ -309,13 +309,13 @@ ${HELLO}
     const name = (f[RECIP] || "").trim();
     // the frame shows the letter's number only (011), the year stays in the full reference (011/1448)
     const ref = L.ref ? String(L.ref).split("/")[0] : "يُعطى عند الحفظ";
-    const line2 = `الرقم: ${ref}`, line3 = `${weekday(d)} ${greg(d)} م`;
+    const line2 = ref, line3 = `${weekday(d)} ${greg(d)} م`;
     const base = fr ? fr.fontSize : 12, room = fr ? fr.w - 2 * fr.padSide : 60;
     const nameSize = name ? fitSize(name, base + 1, room) : base;
     const small = Math.min(fitSize(line2, base, room), fitSize(line3, base, room));
     const to = name ? esc(name) : `<span class="lt-blank">${esc(RECIP)}</span>`;
     return `<div class="lt-m lt-fto" style="font-size:${nameSize}px">${to}</div>` +
-      `<div class="lt-m lt-fl" style="font-size:${small}px"><span>الرقم:</span> <bdi>${esc(ref)}</bdi></div>` +
+      `<div class="lt-m lt-fl" style="font-size:${small}px"><bdi>${esc(ref)}</bdi></div>` +
       `<div class="lt-m lt-fl" style="font-size:${small}px">${esc(line3)}</div>`;
   }
   /* the whole A4 page; parts = { title, body, sign, hdr, ftr } (HTML), editable puts contenteditable on them */
