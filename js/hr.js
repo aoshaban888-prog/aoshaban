@@ -373,6 +373,13 @@ ${HELLO}
     return Object.keys(r).length ? r : null;
   }
   function sealSizeNow(){ return { sigH: seal.sigH, stampW: seal.stampW }; }
+  // picking a closing phrase brings the closing line back if it was removed while editing the letter by hand
+  function ensureClosing(){
+    const body = $("hrPaper").querySelector(".lt-body"); if (!body || body.querySelector(`[data-f="${CLOSING}"]`)) return;
+    const p = document.createElement("p"); p.className = "lt-close";
+    p.innerHTML = fieldHtml(CLOSING, vals(draft()));
+    body.append(p);
+  }
   function setManual(on){ manual = on; $("hrManual").hidden = !on; }
   $("hrPaper").addEventListener("input", e => { if (!manual && e.target.closest(".lt-title,.lt-body,.lt-sign,.lt-hdr,.lt-ftr")) setManual(true); });
 
@@ -412,7 +419,7 @@ ${HELLO}
         const own = defaultsOf(t.body)[f];
         [...(own != null && !CLOSINGS.includes(own) ? [own] : []), ...CLOSINGS].forEach(x => sel.append(new Option(x ? x.replace(/،+$/, "") : "بدون", x)));
         sel.value = values[f] ?? own ?? CLOSINGS[0];
-        sel.addEventListener("change", () => { values[f] = sel.value; renderPaper(); });
+        sel.addEventListener("change", () => { values[f] = sel.value; renderPaper(); ensureClosing(); });
         row.querySelector("label").textContent = f; box.append(row); return;
       } else {
         row.innerHTML = `<label for="${id}"></label>` + (k === "list" ? `<textarea class="input" id="${id}" rows="4" placeholder="كل بند في سطر"></textarea>` : k === "long" ? `<textarea class="input" id="${id}" rows="3"></textarea>` : `<input class="input" id="${id}" type="${k === "date" ? "date" : k === "number" ? "number" : "text"}"${k === "number" ? ' inputmode="decimal" min="0" step="any"' : ""}>`);
