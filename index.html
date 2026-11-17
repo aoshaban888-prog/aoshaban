@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261118f"></script>
-<link rel="stylesheet" href="css/library.css?v=20261118f">
-<link rel="stylesheet" href="css/app.css?v=20261118f">
+<script src="js/boot.js?v=20261118g"></script>
+<link rel="stylesheet" href="css/library.css?v=20261118g">
+<link rel="stylesheet" href="css/app.css?v=20261118g">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -410,6 +410,7 @@
               <div class="hr-actions">
                 <button class="btn primary" type="button" id="hrSave">حفظ وطباعة</button>
                 <button class="btn primary" type="button" id="hrSubmit" hidden>رفع للاعتماد</button>
+                <button class="btn" type="button" id="hrPreview">معاينة</button>
                 <button class="btn" type="button" id="hrPrint">طباعة بدون حفظ</button>
                 <button class="btn" type="button" id="hrPdf">حفظ PDF</button>
                 <button class="btn small ghost" type="button" id="hrClear">تفريغ الخانات</button>
@@ -711,6 +712,14 @@
     </div>
   </form>
 </div>
+<div class="pv" id="pv" role="dialog" aria-modal="true" aria-labelledby="pvTitle" hidden>
+  <div class="pv-bar">
+    <span class="pv-title" id="pvTitle"></span>
+    <div class="pv-zoom"><button class="pv-b" type="button" id="pvOut" aria-label="تصغير">−</button><span class="pv-pct mono" id="pvPct">100%</span><button class="pv-b" type="button" id="pvIn" aria-label="تكبير">+</button><button class="pv-b txt" type="button" id="pvFit" aria-pressed="true">ملء الشاشة</button><button class="pv-b txt" type="button" id="pv100">الحجم الحقيقي</button></div>
+    <div class="pv-acts"><button class="btn small" type="button" id="pvPrint">طباعة</button><button class="btn small" type="button" id="pvPdf">حفظ PDF</button><button class="pv-b" type="button" id="pvClose" aria-label="إغلاق المعاينة">✕</button></div>
+  </div>
+  <div class="pv-stage" id="pvStage"><div class="pv-sizer" id="pvSizer"><article class="hr-paper pv-paper" id="pvPaper"></article></div></div>
+</div>
 <div id="hrPrintArea" aria-hidden="true"></div>
 <div class="fp-fly" id="fpFly" role="menu" hidden></div>
 <div id="docxStyles"></div>
@@ -945,18 +954,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261118f"></script>
-<script src="js/library.js?v=20261118f"></script>
+<script src="js/ui.js?v=20261118g"></script>
+<script src="js/library.js?v=20261118g"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/home.js?v=20261118f"></script>
-<script src="js/tasks.js?v=20261118f"></script>
-<script src="js/slider.js?v=20261118f"></script>
-<script src="js/settings.js?v=20261118f"></script>
-<script src="js/fonts.js?v=20261118f"></script>
-<script src="js/hr.js?v=20261118f"></script>
-<script src="js/requests.js?v=20261118f"></script>
-<script src="js/table-tools.js?v=20261118f"></script>
-<script src="js/login.js?v=20261118f"></script>
-<script src="js/shell.js?v=20261118f"></script>
+<script src="js/home.js?v=20261118g"></script>
+<script src="js/tasks.js?v=20261118g"></script>
+<script src="js/slider.js?v=20261118g"></script>
+<script src="js/settings.js?v=20261118g"></script>
+<script src="js/fonts.js?v=20261118g"></script>
+<script src="js/hr.js?v=20261118g"></script>
+<script src="js/requests.js?v=20261118g"></script>
+<script src="js/table-tools.js?v=20261118g"></script>
+<script src="js/login.js?v=20261118g"></script>
+<script src="js/shell.js?v=20261118g"></script>
 </body>
 </html>

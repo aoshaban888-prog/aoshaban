@@ -168,6 +168,7 @@
     }
     if (r.submittedBy === me && r.status === "returned") add("تعديل وإعادة الرفع", "primary", () => editAs(r, "submitter"));
     if (r.submittedBy === me && (r.status === "pending" || r.status === "returned")) add("سحب الطلب", "ghost", () => act(r, "cancel"));
+    add("معاينة كاملة", "ghost", () => HRLetters.preview({ ...r.letter, ref: r.ref }, { title: r.title, print: r.status === "approved", pdf: r.status === "approved" }));
     if (r.status === "approved") add("طباعة الخطاب", "primary", () => HRLetters.print({ ...r.letter, ref: r.ref }));
     if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...r.letter, ref: r.ref }));
     $("rqNoteWrap").hidden = !amApprover(r);

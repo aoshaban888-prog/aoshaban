@@ -683,6 +683,49 @@ ${HELLO}
       UI.toast("حُفظ ملف PDF");
     } catch (e){ console.error(e); document.querySelectorAll(".pdf-host").forEach(x => x.remove()); UI.toast(e && e.message === "lib_load" ? "تعذّر تحميل أداة PDF. تأكد من الإنترنت" : "تعذّر إنشاء ملف PDF", "err"); }
   }
+  /* ---------- preview: the page at full size, zoomable, with print and PDF ---------- */
+  const PAGE_W = 210 * 96 / 25.4, PAGE_H = 297 * 96 / 25.4;
+  let pv = null, pvZoom = "fit";
+  function preview(L, head, parts, opts = {}){
+    pv = { L, head, parts };
+    $("pvTitle").textContent = opts.title || L.title || "معاينة الخطاب";
+    const paper = $("pvPaper");
+    paper.setAttribute("style", paperStyle(head)); paper.innerHTML = paperInner(L, head, parts, false);
+    $("pvPrint").hidden = opts.print === false; $("pvPdf").hidden = opts.pdf === false || !P.pdf;
+    $("pv").hidden = false; document.body.classList.add("pv-open");
+    pvZoom = "fit"; zoomTo(); placeSeal(paper);
+    setTimeout(() => $("pvClose").focus(), 30);
+  }
+  function zoomTo(){
+    const st = $("pvStage");
+    const k = pvZoom === "fit" ? Math.min((st.clientWidth - 48) / PAGE_W, (st.clientHeight - 48) / PAGE_H) : pvZoom;
+    $("pvPaper").style.setProperty("--k", k);
+    $("pvSizer").style.width = PAGE_W * k + "px"; $("pvSizer").style.height = PAGE_H * k + "px";
+    $("pvPct").textContent = Math.round(k * 100) + "%";
+    $("pvFit").setAttribute("aria-pressed", pvZoom === "fit" ? "true" : "false");
+  }
+  function closePreview(){ $("pv").hidden = true; document.body.classList.remove("pv-open"); pv = null; }
+  $("pvClose").addEventListener("click", closePreview);
+  $("pv").addEventListener("click", e => { if (e.target === $("pvStage")) closePreview(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("pv").hidden) closePreview(); });
+  const curK = () => parseFloat($("pvPaper").style.getPropertyValue("--k")) || 1;
+  $("pvIn").addEventListener("click", () => { pvZoom = Math.min(2, Math.round((curK() + 0.1) * 10) / 10); zoomTo(); });
+  $("pvOut").addEventListener("click", () => { pvZoom = Math.max(0.3, Math.round((curK() - 0.1) * 10) / 10); zoomTo(); });
+  $("pvFit").addEventListener("click", () => { pvZoom = "fit"; zoomTo(); });
+  $("pv100").addEventListener("click", () => { pvZoom = 1; zoomTo(); });
+  window.addEventListener("resize", () => { if (!$("pv").hidden && pvZoom === "fit") zoomTo(); });
+  $("pvPrint").addEventListener("click", () => { if (pv) printParts(pv.L, pv.head, pv.parts); });
+  $("pvPdf").addEventListener("click", () => { if (pv) savePdf(pv.L, pv.head, pv.parts); });
+  // a template shown with its default values and today's date
+  function previewTemplate(t){
+    const head = curHead();
+    const L = { title: t.title, body: t.body, html: !!t.html, date: ymd(new Date()), assoc: $("hrAssoc").value.trim(), fields: defaultsOf(t.body), signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim() };
+    preview(L, head, { title: esc(t.title), body: genBody(t.body, vals(L), !!t.html), sign: genSign(L, {}), ...headParts(head) }, { title: `قالب: ${t.title}`, print: false, pdf: false });
+  }
+  function previewHead(h){
+    const L = { assoc: "جمعية البر الخيرية", date: ymd(new Date()), ref: "001/1448", signRole: "المدير التنفيذي", signName: "", fields: { "الجهة الموجه لها": "الجهة الموجه لها الخطاب" } };
+    preview(L, h, { showSig: true, showStamp: true, title: "عنوان الخطاب", body: "<p>هذا نص تجريبي يوضح مكان المحتوى داخل الكليشة.</p><p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>", sign: genSign(L, {}), hdr: h.hdr || "", ftr: h.ftr || "" }, { title: `كليشة: ${h.name}`, print: false, pdf: false });
+  }
   function partsOf(L, head){
     return L.parts ? { ...L.parts, title: clean(L.parts.title), body: clean(L.parts.body), sign: clean(L.parts.sign), hdr: clean(L.parts.hdr), ftr: clean(L.parts.ftr) }
       : { title: esc(L.title), body: genBody(L.body, vals(L), !!L.html), sign: genSign(L, L), ...headParts(head) };
@@ -806,6 +849,7 @@ ${HELLO}
     open: (l, opts) => openLetter(l, { force: true, ...(opts || {}) }),
     paper(L){ const head = heads.find(h => h.id === L.headId) || null; return { style: paperStyle(head), html: paperInner(L, head, partsOf(L, head), false) }; },
     print: L => printLetter(L),
+    preview: (L, opts) => { const head = heads.find(h => h.id === L.headId) || null; preview(L, head, partsOf(L, head), opts); },
     pdf: L => { const head = heads.find(h => h.id === L.headId) || null; return savePdf(L, head, partsOf(L, head)); },
     fit: () => fit(), place: el => placeSeal(el),
     setCanIssue(v){ canIssue = !!v; setEditing(editingLetter); },
@@ -855,11 +899,12 @@ ${HELLO}
     $("hrLogEmpty").textContent = letters.length ? "لا توجد نتائج" : "لم يصدر أي خطاب بعد";
     rows.forEach(l => {
       const tr = document.createElement("tr"); if (picked.has(l.id)) tr.classList.add("sel");
-      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small" type="button">تعديل</button> <button class="btn small" type="button">طباعة</button> <button class="btn small hr-pdf" type="button">PDF</button> <button class="btn small ghost" type="button">حذف</button></td>`;
+      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small hr-pv" type="button">معاينة</button> <button class="btn small hr-ed" type="button">تعديل</button> <button class="btn small" type="button">طباعة</button> <button class="btn small hr-pdf" type="button">PDF</button> <button class="btn small ghost hr-del" type="button">حذف</button></td>`;
       const td = tr.querySelectorAll("td");
-      const [cbx] = tr.querySelectorAll(".hr-pick"), btns = tr.querySelectorAll("button");
-      if (!P.deleteLog){ cbx.remove(); btns[3].remove(); }
-      if (!P.editIssued) btns[0].remove();
+      const cbx = tr.querySelector(".hr-pick");
+      if (!P.deleteLog){ cbx.remove(); tr.querySelector(".hr-del").remove(); }
+      if (!P.editIssued) tr.querySelector(".hr-ed").remove();
+      tr.querySelector(".hr-pv").addEventListener("click", () => { const head = heads.find(h => h.id === l.headId) || null; preview(l, head, partsOf(l, head), { title: `${l.ref} · ${l.title}` }); });
       const pdfBtn = tr.querySelector(".hr-pdf");
       if (!P.pdf) pdfBtn.remove(); else pdfBtn.addEventListener("click", () => { const head = heads.find(h => h.id === l.headId) || null; savePdf(l, head, partsOf(l, head)); });
       td[0].querySelector("bdi").textContent = l.ref;
@@ -896,10 +941,11 @@ ${HELLO}
     const ul = $("hrTplList"); if (!ul) return; ul.innerHTML = "";
     templates.forEach(t => {
       const li = document.createElement("li");
-      li.innerHTML = `<span class="f-meta"><span class="f-name"></span><span class="f-file"></span></span><button class="btn small" type="button">تعديل</button> <button class="btn small ghost" type="button">حذف</button>`;
+      li.innerHTML = `<span class="f-meta"><span class="f-name"></span><span class="f-file"></span></span><button class="btn small ghost hr-pvt" type="button">معاينة</button> <button class="btn small" type="button">تعديل</button> <button class="btn small ghost" type="button">حذف</button>`;
       li.querySelector(".f-name").textContent = t.title;
       li.querySelector(".f-file").textContent = `${t.category} · ${fieldsOf(t.body).length} خانة`;
-      const [eb, dbn] = li.querySelectorAll("button");
+      const [pvb, eb, dbn] = li.querySelectorAll("button");
+      pvb.addEventListener("click", () => previewTemplate(t));
       eb.addEventListener("click", () => openEditor(t));
       dbn.addEventListener("click", async () => { if (!db){ UI.alert("سجّل الدخول لتعديل القوالب"); return; } if (await UI.confirm(`حذف قالب «${t.title}»؟ الخطابات الصادرة منه تبقى في السجل.`, { ok: "حذف", danger: true })) db.collection("hrTemplates").doc(t.id).delete().then(() => UI.toast("حُذف القالب")).catch(() => UI.toast("تعذّر الحذف", "err")); });
       ul.append(li);
@@ -957,11 +1003,12 @@ ${HELLO}
     $("hdEmpty").hidden = heads.length > 0 || !db;
     heads.forEach(h => {
       const li = document.createElement("li");
-      li.innerHTML = `<span class="hd-thumb"></span><span class="f-meta"><span class="f-name"></span><span class="f-file"></span></span><button class="btn small" type="button">تعديل</button> <button class="btn small ghost" type="button">حذف</button>`;
+      li.innerHTML = `<span class="hd-thumb"></span><span class="f-meta"><span class="f-name"></span><span class="f-file"></span></span><button class="btn small ghost" type="button">معاينة</button> <button class="btn small" type="button">تعديل</button> <button class="btn small ghost" type="button">حذف</button>`;
       if (h.bg) li.querySelector(".hd-thumb").style.backgroundImage = `url("${h.bg}")`;
       li.querySelector(".f-name").textContent = h.name;
       li.querySelector(".f-file").textContent = [h.bg ? "صورة كليشة" : "بدون صورة", h.frame && h.frame.image ? "إطار تاريخ" : ""].filter(Boolean).join(" · ");
-      const [eb, dbn] = li.querySelectorAll("button");
+      const [pvb, eb, dbn] = li.querySelectorAll("button");
+      pvb.addEventListener("click", () => previewHead(h));
       eb.addEventListener("click", () => openHead(h));
       dbn.addEventListener("click", async () => { if (await UI.confirm(`حذف كليشة «${h.name}»؟`, { ok: "حذف", danger: true })) db.collection("hrHeads").doc(h.id).delete().then(() => UI.toast("حُذفت الكليشة")).catch(() => UI.toast("تعذّر الحذف", "err")); });
       ul.append(li);
@@ -1114,6 +1161,7 @@ ${HELLO}
 
   $("hrSave").addEventListener("click", saveAndPrint);
   $("hrPdf").addEventListener("click", () => { if (curTpl()) savePdf(draft(), curHead(), grab()); });
+  $("hrPreview").addEventListener("click", () => { if (curTpl()) preview(draft(), curHead(), grab(), { print: P.printDraft || P.issue }); });
   $("hrPrint").addEventListener("click", () => { if (curTpl()) printParts(draft(), curHead(), grab()); });
   $("hrEditEnd").addEventListener("click", () => { setEditing(null); Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); });
   $("hrClear").addEventListener("click", () => { setEditing(null); Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); });
