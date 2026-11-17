@@ -30,6 +30,7 @@
     o.home = { ...DEFAULTS.home, ...((s && s.home) || {}) };
     if (!o.font) o.font = DEFAULTS.font;
     if (!RADIUS[o.radius]) o.radius = DEFAULTS.radius;
+    if (o.startPage === "governance/hr") o.startPage = "hr/letters";
     return o;
   }
   function loadFont(name){

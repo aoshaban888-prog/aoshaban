@@ -21,10 +21,13 @@
     <nav class="nav">
       <a href="#/home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>الرئيسية</a>
       <a href="#/tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>المهام</a>
-      <button class="nav-group" type="button" id="govBtn" aria-expanded="false" aria-controls="govSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10M19 21V10M9.5 21V10M14.5 21V10"/><path d="M2 10 12 3l10 7z"/></svg><span>الحوكمة</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button class="nav-group" type="button" id="govBtn" data-group="governance" aria-expanded="false" aria-controls="govSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10M19 21V10M9.5 21V10M14.5 21V10"/><path d="M2 10 12 3l10 7z"/></svg><span>الحوكمة</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="nav-sub" id="govSub" hidden>
         <a class="sub" href="#/governance/library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>اللوائح والسياسات</a>
-        <a class="sub" href="#/governance/hr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg>الموارد البشرية</a>
+      </div>
+      <button class="nav-group" type="button" id="hrBtn" data-group="hr" aria-expanded="false" aria-controls="hrSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><span>الموارد البشرية</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-sub" id="hrSub" hidden>
+        <a class="sub" href="#/hr/letters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>الخطابات</a>
       </div>
       <div class="nav-label">الإدارة</div>
       <a href="#/admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>التمكين التقني</a>
@@ -280,9 +283,9 @@
     </main>
   </div>
     </section>
-    <section class="view hr" data-view="governance/hr" hidden>
+    <section class="view hr" data-view="hr/letters" hidden>
       <header class="page-h">
-        <div><p class="crumb">الحوكمة · الموارد البشرية</p><h1>الخطابات</h1></div>
+        <div><p class="crumb">الموارد البشرية</p><h1>الخطابات</h1></div>
         <div class="actions"><div class="seg-tabs" role="tablist" aria-label="الخطابات">
           <button type="button" role="tab" data-hrtab="new" aria-selected="true">خطاب جديد</button>
           <button type="button" role="tab" data-hrtab="log" aria-selected="false">السجل</button>
@@ -393,7 +396,7 @@
             <label><input type="radio" name="sRadius" value="small"><span>حاد</span></label>
             <label><input type="radio" name="sRadius" value="medium"><span>متوسط</span></label>
             <label><input type="radio" name="sRadius" value="large"><span>دائري</span></label></div></div>
-          <div class="s-row"><label for="sStart">الصفحة عند الفتح</label><select class="select" id="sStart"><option value="home">الرئيسية</option><option value="tasks">المهام</option><option value="governance/library">اللوائح والسياسات</option><option value="governance/hr">الموارد البشرية</option></select></div>
+          <div class="s-row"><label for="sStart">الصفحة عند الفتح</label><select class="select" id="sStart"><option value="home">الرئيسية</option><option value="tasks">المهام</option><option value="governance/library">اللوائح والسياسات</option><option value="hr/letters">الخطابات</option></select></div>
           <div class="s-row"><span class="lbl">الرئيسية تعرض</span>
             <label class="s-check"><input type="checkbox" id="sHomeTasks"> لوحة المهام</label>
             <label class="s-check"><input type="checkbox" id="sHomePrayer"> أوقات الصلاة</label></div>
