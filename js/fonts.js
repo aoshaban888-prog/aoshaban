@@ -162,22 +162,22 @@
     }
   }
   async function removeGroup(g, items){
-    if (!confirm(`حذف عائلة «${g}» كاملة (${items.length} ملف)؟`)) return;
+    if (!(await UI.confirm(`حذف عائلة «${g}» كاملة (${items.length} ملف)؟`, { ok: "حذف", danger: true }))) return;
     msg(`جارٍ حذف ${g}…`);
     try {
       for (const m of items){
         await db.collection("fonts").doc(m.id).delete();
         for (let i = 0; i < m.n; i++) await db.collection("fontChunks").doc(`${m.id}_${i}`).delete().catch(() => {});
       }
-      openGroups.delete(g); msg(`حُذفت عائلة «${g}»`, "ok");
+      openGroups.delete(g); msg(""); UI.toast(`حُذفت عائلة «${g}»`);
     } catch (e){ console.error(e); msg("تعذّر الحذف", "err"); }
   }
   async function remove(m){
-    if (!confirm(`حذف الخط «${m.family}» (${m.fileName})؟`)) return;
+    if (!(await UI.confirm(`حذف الخط «${m.family}» (${m.fileName})؟`, { ok: "حذف", danger: true }))) return;
     try {
       await db.collection("fonts").doc(m.id).delete();
       for (let i = 0; i < m.n; i++) await db.collection("fontChunks").doc(`${m.id}_${i}`).delete().catch(() => {});
-      msg("حُذف الخط", "ok");
+      msg(""); UI.toast("حُذف الخط");
     } catch (e){ console.error(e); msg("تعذّر الحذف", "err"); }
   }
   const inp = $("fFiles");

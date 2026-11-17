@@ -242,7 +242,7 @@
       td[2].textContent = l.title; td[3].textContent = l.employee || "—"; td[4].textContent = l.assoc || "";
       const [pb, db2] = tr.querySelectorAll("button");
       pb.addEventListener("click", () => printLetter(l));
-      db2.addEventListener("click", () => { if (confirm(`حذف الخطاب ${l.ref} من السجل؟ لن يُعاد استخدام رقمه.`)) db.collection("hrLetters").doc(l.id).delete().catch(console.error); });
+      db2.addEventListener("click", async () => { if (await UI.confirm(`حذف الخطاب ${l.ref} من السجل؟ لن يُعاد استخدام رقمه.`, { ok: "حذف", danger: true })) db.collection("hrLetters").doc(l.id).delete().then(() => UI.toast("حُذف الخطاب")).catch(() => UI.toast("تعذّر الحذف", "err")); });
       body.append(tr);
     });
   }
@@ -258,12 +258,12 @@
       li.querySelector(".f-file").textContent = `${t.category} · ${fieldsOf(t.body).length} خانة`;
       const [eb, dbn] = li.querySelectorAll("button");
       eb.addEventListener("click", () => openEditor(t));
-      dbn.addEventListener("click", () => { if (!db){ alert("سجّل الدخول لتعديل القوالب"); return; } if (confirm(`حذف قالب «${t.title}»؟ الخطابات الصادرة منه تبقى في السجل.`)) db.collection("hrTemplates").doc(t.id).delete().catch(console.error); });
+      dbn.addEventListener("click", async () => { if (!db){ UI.alert("سجّل الدخول لتعديل القوالب"); return; } if (await UI.confirm(`حذف قالب «${t.title}»؟ الخطابات الصادرة منه تبقى في السجل.`, { ok: "حذف", danger: true })) db.collection("hrTemplates").doc(t.id).delete().then(() => UI.toast("حُذف القالب")).catch(() => UI.toast("تعذّر الحذف", "err")); });
       ul.append(li);
     });
   }
   function openEditor(t){
-    if (!db){ alert("سجّل الدخول لتعديل القوالب"); return; }
+    if (!db){ UI.alert("سجّل الدخول لتعديل القوالب"); return; }
     editing = t || null;
     $("hrEdTitle").value = t ? t.title : ""; $("hrEdCat").value = t && CATS.includes(t.category) ? t.category : "أخرى";
     $("hrEdBody").value = t ? t.body : "";
@@ -277,8 +277,8 @@
     try {
       if (editing) await db.collection("hrTemplates").doc(editing.id).update(data);
       else await db.collection("hrTemplates").add({ ...data, order: Date.now() });
-      $("hrEditor").hidden = true; editing = null;
-    } catch (err){ console.error(err); alert("تعذّر حفظ القالب"); }
+      $("hrEditor").hidden = true; editing = null; UI.toast("حُفظ القالب");
+    } catch (err){ console.error(err); UI.toast("تعذّر حفظ القالب", "err"); }
   }
 
   /* ---------- tabs and wiring ---------- */

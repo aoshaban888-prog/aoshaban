@@ -33,6 +33,16 @@
       <a href="#/admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>التمكين التقني</a>
     </nav>
     <div class="side-foot">
+      <div class="account" id="account" hidden>
+        <div class="acct-menu" id="acctMenu" role="menu" hidden>
+          <bdi class="acct-mail" id="acctMail"></bdi>
+          <a class="acct-item" role="menuitem" href="#/admin">التمكين التقني</a>
+          <button class="acct-item" role="menuitem" type="button" id="acctOut">تسجيل الخروج</button>
+        </div>
+        <button class="acct-btn" id="acctBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="acctMenu">
+          <span class="acct-pic" id="acctPic" aria-hidden="true"></span><span class="acct-name" id="acctName"></span><svg class="acct-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+        </button>
+      </div>
       <div class="store-note" id="storeNote"><span class="dot"></span><span>جارٍ الاتصال بالمكتبة…</span></div>
       <div class="side-row"><span class="muted">المظهر</span>
         <div class="theme-pick" role="radiogroup" aria-label="المظهر">
@@ -53,6 +63,12 @@
         <div><p class="crumb" id="hHijri"></p><h1 id="hDate"></h1></div>
         <div class="clock" aria-label="الوقت الآن"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div>
       </header>
+      <div class="stats loading" id="hStats">
+        <a class="stat" data-stat="today" href="#/tasks"><span class="st-l">مهام اليوم</span><span class="st-n">0</span><span class="st-sub"></span></a>
+        <a class="stat" data-stat="late" href="#/tasks"><span class="st-l">متأخرة</span><span class="st-n">0</span><span class="st-sub"></span></a>
+        <a class="stat" data-stat="letters" href="#/hr/letters"><span class="st-l">خطابات هذا الشهر</span><span class="st-n">0</span><span class="st-sub"></span></a>
+        <a class="stat" data-stat="reviews" href="#/governance/library"><span class="st-l">مراجعات لوائح قريبة</span><span class="st-n">0</span><span class="st-sub"></span></a>
+      </div>
       <section class="slider" id="slider" aria-roledescription="سلايدر" aria-label="الشرائح" tabindex="0" hidden>
         <div class="sl-viewport"><div class="sl-track" id="slTrack" aria-live="off"></div></div>
         <button class="sl-nav prev" id="slPrev" type="button" aria-label="الشريحة السابقة"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
@@ -68,7 +84,8 @@
             <input class="input" type="date" id="tDue" aria-label="تاريخ الاستحقاق">
             <button class="btn primary" type="submit">إضافة</button>
           </form>
-          <p id="tSignin" class="muted-text">سجّل الدخول من القائمة الجانبية لعرض مهامك</p>
+          <div class="skel-rows" id="tSkel" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p id="tSignin" class="muted-text" hidden>سجّل الدخول من القائمة الجانبية لعرض مهامك</p>
           <ul id="tList" class="t-list"></ul>
           <p id="tEmpty" class="muted-text" hidden>لا توجد مهام مفتوحة</p>
           <a id="tMore" href="#/tasks" class="link" hidden></a>
@@ -81,9 +98,22 @@
         </section>
       </div>
     </section>
-    <section class="view" data-view="tasks" hidden>
-      <header class="page-h"><div><h1>المهام</h1></div></header>
-      <div class="empty-state"><h2>يُبنى في المرحلة القادمة</h2><p>لوحة أعمدة: جديدة، قيد التنفيذ، مكتملة، مع عرض قائمة مرتب بالتاريخ</p></div>
+    <section class="view tasks" data-view="tasks" hidden>
+      <header class="page-h">
+        <div><h1>المهام</h1></div>
+        <div class="actions">
+          <input class="input tk-q" id="tkQ" type="search" placeholder="بحث" aria-label="بحث في المهام">
+          <div class="seg-tabs" role="tablist" aria-label="طريقة العرض">
+            <button type="button" role="tab" data-tkview="board" aria-selected="true">لوحة</button>
+            <button type="button" role="tab" data-tkview="list" aria-selected="false">قائمة</button>
+          </div>
+          <button class="btn primary" type="button" id="tkNew">مهمة جديدة</button>
+        </div>
+      </header>
+      <div class="tk-skel" id="tkSkel" aria-hidden="true"><div class="skel-col"><i></i><i></i><i></i></div><div class="skel-col"><i></i><i></i></div><div class="skel-col"><i></i></div></div>
+      <p class="muted-text" id="tkSignin" hidden>سجّل الدخول من القائمة الجانبية لعرض مهامك</p>
+      <div class="tk-board" id="tkBoard" hidden></div>
+      <div class="tk-list" id="tkList" hidden></div>
     </section>
     <section class="view" data-view="governance/library" hidden>
       <header class="page-h">
@@ -359,10 +389,16 @@
           <button class="btn primary" type="button" id="sSave" disabled>حفظ التغييرات</button>
         </div>
       </header>
+      <div class="seg-tabs admin-tabs" role="tablist" aria-label="أقسام التمكين">
+        <button type="button" role="tab" data-atab="look" aria-selected="true">الهوية والمظهر</button>
+        <button type="button" role="tab" data-atab="fonts" aria-selected="false">الخطوط</button>
+        <button type="button" role="tab" data-atab="slider" aria-selected="false">السلايدر</button>
+        <button type="button" role="tab" data-atab="users" aria-selected="false">المستخدمون</button>
+      </div>
       <p class="s-msg" id="sMsg" role="status"></p>
       <p class="muted-text s-signin" id="sSignin">سجّل الدخول لحفظ الإعدادات. التغييرات هنا تظهر فوراً لكنها لا تُحفظ قبل تسجيل الدخول</p>
       <div class="s-grid">
-        <section class="card" aria-labelledby="s1"><div class="card-h"><h2 id="s1">الهوية</h2></div>
+        <section class="card" data-atab="look" aria-labelledby="s1"><div class="card-h"><h2 id="s1">الهوية</h2></div>
           <div class="s-row"><label for="sName">اسم الموقع</label><input class="input" id="sName" maxlength="40"></div>
           <div class="s-row"><span class="lbl">الشعار</span>
             <div class="logo-pick"><div class="logo-prev" id="sLogoPrev"></div><div class="logo-btns"><label class="btn small">رفع شعار<input type="file" id="sLogoFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" hidden></label><button class="btn small ghost" type="button" data-clear="logo">إزالة</button></div></div></div>
@@ -372,7 +408,7 @@
           <label class="s-check"><input type="checkbox" id="sShowName"> إظهار الاسم بجانب الشعار</label>
         </section>
 
-        <section class="card" aria-labelledby="s2"><div class="card-h"><h2 id="s2">الألوان</h2></div>
+        <section class="card" data-atab="look" aria-labelledby="s2"><div class="card-h"><h2 id="s2">الألوان</h2></div>
           <div class="presets" id="sPresets"></div>
           <div class="s-row two">
             <div><label for="sA1">اللون الأول</label><div class="color"><input type="color" id="sA1"><bdi class="mono" id="sA1v"></bdi></div></div>
@@ -382,7 +418,7 @@
           <p class="muted-text">التدرّج يظهر على الزر الأساسي والقسم المحدد ومربع الصلاة القادمة في كل المظاهر. اختر لونين متقاربين للون واحد بلا تدرّج</p>
         </section>
 
-        <section class="card" aria-labelledby="s3"><div class="card-h"><h2 id="s3">الخطوط</h2></div>
+        <section class="card wide" data-atab="fonts" aria-labelledby="s3"><div class="card-h"><h2 id="s3">الخطوط</h2></div>
           <div class="s-row"><label for="sFont">خط الواجهة</label><select class="select" id="sFont"></select></div>
           <div class="s-row"><label for="sFontSize">حجم النص</label><select class="select" id="sFontSize"><option value="14">صغير</option><option value="15">متوسط</option><option value="16">كبير</option><option value="17">كبير جداً</option></select></div>
           <p class="font-sample">لائحة الحوكمة لجمعية البر الخيرية · 1448 هـ</p>
@@ -397,7 +433,7 @@
           </div>
         </section>
 
-        <section class="card" aria-labelledby="s4"><div class="card-h"><h2 id="s4">الواجهة</h2></div>
+        <section class="card" data-atab="look" aria-labelledby="s4"><div class="card-h"><h2 id="s4">الواجهة</h2></div>
           <div class="s-row"><label for="sTheme">المظهر الافتراضي</label><select class="select" id="sTheme"><option value="system">حسب الجهاز</option><option value="light">فاتح</option><option value="dark">داكن</option><option value="neon">نيون</option></select></div>
           <div class="s-row"><span class="lbl">انحناء الزوايا</span><div class="seg-pick">
             <label><input type="radio" name="sRadius" value="small"><span>حاد</span></label>
@@ -409,7 +445,7 @@
             <label class="s-check"><input type="checkbox" id="sHomePrayer"> أوقات الصلاة</label></div>
         </section>
 
-        <section class="card wide" aria-labelledby="s6"><div class="card-h"><h2 id="s6">السلايدر</h2><button class="btn small" type="button" id="slAdd" hidden>شريحة جديدة</button></div>
+        <section class="card wide" data-atab="slider" aria-labelledby="s6"><div class="card-h"><h2 id="s6">السلايدر</h2><button class="btn small" type="button" id="slAdd" hidden>شريحة جديدة</button></div>
           <div class="s-row"><label for="slSeconds">مدة كل شريحة</label><select class="select" id="slSeconds"><option value="4">4 ثوانٍ</option><option value="6">6 ثوانٍ</option><option value="8">8 ثوانٍ</option><option value="10">10 ثوانٍ</option><option value="15">15 ثانية</option></select></div>
           <label class="s-check"><input type="checkbox" id="sHomeSlider"> إظهار السلايدر في الرئيسية</label>
           <p class="muted-text">المدة والإظهار يُحفظان مع «حفظ التغييرات». الشرائح نفسها تُحفظ فوراً</p>
@@ -431,7 +467,7 @@
           </div>
         </section>
 
-        <section class="card wide" aria-labelledby="s5"><div class="card-h"><h2 id="s5">المستخدمون والصلاحيات</h2></div>
+        <section class="card wide" data-atab="users" aria-labelledby="s5"><div class="card-h"><h2 id="s5">المستخدمون والصلاحيات</h2></div>
           <p class="muted-text" id="uSignin">سجّل الدخول لإدارة المستخدمين</p>
           <div id="uNoAdmin" class="u-help" hidden>
             <p>إدارة المستخدمين للمديرين فقط. لتفعيلها مرة واحدة:</p>
@@ -459,6 +495,23 @@
   </div>
 </div>
 
+<div class="ui-scrim" id="tkScrim" hidden></div>
+<div class="ui-dialog tk-dlg" id="tkDlg" role="dialog" aria-modal="true" aria-labelledby="tkDlgTitle" hidden>
+  <h2 id="tkDlgTitle">مهمة جديدة</h2>
+  <form id="tkForm">
+    <div class="s-row"><label for="tkTitle">المهمة</label><input class="input" id="tkTitle" required maxlength="160" autocomplete="off"></div>
+    <div class="s-row"><label for="tkNotes">ملاحظات</label><textarea class="input" id="tkNotes" rows="3"></textarea></div>
+    <div class="s-row"><label for="tkStatus">الحالة</label><select class="select" id="tkStatus"><option value="todo">جديدة</option><option value="doing">قيد التنفيذ</option><option value="done">مكتملة</option></select></div>
+    <div class="s-row"><label for="tkPriority">الأولوية</label><select class="select" id="tkPriority"><option value="normal">عادية</option><option value="high">عالية</option></select></div>
+    <div class="s-row"><label for="tkDue">تاريخ الاستحقاق</label><input class="input" id="tkDue" type="date"></div>
+    <div class="s-row"><label for="tkLink">مرتبطة بـ</label><select class="select" id="tkLink"></select></div>
+    <div class="ui-actions">
+      <button class="btn primary" type="submit" id="tkSave">حفظ</button>
+      <button class="btn" type="button" id="tkCancel">إلغاء</button>
+      <button class="btn ghost danger-text" type="button" id="tkDelete" hidden>حذف المهمة</button>
+    </div>
+  </form>
+</div>
 <div id="hrPrintArea" aria-hidden="true"></div>
 <div class="fp-fly" id="fpFly" role="menu" hidden></div>
 <div id="docxStyles"></div>
@@ -693,9 +746,11 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/ui.js"></script>
 <script src="js/library.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
 <script src="js/home.js"></script>
+<script src="js/tasks.js"></script>
 <script src="js/slider.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/fonts.js"></script>

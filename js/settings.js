@@ -98,7 +98,7 @@
     document.querySelectorAll("[data-clear]").forEach(b => b.addEventListener("click", () => change({ [b.dataset.clear]: "" })));
     $("sSave").addEventListener("click", save);
     $("sUndo").addEventListener("click", () => { draft = S.merge(saved); dirty = false; S.apply(draft); fill(); });
-    $("sReset").addEventListener("click", () => { if (confirm("إرجاع الهوية والألوان والخطوط والواجهة إلى الإعدادات الأصلية؟ لن يُحفظ شيء حتى تضغط «حفظ التغييرات».")) change({ ...S.DEFAULTS }); });
+    $("sReset").addEventListener("click", async () => { if (await UI.confirm("إرجاع الهوية والألوان والخطوط والواجهة إلى الإعدادات الأصلية؟ لن يُحفظ شيء حتى تضغط «حفظ التغييرات».", { ok: "إرجاع" })) change({ ...S.DEFAULTS }); });
     $("uAdd").addEventListener("submit", addUser);
   }
   function setMsg(t, kind){ $("sMsg").textContent = t || ""; $("sMsg").className = "s-msg" + (kind ? " " + kind : ""); }
@@ -128,7 +128,7 @@
     try {
       draft = S.merge({ ...draft, siteName: draft.siteName.trim() || S.DEFAULTS.siteName });
       await db.collection("settings").doc("site").set({ ...draft, updatedAt: new Date().toISOString(), updatedBy: myEmail });
-      saved = S.merge(draft); dirty = false; S.cache(saved); setMsg("حُفظت الإعدادات وطُبّقت على الموقع", "ok");
+      saved = S.merge(draft); dirty = false; S.cache(saved); setMsg(""); UI.toast("حُفظت الإعدادات وطُبّقت على الموقع");
     } catch (e){ console.error(e); setMsg(e && e.code === "permission-denied" ? "لا تملك صلاحية حفظ الإعدادات" : "تعذّر الحفظ. حاول مرة أخرى", "err"); }
     fill();
   }
@@ -149,8 +149,8 @@
       if (me) tr.querySelector(".u-act").innerHTML = '<span class="muted-text">أنت</span>';
       sel.addEventListener("change", () => db.collection("allowed").doc(p.id).update({ role: sel.value }).catch(err => { console.error(err); uMsg("تعذّر تغيير الدور", "err"); }));
       const rm = tr.querySelector("button");
-      if (rm && !me) rm.addEventListener("click", () => {
-        if (!confirm(`إزالة ${p.id}؟ لن يتمكن من فتح الموقع بعدها.`)) return;
+      if (rm && !me) rm.addEventListener("click", async () => {
+        if (!(await UI.confirm(`إزالة ${p.id}؟ لن يتمكن من فتح الموقع بعدها.`, { ok: "إزالة", danger: true }))) return;
         db.collection("allowed").doc(p.id).delete().catch(err => { console.error(err); uMsg("تعذّرت الإزالة", "err"); });
       });
       body.append(tr);
@@ -191,6 +191,16 @@
     watchPeople();
     fill();
   }
+  // tabs: الهوية والمظهر، الخطوط، السلايدر، المستخدمون
+  function setATab(t){
+    document.querySelectorAll("button[data-atab]").forEach(b => b.setAttribute("aria-selected", b.dataset.atab === t ? "true" : "false"));
+    document.querySelectorAll("section[data-atab]").forEach(c => { c.hidden = c.dataset.atab !== t; });
+    try { localStorage.setItem("app-admin-tab", t); } catch {}
+  }
+  document.querySelectorAll("button[data-atab]").forEach(b => b.addEventListener("click", () => setATab(b.dataset.atab)));
+  let aTab = "look"; try { aTab = localStorage.getItem("app-admin-tab") || "look"; } catch {}
+  setATab(document.querySelector(`button[data-atab="${aTab}"]`) ? aTab : "look");
+
   build(); fill();
   if (window.appDb && window.appUser) connect({ db: window.appDb, user: window.appUser });
   window.addEventListener("app:db", e => connect(e.detail));

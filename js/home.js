@@ -86,12 +86,12 @@
   $("pLocBtn").addEventListener("click", () => { try { localStorage.removeItem(LOC_KEY); } catch {} loc = null; askLocation(); });
 
   /* ---------- tasks panel (Firestore "tasks") ---------- */
-  let tasks = [], col = null, unsub = null;
+  let tasks = [], col = null, unsub = null, letters = [], assocs = [], gotTasks = false;
   const dayDiff = s => { if (!s) return null; const a = new Date(s + "T00:00:00"), b = new Date(ymd(new Date()) + "T00:00:00"); return Math.round((a - b) / 86400000); };
   const dueLabel = s => {
     const d = dayDiff(s);
     if (d === null) return "";
-    if (d < 0) return d === -1 ? "متأخرة يوماً" : `متأخرة ${-d} أيام`;
+    if (d < 0) return d === -1 ? "متأخرة يوماً" : d === -2 ? "متأخرة يومين" : `متأخرة ${-d} أيام`;
     if (d === 0) return "اليوم";
     if (d === 1) return "غداً";
     return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short" }).format(new Date(s + "T00:00:00"));
@@ -100,11 +100,48 @@
     if (col) return;
     col = db.collection("tasks");
     $("tAdd").hidden = false; $("tSignin").hidden = true;
-    unsub = col.onSnapshot(snap => { tasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTasks(); },
+    db.collection("hrLetters").onSnapshot(snap => { letters = snap.docs.map(d => d.data()); renderStats(); }, () => {});
+    db.collection("associations").onSnapshot(snap => { assocs = snap.docs.map(d => d.data()); renderStats(); }, () => {});
+    unsub = col.onSnapshot(snap => { tasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); gotTasks = true; renderTasks(); },
       e => { console.error(e); $("tEmpty").textContent = "تعذّر تحميل المهام"; $("tEmpty").hidden = false; });
   }
+  /* ---------- the numbers row: today, overdue, letters this month, reviews due ---------- */
+  function renderStats(){
+    const box = $("hStats"); if (!box) return;
+    const signedOut = window.appAuth && window.appAuth.user === null;
+    box.hidden = !!signedOut;
+    if (!col || !gotTasks){ box.classList.add("loading"); return; }
+    box.classList.remove("loading");
+    const open = tasks.filter(t => t.status !== "done");
+    const dToday = open.filter(t => dayDiff(t.due) === 0).length;
+    const late = open.filter(t => (dayDiff(t.due) ?? 1) < 0).length;
+    const now = new Date(), ym = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1), pym = `${prev.getFullYear()}-${pad(prev.getMonth() + 1)}`;
+    const lThis = letters.filter(l => String(l.createdAt || "").startsWith(ym)).length;
+    const lPrev = letters.filter(l => String(l.createdAt || "").startsWith(pym)).length;
+    let rev = 0, revLate = 0;
+    assocs.forEach(a => Object.values(a.approvals || {}).forEach(ap => {
+      const d = ap && ap.review ? dayDiff(ap.review) : null;
+      if (d !== null && d <= 30){ rev++; if (d < 0) revLate++; }
+    }));
+    const set = (k, n, sub, warn) => {
+      const el = box.querySelector(`[data-stat="${k}"]`);
+      el.querySelector(".st-n").textContent = n.toLocaleString("en-US");
+      el.querySelector(".st-sub").textContent = sub;
+      el.classList.toggle("warn", !!warn);
+    };
+    set("today", dToday, `من ${open.length} مفتوحة`);
+    set("late", late, late ? "تحتاج متابعة" : "لا شيء متأخر", late > 0);
+    set("letters", lThis, `مقابل ${lPrev} الشهر الماضي`);
+    set("reviews", rev, revLate ? `منها ${revLate} فات موعدها` : "خلال 30 يوماً", revLate > 0);
+  }
+  window.addEventListener("app:auth", () => { renderStats(); renderTasks(); });
+
   function renderTasks(){
+    renderStats();
     const list = $("tList"); if (!list) return;
+    const loading = !col && !(window.appAuth && window.appAuth.user === null);
+    $("tSkel").hidden = !loading; $("tSignin").hidden = !!col || loading;
     const open = tasks.filter(t => t.status !== "done");
     const rank = t => { const d = dayDiff(t.due); return d === null ? 9999 : d; };
     open.sort((a, b) => rank(a) - rank(b) || (b.priority === "high") - (a.priority === "high") || String(a.createdAt).localeCompare(String(b.createdAt)));
@@ -134,7 +171,7 @@
     try {
       await col.add({ title, status: "todo", due: $("tDue").value || null, priority: "normal", notes: "", createdAt: now, updatedAt: now });
       $("tTitle").value = ""; $("tDue").value = ""; $("tTitle").focus();
-    } catch (err){ console.error(err); alert("تعذّر حفظ المهمة"); }
+    } catch (err){ console.error(err); UI.toast("تعذّر حفظ المهمة", "err"); }
     finally { btn.disabled = false; }
   });
 

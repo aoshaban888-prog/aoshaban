@@ -100,7 +100,7 @@
       up.addEventListener("click", () => swap(i, i - 1));
       down.addEventListener("click", () => swap(i, i + 1));
       ed.addEventListener("click", () => openEditor(s));
-      del.addEventListener("click", () => { if (confirm(`حذف الشريحة «${s.title || "بلا عنوان"}»؟`)) db.collection("slides").doc(s.id).delete().catch(console.error); });
+      del.addEventListener("click", async () => { if (await UI.confirm(`حذف الشريحة «${s.title || "بلا عنوان"}»؟`, { ok: "حذف", danger: true })) db.collection("slides").doc(s.id).delete().then(() => UI.toast("حُذفت الشريحة")).catch(() => UI.toast("تعذّر الحذف", "err")); });
       ul.append(li);
     });
   }
@@ -146,7 +146,7 @@
     try {
       if (editing) await db.collection("slides").doc(editing.id).update(data);
       else await db.collection("slides").add({ ...data, image: data.image || "", active: true, order: Date.now() });
-      $("slEditor").hidden = true; editing = null; pendingImage = null; msg("حُفظت الشريحة", "ok");
+      $("slEditor").hidden = true; editing = null; pendingImage = null; msg(""); UI.toast("حُفظت الشريحة");
     } catch (err){ console.error(err); msg("تعذّر الحفظ", "err"); }
     finally { btn.disabled = false; }
   });

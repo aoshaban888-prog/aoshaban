@@ -118,6 +118,7 @@ function useUploadedFonts(list){
   previewStale = true; if (pTab === "preview") schedulePreview(100);
 }
 window.addEventListener("app:fonts", e => useUploadedFonts(e.detail));
+window.addEventListener("app:open-policy", e => { if (state.policies.some(p => p.id === e.detail)) setTimeout(() => selectPolicy(e.detail), 50); });
 
 /* font picker: family list, each family opens its weights */
 const fp = { open: false, famOpen: null };
@@ -271,6 +272,7 @@ function initFirebase(){
       if (state.mode === "db") return;
       if (!user){
         setStore("warn", "سجّل الدخول بحساب قوقل لفتح المكتبة"); storeButton("تسجيل الدخول بقوقل", signIn);
+        window.appAuth = { user: null }; window.dispatchEvent(new CustomEvent("app:auth", { detail: window.appAuth }));
         return;
       }
       setStore("", "جارٍ التحقق من الصلاحية…");
@@ -283,10 +285,11 @@ function initFirebase(){
       }
       if (!ok){
         setStore("warn", `حساب ${user.email} غير مصرّح له بفتح المكتبة`); storeButton("تبديل الحساب", signOut);
+        window.appAuth = { user, allowed: false }; window.dispatchEvent(new CustomEvent("app:auth", { detail: window.appAuth }));
         return;
       }
       state.db = db; state.col = db.collection("policies"); state.mode = "db"; state.canWrite = true;
-      window.appDb = db; window.appUser = user; window.dispatchEvent(new CustomEvent("app:db", { detail: { db, user } }));
+      window.appDb = db; window.appUser = user; window.appAuth = { user, allowed: true, signOut }; window.dispatchEvent(new CustomEvent("app:auth", { detail: window.appAuth })); window.dispatchEvent(new CustomEvent("app:db", { detail: { db, user } }));
       setStore("ok", `المكتبة محفوظة في Firebase · ${user.email}`); storeButton("خروج", signOut);
       state.col.onSnapshot(snap => {
         state.policies = snap.docs.map(policyRow);

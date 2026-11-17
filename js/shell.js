@@ -61,6 +61,31 @@
   setPinned(sideSaved !== "hidden", false);
   pinBtn.addEventListener("click", () => setPinned(app.classList.contains("side-hidden"), true));
 
+  /* account at the foot of the sidebar: photo and name; the menu holds the email, settings and sign-out */
+  const acct = document.getElementById("account"), acctBtn = document.getElementById("acctBtn"), acctMenu = document.getElementById("acctMenu");
+  function setMenu(open){ acctMenu.hidden = !open; acctBtn.setAttribute("aria-expanded", open ? "true" : "false"); }
+  acctBtn.addEventListener("click", e => { e.stopPropagation(); setMenu(acctMenu.hidden); });
+  document.addEventListener("click", e => { if (!acct.contains(e.target)) setMenu(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") setMenu(false); });
+  acctMenu.addEventListener("click", e => { if (e.target.closest("a")) setMenu(false); });
+  document.getElementById("acctOut").addEventListener("click", () => {
+    const a = window.appAuth; if (a && a.signOut) a.signOut(); else location.reload();
+  });
+  function renderAccount(){
+    const a = window.appAuth, u = a && a.allowed && a.user;
+    acct.hidden = !u;
+    document.querySelector(".side-foot").classList.toggle("signed", !!u);
+    if (!u) return;
+    const name = u.displayName || u.email.split("@")[0];
+    document.getElementById("acctName").textContent = name;
+    document.getElementById("acctMail").textContent = u.email;
+    const pic = document.getElementById("acctPic"); pic.innerHTML = "";
+    if (u.photoURL){ const i = document.createElement("img"); i.src = u.photoURL; i.alt = ""; i.referrerPolicy = "no-referrer"; i.onerror = () => { i.remove(); pic.textContent = name.trim()[0] || "?"; }; pic.append(i); }
+    else pic.textContent = name.trim()[0] || "?";
+  }
+  window.addEventListener("app:auth", renderAccount);
+  renderAccount();
+
   /* theme: light, dark or neon; with nothing chosen the page follows the system */
   const root = document.documentElement;
   const sysTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
