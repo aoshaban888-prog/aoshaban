@@ -685,7 +685,7 @@ ${HELLO}
         L.createdAt = new Date().toISOString(); L.createdBy = me;
         const r = await db.collection("hrLetters").add(L);
         // later changes to this letter keep its number
-        setEditing({ ...L, id: r.id });
+        if (P.editIssued) setEditing({ ...L, id: r.id });
         msg(""); UI.toast(`حُفظ الخطاب برقم ${L.ref}`);
       }
       renderPaper(); // show the number on the page
@@ -728,7 +728,17 @@ ${HELLO}
     msg(""); window.scrollTo(0, 0);
   }
 
+  // without «view all», only this user's letters are asked for (the database rules refuse the whole log)
+  let lettersUnsub = null, lettersAll = null;
+  function subLetters(){
+    if (!db || lettersAll === !!P.viewLog) return;
+    lettersAll = !!P.viewLog;
+    if (lettersUnsub) lettersUnsub();
+    const q = lettersAll ? db.collection("hrLetters") : db.collection("hrLetters").where("createdBy", "==", me);
+    lettersUnsub = q.onSnapshot(snap => { letters = snap.docs.map(x => ({ id: x.id, ...x.data() })); renderLog(); }, e => console.error(e));
+  }
   function applyPerms(){
+    subLetters();
     // tabs and tools the user may not use disappear
     document.querySelector('[data-hrtab="tpl"]').hidden = !P.templates;
     document.querySelector('[data-hrtab="heads"]').hidden = !P.heads;
@@ -1100,7 +1110,7 @@ ${HELLO}
       }
       fillTplSelect(); renderTpls(); migrate();
     }, e => console.error(e));
-    db.collection("hrLetters").onSnapshot(snap => { letters = snap.docs.map(x => ({ id: x.id, ...x.data() })); renderLog(); }, e => console.error(e));
+    subLetters();
     db.collection("hrMeta").doc("seal").onSnapshot(d => { if (d.exists){ seal = { ...seal, ...d.data() }; renderSealForm(); renderPaper("sign"); } }, () => {});
     renderSealForm();
     db.collection("hrHeads").onSnapshot(snap => { heads = snap.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => a.name.localeCompare(b.name)); fillHeadSelect(); renderHeads(); }, e => console.error(e));

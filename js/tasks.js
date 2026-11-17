@@ -223,7 +223,7 @@
   function connect(d){
     if (db) return;
     db = d.db;
-    db.collection("tasks").onSnapshot(snap => { tasks = snap.docs.map(x => ({ id: x.id, ...x.data() })); render(); }, e => { console.error(e); UI.toast("تعذّر تحميل المهام", "err"); });
+    db.collection("tasks").onSnapshot(snap => { tasks = snap.docs.map(x => ({ id: x.id, ...x.data() })); render(); }, e => { console.error(e); if (e && e.code !== "permission-denied") UI.toast("تعذّر تحميل المهام", "err"); });
     db.collection("policies").onSnapshot(snap => { policies = snap.docs.map(x => ({ id: x.id, title: x.data().title || "" })); }, () => {});
     db.collection("hrLetters").onSnapshot(snap => { letters = snap.docs.map(x => ({ id: x.id, ...x.data() })); }, () => {});
     render();

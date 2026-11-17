@@ -1,35 +1,119 @@
 rules_version = '2';
-// Only signed-in Google accounts whose email has a document in the "allowed" collection
-// (document ID = the email, e.g. allowed/someone@gmail.com) can read or write the site.
-// A person whose document has role: "admin" can also add, remove and change people
-// from the site settings page. The first admin is set by hand in the console.
+// Access is limited to signed-in accounts with a verified email whose email has a document in "allowed".
+// That document holds the person's role ("admin" has everything), sections and permissions,
+// all edited from the site settings pages by an admin. The first admin is set by hand in the console.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
       return request.auth != null && request.auth.token.email_verified == true;
     }
+    function myEmail() {
+      return request.auth.token.email;
+    }
     function me() {
-      return /databases/$(database)/documents/allowed/$(request.auth.token.email);
+      return /databases/$(database)/documents/allowed/$(myEmail());
     }
     function allowed() {
       return signedIn() && exists(me());
     }
+    function profile() {
+      return get(me()).data;
+    }
     function isAdmin() {
-      return allowed() && get(me()).data.get("role", "") == "admin";
+      return allowed() && profile().get("role", "") == "admin";
+    }
+    // letters permissions: submit is on by default; older records may carry canIssue
+    function perm(k) {
+      return isAdmin() || (allowed() && profile().get("perms", {}).get(k, k == "submit" || (k == "issue" && profile().get("canIssue", false))));
+    }
+    // sections a member can open (all three when not set)
+    function section(s) {
+      return isAdmin() || (allowed() && s in profile().get("sections", ["tasks", "governance", "hr"]));
     }
 
-    // everyone may check their own entry; admins see and edit the whole list but cannot remove or demote themselves
+    // people: everyone may read their own entry; admins manage the list but cannot remove or demote themselves
     match /allowed/{email} {
-      allow get: if signedIn() && request.auth.token.email == email;
+      allow get: if signedIn() && myEmail() == email;
       allow list: if isAdmin();
       allow create: if isAdmin();
-      allow update: if isAdmin() && (email != request.auth.token.email || request.resource.data.get("role", "") == "admin");
-      allow delete: if isAdmin() && email != request.auth.token.email;
+      allow update: if isAdmin() && (email != myEmail() || request.resource.data.get("role", "") == "admin");
+      allow delete: if isAdmin() && email != myEmail();
     }
 
-    // everything else: policies, associations, letterheads, versions, tasks, settings, ...
-    match /{col}/{id} {
-      allow read, write: if col != "allowed" && allowed();
+    // site settings, fonts and slider: everyone reads, admins change
+    match /settings/{id} {
+      allow read: if allowed();
+      allow write: if isAdmin();
+    }
+    match /fonts/{id} {
+      allow read: if allowed();
+      allow write: if isAdmin();
+    }
+    match /fontChunks/{id} {
+      allow read: if allowed();
+      allow write: if isAdmin();
+    }
+    match /slides/{id} {
+      allow read: if allowed();
+      allow write: if isAdmin();
+    }
+    match /prefs/{id} {
+      allow read, write: if allowed();
+    }
+
+    // tasks
+    match /tasks/{id} {
+      allow read, write: if section("tasks");
+    }
+
+    // governance library (policies and associations are also read by the letters and the home page)
+    match /policies/{id} {
+      allow read: if allowed();
+      allow write: if section("governance");
+    }
+    match /associations/{id} {
+      allow read: if allowed();
+      allow write: if section("governance");
+    }
+    match /letterheads/{id} {
+      allow read, write: if section("governance");
+    }
+    match /versions/{id} {
+      allow read, write: if section("governance");
+    }
+    match /vindex/{id} {
+      allow read, write: if section("governance");
+    }
+
+    // letters settings
+    match /hrTemplates/{id} {
+      allow read: if allowed();
+      allow write: if perm("templates");
+    }
+    match /hrHeads/{id} {
+      allow read: if allowed();
+      allow write: if perm("heads");
+    }
+    match /hrMeta/{id} {
+      allow read: if allowed();
+      allow write: if (id == "seal" && perm("seal")) || (id == "templates" && perm("templates")) || (id == "counter" && allowed());
+    }
+
+    // issued letters: everyone sees their own, the whole log needs viewLog
+    match /hrLetters/{id} {
+      allow read: if perm("viewLog") || (allowed() && resource.data.createdBy == myEmail());
+      allow create: if (perm("issue") && request.resource.data.createdBy == myEmail())
+                    || (allowed() && request.resource.data.get("requestId", null) != null);
+      allow update: if perm("editIssued");
+      allow delete: if perm("deleteLog");
+    }
+
+    // administrative requests
+    match /requests/{id} {
+      allow read: if allowed();
+      allow create: if perm("submit") && request.resource.data.submittedBy == myEmail();
+      allow update: if allowed();
+      allow delete: if isAdmin();
     }
   }
 }
