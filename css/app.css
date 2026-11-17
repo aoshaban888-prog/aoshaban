@@ -540,8 +540,10 @@ bdi{unicode-bidi:isolate}
 .hr-editor{margin-top:20px}
 .hr-ed-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:8px 0}
 .hr-ed-ins{display:flex;gap:6px;flex-wrap:wrap}
-.hr-ed-ins .select{width:180px;height:34px}
-.hr-ed-ins .input{width:170px;height:34px}
+.hr-ed-ins{align-items:center}
+.hr-ed-ins .select,.hr-ed-ins .input{height:36px;padding:0 10px;line-height:normal;min-width:0;font-size:14px}
+.hr-ed-ins .select{width:200px}
+.hr-ed-ins .input{width:180px}
 #hrEdTools{position:sticky;top:8px;margin-bottom:8px}
 .hr-ed-rich{min-height:420px;background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:28px 36px;font-family:var(--font-ui);font-size:14px;line-height:1.9;outline:none;margin-bottom:8px}
 .hr-ed-rich:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
