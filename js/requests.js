@@ -173,7 +173,7 @@
     if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...HRLetters.finalize(r.letter), ref: r.ref }));
     $("rqNoteWrap").hidden = !amApprover(r);
     // preview
-    const pv = HRLetters.paper({ ...(r.status === "approved" ? r.letter : HRLetters.finalize(r.letter)), ref: r.ref });
+    const pv = HRLetters.paper({ ...HRLetters.finalize(r.letter), ref: r.ref });
     const paper = $("rqPaper"); paper.setAttribute("style", pv.style); paper.innerHTML = pv.html;
     setTimeout(() => { HRLetters.fit(); HRLetters.place(paper); }, 30);
   }

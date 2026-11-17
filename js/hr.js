@@ -355,6 +355,7 @@ ${HELLO}
   }
   const vals = L => ({ ...L.fields, [ASSOC_FIELD]: L.assoc, "صفة المعتمد": L.signRole, "اسم المعتمد": L.signName });
   function headParts(head){ return { hdr: head ? head.hdr || "" : "", ftr: head ? head.ftr || "" : "" }; }
+  const PENDING_SIGN = '<div class="lt-pend">الاعتماد والتوقيع والختم تظهر بعد الاعتماد النهائي</div>';
   function renderPaper(force){
     const paper = $("hrPaper"), t = curTpl(), head = curHead(), L = draft();
     if (!t){ paper.removeAttribute("style"); paper.innerHTML = '<p class="lt-empty">اختر نوع الخطاب</p>'; fit(); return; }
@@ -366,10 +367,13 @@ ${HELLO}
       return;
     }
     const keep = force === "head" || force === "sign" ? grab() : null;
-    const sw = { showSig: L.showSig, showStamp: L.showStamp };
-    if (keep && force === "sign") keep.sign = genSign(L, sw);
+    // users who can only submit see no signer, signature or stamp until the final approval
+    const pend = !P.issue && !P.admin;
+    const sw = pend ? { showSig: false, showStamp: false } : { showSig: L.showSig, showStamp: L.showStamp };
+    const signHtml = pend ? PENDING_SIGN : genSign(L, sw);
+    if (keep && (force === "sign" || pend)) keep.sign = signHtml;
     const parts = keep ? { ...keep, ...headParts(head), showHdr, showFtr, ...sw, sealPos: null, sealSize: null } :
-      { title: esc(t.title), body: genBody(t.body, vals(L), !!t.html), sign: genSign(L, sw), ...headParts(head), showHdr, showFtr, ...sw };
+      { title: esc(t.title), body: genBody(t.body, vals(L), !!t.html), sign: signHtml, ...headParts(head), showHdr, showFtr, ...sw };
     paper.setAttribute("style", paperStyle(head));
     paper.innerHTML = paperInner(L, head, parts, P.editText, P.seal);
     fit(); placeSeal(paper);
@@ -859,10 +863,10 @@ ${HELLO}
     finalize(L0){
       const L = JSON.parse(JSON.stringify(L0 || {}));
       const sh = signShared || {};
-      let changed = false;
-      if (!(L.signName || "").trim() && !(L.signRole || "").trim() && (sh.signName || sh.signRole)){ L.signName = sh.signName || ""; L.signRole = sh.signRole || ""; changed = true; }
+      if (!(L.signName || "").trim() && !(L.signRole || "").trim() && (sh.signName || sh.signRole)){ L.signName = sh.signName || ""; L.signRole = sh.signRole || ""; }
       if (!L.headId && sh.defaultHead && heads.some(h => h.id === sh.defaultHead)) L.headId = sh.defaultHead;
-      if (changed && L.parts) L.parts.sign = genSign(L, L);
+      L.showSig = true; L.showStamp = true;
+      if (L.parts){ L.parts.showSig = true; L.parts.showStamp = true; L.parts.sealPos = null; L.parts.sign = genSign(L, L); }
       return L;
     },
     preview: (L, opts) => { const head = heads.find(h => h.id === L.headId) || null; preview(L, head, partsOf(L, head), opts); },
