@@ -851,10 +851,8 @@ textarea.input{min-height:180px;resize:vertical;font-family:var(--font-doc);line
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.2/dist/docx-preview.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 <!-- Firebase (Firestore + Google sign-in). If these fail to load (e.g. inside a Claude artifact), the page falls back to Claude's store or the browser. -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -868,6 +866,22 @@ const NAME_RX = /\{\{?\s*اسم[ _]الجمعية\s*\}?\}|\[\s*اسم الجمع
 /* blanks left for the association name in imported policies: «جمعية ......» and «الجمعية (......)» */
 const NAME_BLANK_RX = /جمعية\s*[.…_ـ]{3,}|الجمعية\s*\(\s*[.…_ـ\s]{3,}\)/g;
 const blanksToPlaceholder = h => (h || "").replace(NAME_BLANK_RX, "{اسم الجمعية}");
+
+/* heavy libraries are fetched the first time they are needed (Word import, PDF export) */
+const LIBS = {
+  mammoth: ["https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"],
+  pdf: ["https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"],
+};
+const libLoads = {};
+const loadScript = src => new Promise((res, rej) => {
+  const el = document.createElement("script"); el.src = src; el.async = false;
+  el.onload = res; el.onerror = () => { el.remove(); rej(Object.assign(new Error("lib_load"), { code: "lib_load" })); };
+  document.head.append(el);
+});
+function needLib(k){ return libLoads[k] ||= Promise.all(LIBS[k].map(loadScript)).catch(e => { delete libLoads[k]; throw e; }); }
+
+/* policy HTML is cleaned of scripts and event handlers before it reaches the page or the database */
+const cleanHtml = h => window.DOMPurify ? DOMPurify.sanitize(h || "", { ADD_ATTR: ["contenteditable"] }) : (h || "");
 
 /* Fonts the association supplied; published next to the page under fonts/.
    Each weight is its own Word family (`word`); `allBold` weights are a family's Bold face, so every run is set bold. */
@@ -1068,7 +1082,7 @@ function initFirebase(){
   let app;
   try { app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG); } catch (e){ console.error(e); return Promise.resolve(false); }
   const auth = app.auth(); const db = app.firestore();
-  try { db.settings({ ignoreUndefinedProperties: true }); } catch {}
+  try { db.settings({ ignoreUndefinedProperties: true, merge: true }); } catch {}
   const provider = new firebase.auth.GoogleAuthProvider(); provider.setCustomParameters({ prompt: "select_account" });
   const signIn = async () => {
     try { await auth.signInWithPopup(provider); }
@@ -1104,7 +1118,7 @@ function initFirebase(){
       state.db = db; state.col = db.collection("policies"); state.mode = "db"; state.canWrite = true;
       setStore("ok", `المكتبة محفوظة في Firebase · ${user.email}`); storeButton("خروج", signOut);
       state.col.onSnapshot(snap => {
-        state.policies = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.policies = snap.docs.map(policyRow);
         renderList(); renderChosen();
         if (state.onPolicies) state.onPolicies();
       }, e => { console.error(e); setStore("warn", "تعذّر الاتصال بالمكتبة. أعد تحميل الصفحة."); });
@@ -1128,7 +1142,7 @@ async function initStore(){
       state.db = db; state.col = db.collection("policies"); state.mode = "db";
       setStore("ok", "المكتبة محفوظة ومتاحة في كل مرة تفتح الصفحة");
       state.col.onSnapshot(snap => {
-        state.policies = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.policies = snap.docs.map(policyRow);
         renderList(); renderChosen();
         if (state.onPolicies) state.onPolicies();
       }, () => { setStore("warn", "تعذّر الاتصال بالمكتبة. أعد تحميل الصفحة."); });
@@ -1137,14 +1151,15 @@ async function initStore(){
   }
   state.mode = "local";
   setStore("warn", "المكتبة محفوظة في هذا المتصفح فقط");
-  state.policies = lsRead(LS_KEY, []);
+  state.policies = lsRead(LS_KEY, []).map(p => ({ ...p, html: cleanHtml(p.html) }));
   renderList();
 }
 
+function policyRow(d){ const x = d.data(); return { id: d.id, ...x, html: cleanHtml(x.html) }; }
 function newId(){ return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 async function savePolicy(p){
-  const body = { title: p.title, category: p.category || "أخرى", code: p.code || "", html: p.html || "", sample: !!p.sample,
+  const body = { title: p.title, category: p.category || "أخرى", code: p.code || "", html: cleanHtml(p.html), sample: !!p.sample,
                  createdAt: p.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
   if (new Blob([JSON.stringify(body)]).size > 250000) throw new Error("too_big");
   const old = state.policies.find(x => x.id === p.id);
@@ -1252,6 +1267,7 @@ function versionsXml(opt, ctx){
   return x + "</w:tbl>";
 }
 function storeError(e){
+  if (e && e.code === "lib_load") return "تعذّر تحميل أداة لازمة من الإنترنت. تأكد من الاتصال ثم حاول مرة أخرى.";
   if (e && e.message === "too_big") return "نص السياسة أكبر من الحد المسموح للحفظ. قسّمها إلى سياستين.";
   if (e && (e.code === "invalid_argument" || e.code === "permission-denied")) return "لا تملك صلاحية تعديل المكتبة.";
   if (e && (e.code === "quota_exceeded" || e.code === "resource-exhausted")) return "امتلأت مساحة المكتبة. احذف سياسات غير مستخدمة ثم أعد المحاولة.";
@@ -1480,7 +1496,7 @@ function renderChosen(){
 
 /* placeholders shown highlighted in the editor */
 function decoratePlaceholders(html){
-  return blanksToPlaceholder(html).replace(NAME_RX, '<span class="ph">{اسم الجمعية}</span>');
+  return blanksToPlaceholder(cleanHtml(html)).replace(NAME_RX, '<span class="ph">{اسم الجمعية}</span>');
 }
 function editorHtml(){
   const d = $("editor").cloneNode(true);
@@ -2472,12 +2488,13 @@ function textToHtml(t){
 function escHtml(s){ return s.replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c])); }
 
 async function docxToHtml(file){
+  await needLib("mammoth");
   const buf = await file.arrayBuffer();
   const res = await mammoth.convertToHtml({ arrayBuffer: buf }, {
     convertImage: mammoth.images.imgElement(() => Promise.resolve({ src: "" })),
     styleMap: ["p[style-name='Title'] => h1:fresh", "p[style-name='العنوان'] => h1:fresh"],
   });
-  return res.value.replace(/<img[^>]*>/g, "").replace(/<a id="[^"]*"><\/a>/g, "");
+  return cleanHtml(res.value.replace(/<img[^>]*>/g, "").replace(/<a id="[^"]*"><\/a>/g, ""));
 }
 
 $("dlgSave").addEventListener("click", async () => {
@@ -2497,6 +2514,7 @@ $("dlgSave").addEventListener("click", async () => {
       const skip = $("skipDups").checked;
       const todo = pendingFiles.filter(f => !(skip && f.dup));
       if (!todo.length){ m.className = "msg err"; m.textContent = "كل الملفات المختارة موجودة مسبقاً في المكتبة."; return; }
+      m.textContent = "جارٍ التجهيز…"; await needLib("mammoth");
       for (const f of todo){
         m.textContent = "جارٍ قراءة " + f.name + "…";
         let html;
@@ -4138,7 +4156,7 @@ $("pdfBtn").addEventListener("click", async () => {
     const blob = await pagesToPdf(pages);
     stage.innerHTML = "";
     await offer(fileBase() + ".pdf", blob);
-  } catch (e){ console.error(e); setMsg("تعذّر إنشاء ملف PDF. جرّب تصدير وورد ثم حفظه PDF من وورد.", "err"); stage.innerHTML = ""; }
+  } catch (e){ console.error(e); setMsg(e && e.code === "lib_load" ? storeError(e) : "تعذّر إنشاء ملف PDF. جرّب تصدير وورد ثم حفظه PDF من وورد.", "err"); stage.innerHTML = ""; }
   finally { busy(b, false); }
 });
 
@@ -4186,6 +4204,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("bdlg")
 
 function safeName(t){ return (t || "").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120); }
 async function pagesToPdf(pages){
+  await needLib("pdf");
   const { jsPDF } = window.jspdf;
   let pdf = null;
   for (const pg of pages){
