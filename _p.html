@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مكتب الحوكمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
+<script src="js/boot.js?v=20261118c"></script>
+<link rel="stylesheet" href="css/library.css?v=20261118c">
+<link rel="stylesheet" href="css/app.css?v=20261118c">
+</head>
+<body>
+<div class="login" id="login" hidden>
+  <div class="lg-card" role="main" aria-labelledby="lgName">
+    <div class="lg-brand"><img id="lgLogo" alt="" hidden><h1 id="lgName">مكتب الحوكمة</h1></div>
+
+    <form id="lgForm" novalidate>
+      <p class="lg-sub">بوابة الدخول لمنسوبي الجهة</p>
+      <label class="lg-l" for="lgEmail">البريد الإلكتروني</label>
+      <div class="lg-field"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg><input id="lgEmail" type="email" dir="ltr" autocomplete="username" inputmode="email" placeholder="name@example.com"></div>
+      <label class="lg-l" for="lgPass">كلمة المرور</label>
+      <div class="lg-field"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input id="lgPass" type="password" dir="ltr" autocomplete="current-password" placeholder="••••••••">
+        <button class="lg-eye" id="lgEye" type="button" aria-label="إظهار كلمة المرور"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+      <button class="lg-forgot" id="lgForgot" type="button">نسيت كلمة المرور؟</button>
+      <p class="lg-msg" id="lgMsg" role="status" hidden></p>
+      <button class="lg-go" id="lgGo" type="submit">تسجيل الدخول</button>
+      <div class="lg-or"><span>أو</span></div>
+      <button class="lg-google" id="lgGoogle" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>الدخول بحساب قوقل</button>
+    </form>
+
+    <div id="lgVerify" hidden>
+      <h2 class="lg-h">فعّل بريدك الإلكتروني</h2>
+      <p class="lg-sub">أرسلنا رابط تفعيل إلى <bdi id="lgVerifyMail"></bdi>. افتح الرسالة واضغط الرابط، ثم ارجع هنا</p>
+      <button class="lg-go" id="lgVerified" type="button">فعّلت بريدي</button>
+      <button class="lg-google" id="lgResend" type="button">إعادة إرسال رابط التفعيل</button>
+      <button class="lg-forgot" type="button" data-lg-out>الدخول بحساب آخر</button>
+    </div>
+
+    <div id="lgDenied" hidden>
+      <h2 class="lg-h">لا تملك صلاحية الدخول</h2>
+      <p class="lg-sub">الحساب <bdi id="lgDeniedMail"></bdi> غير مضاف في قائمة المستخدمين. اطلب من مدير النظام إضافتك</p>
+      <button class="lg-go" type="button" data-lg-out>الدخول بحساب آخر</button>
+    </div>
+  </div>
+  <p class="lg-foot">دخول آمن عبر Firebase</p>
+</div>
+<div class="gate-loader" aria-hidden="true"><span></span></div>
+<div class="app">
+  <aside class="side" id="side" aria-label="القائمة">
+    <div class="side-top">
+      <a class="brand" href="#/home"><img class="logo-img" alt="" hidden><span class="brand-name">مكتب الحوكمة</span></a>
+      <button class="pin-btn" id="pinBtn" type="button" aria-pressed="true" title="إخفاء القائمة" aria-label="إخفاء القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M15 3v18"/></svg></button>
+    </div>
+    <nav class="nav">
+      <a href="#/home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>الرئيسية</a>
+      <a href="#/tasks" data-sec="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>المهام</a>
+      <button class="nav-group" data-sec="governance" type="button" id="govBtn" data-group="governance" aria-expanded="false" aria-controls="govSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10M19 21V10M9.5 21V10M14.5 21V10"/><path d="M2 10 12 3l10 7z"/></svg><span>الحوكمة</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-sub" data-sec="governance" id="govSub" hidden>
+        <a class="sub" href="#/governance/library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>اللوائح والسياسات</a>
+      </div>
+      <button class="nav-group" data-sec="hr" type="button" id="hrBtn" data-group="hr" aria-expanded="false" aria-controls="hrSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><span>الموارد البشرية</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-sub" data-sec="hr" id="hrSub" hidden>
+        <a class="sub" href="#/hr/letters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>الخطابات</a>
+        <a class="sub" href="#/hr/requests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>الطلبات<span class="nav-badge" id="rqBadge" hidden></span></a>
+      </div>
+      <div class="nav-label" data-sec="admin">الإدارة</div>
+      <button class="nav-group" type="button" id="admBtn" data-group="admin" data-sec="admin" aria-expanded="false" aria-controls="admSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>التمكين التقني</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-sub" id="admSub" data-sec="admin" hidden>
+        <a class="sub" href="#/admin">الإعدادات العامة</a>
+        <a class="sub" href="#/admin/requests">إدارة الطلبات الإدارية</a>
+        <a class="sub" href="#/admin/permissions">صلاحيات المستخدمين</a>
+      </div>
+    </nav>
+    <div class="side-foot">
+      <div class="account" id="account" hidden>
+        <div class="acct-menu" id="acctMenu" role="menu" hidden>
+          <bdi class="acct-mail" id="acctMail"></bdi>
+          <a class="acct-item" role="menuitem" href="#/admin">التمكين التقني</a>
+          <button class="acct-item" role="menuitem" type="button" id="acctPass">تغيير كلمة المرور</button>
+          <button class="acct-item" role="menuitem" type="button" id="acctOut">تسجيل الخروج</button>
+        </div>
+        <button class="acct-btn" id="acctBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="acctMenu">
+          <span class="acct-pic" id="acctPic" aria-hidden="true"></span><span class="acct-name" id="acctName"></span><svg class="acct-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+        </button>
+      </div>
+      <div class="store-note" id="storeNote"><span class="dot"></span><span>جارٍ الاتصال بالمكتبة…</span></div>
+      <div class="side-row"><span class="muted">المظهر</span>
+        <div class="theme-pick" role="radiogroup" aria-label="المظهر">
+          <button type="button" role="radio" data-theme-set="light">فاتح</button>
+          <button type="button" role="radio" data-theme-set="dark">داكن</button>
+          <button type="button" role="radio" data-theme-set="neon">نيون</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="scrim"></div>
+
+  <div class="main-col">
+    <div class="topbar"><button class="menu-btn" type="button" aria-label="القائمة" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><span class="t"></span></div>
+    <main class="main">
+    <section class="view home" data-view="home" hidden>
+      <header class="home-h">
+        <div><p class="crumb" id="hHijri"></p><h1 id="hDate"></h1></div>
+        <div class="clock" aria-label="الوقت الآن"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div>
+      </header>
+      <div class="stats loading" id="hStats">
+        <a class="stat" data-stat="today" href="#/tasks"><span class="st-l">مهام اليوم</span><span class="st-n">0</span><span class="st-sub"></span></a>
+        <a class="stat" data-stat="late" href="#/tasks"><span class="st-l">متأخرة</span><span class="st-n">0</span><span class="st-sub"></span></a>
+        <a class="stat" data-stat="letters" href="#/hr/letters"><span class="st-l">خطابات هذا الشهر</span><span class="st-n">0</span><span class="st-sub"></span></a>
+        <a class="stat" data-stat="reviews" href="#/governance/library"><span class="st-l">مراجعات لوائح قريبة</span><span class="st-n">0</span><span class="st-sub"></span></a>
+      </div>
+      <section class="slider" id="slider" aria-roledescription="سلايدر" aria-label="الشرائح" tabindex="0" hidden>
+        <div class="sl-viewport"><div class="sl-track" id="slTrack" aria-live="off"></div></div>
+        <button class="sl-nav prev" id="slPrev" type="button" aria-label="الشريحة السابقة"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        <button class="sl-nav next" id="slNext" type="button" aria-label="الشريحة التالية"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+        <div class="sl-dots" id="slDots"></div>
+      </section>
+      <p class="muted-text sl-empty" id="sliderEmpty" hidden>السلايدر فارغ. أضف شرائح من <a class="link" href="#/admin">التمكين التقني</a></p>
+      <div class="home-grid">
+        <section class="card tasks-card" aria-labelledby="tH">
+          <div class="card-h"><h2 id="tH">المهام</h2><span class="meta" id="tCount"></span><a href="#/tasks" class="link">كل المهام</a></div>
+          <form id="tAdd" class="t-add" hidden>
+            <input class="input" id="tTitle" placeholder="مهمة جديدة" aria-label="مهمة جديدة" autocomplete="off" required>
+            <input class="input" type="date" id="tDue" aria-label="تاريخ الاستحقاق">
+            <button class="btn primary" type="submit">إضافة</button>
+          </form>
+          <div class="skel-rows" id="tSkel" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p id="tSignin" class="muted-text" hidden>سجّل الدخول من القائمة الجانبية لعرض مهامك</p>
+          <ul id="tList" class="t-list"></ul>
+          <p id="tEmpty" class="muted-text" hidden>لا توجد مهام مفتوحة</p>
+          <a id="tMore" href="#/tasks" class="link" hidden></a>
+        </section>
+        <section class="card prayer-card" aria-labelledby="pH">
+          <div class="card-h"><h2 id="pH">أوقات الصلاة</h2></div>
+          <div class="p-next"><span class="muted-text">الصلاة القادمة</span><strong id="pNext"></strong><span id="pLeft"></span></div>
+          <ul id="pList" class="p-list"></ul>
+          <p class="p-note"><span id="pNote"></span><button id="pLocBtn" class="linkbtn" type="button" hidden>استخدام موقعي</button></p>
+        </section>
+      </div>
+    </section>
+    <section class="view tasks" data-view="tasks" hidden>
+      <header class="page-h">
+        <div><h1>المهام</h1></div>
+        <div class="actions">
+          <input class="input tk-q" id="tkQ" type="search" placeholder="بحث" aria-label="بحث في المهام">
+          <div class="seg-tabs" role="tablist" aria-label="طريقة العرض">
+            <button type="button" role="tab" data-tkview="board" aria-selected="true">لوحة</button>
+            <button type="button" role="tab" data-tkview="list" aria-selected="false">قائمة</button>
+          </div>
+          <button class="btn primary" type="button" id="tkNew">مهمة جديدة</button>
+        </div>
+      </header>
+      <div class="tk-skel" id="tkSkel" aria-hidden="true"><div class="skel-col"><i></i><i></i><i></i></div><div class="skel-col"><i></i><i></i></div><div class="skel-col"><i></i></div></div>
+      <p class="muted-text" id="tkSignin" hidden>سجّل الدخول من القائمة الجانبية لعرض مهامك</p>
+      <div class="tk-board" id="tkBoard" hidden></div>
+      <div class="tk-list" id="tkList" hidden></div>
+    </section>
+    <section class="view" data-view="governance/library" hidden>
+      <header class="page-h">
+        <div><p class="crumb">الحوكمة</p><h1>اللوائح والسياسات</h1></div>
+        <div class="actions">
+          <button class="btn small" id="bkOut" type="button" title="تنزيل ملف فيه كل السياسات والجمعيات والكليشات وسجل الإصدارات، لنقلها أو حفظها">نسخة احتياطية</button>
+      <button class="btn small" id="bkIn" type="button" title="استعادة المكتبة من ملف نسخة احتياطية">استعادة</button>
+      <input type="file" id="bkFile" accept=".json,application/json" hidden>
+      <div class="bk-ask" id="bkAsk" role="alertdialog" aria-live="polite" hidden><span id="bkAskT"></span><button class="btn small primary" id="bkGo" type="button">استعادة</button><button class="btn small ghost" id="bkNo" type="button">إلغاء</button></div>
+        </div>
+      </header>
+  <div class="grid">
+    <!-- Library -->
+    <aside class="panel lib" aria-label="المكتبة">
+      <div class="panel-h">
+        <h2>المكتبة</h2>
+        <div class="row" style="gap:6px">
+        <button class="btn small" id="batchBtn" type="button" title="تصدير عدة سياسات دفعة واحدة">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h9l3 3v11"/><path d="M4 8h10l2 2v10H4z"/><path d="M10 13v5M7.5 15.5L10 18l2.5-2.5"/></svg>
+          تصدير مجمّع
+        </button>
+        <button class="btn small" id="addBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          إضافة سياسة
+        </button>
+        </div>
+      </div>
+      <div class="search">
+        <input class="input" id="q" type="search" placeholder="ابحث باسم السياسة أو رمزها" aria-label="بحث">
+        <select class="select" id="catFilter" aria-label="التصنيف"></select>
+      </div>
+      <div class="lib-notice" id="libNotice" hidden></div>
+      <div class="list" id="list"></div>
+    </aside>
+
+    <!-- Desk -->
+    <main class="desk">
+      <div class="actionbar" id="actionbar">
+        <div class="ab-title" id="abTitle"><span class="none">اختر سياسة من المكتبة</span></div>
+        <div class="row">
+          <button class="btn primary" id="wordBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+            تصدير وورد
+          </button>
+          <button class="btn" id="pdfBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+            تصدير PDF
+          </button>
+          <button class="btn" id="allAssocBtn" type="button" title="تصدير هذه السياسة لكل الجمعيات المحفوظة، كل جمعية على كليشتها">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            لكل الجمعيات
+          </button>
+        </div>
+        <div class="msg" id="msg" role="status" aria-live="polite"></div>
+      </div>
+      <section class="panel">
+        <div class="panel-h"><h2>بيانات الجمعية</h2>
+          <div class="assoc-bar">
+            <select class="select" id="assocSel" aria-label="الجمعيات المحفوظة"></select>
+            <button class="btn small" id="assocSave" type="button">حفظ الجمعية</button>
+            <button class="btn small danger" id="assocDel" type="button" hidden>حذف</button>
+          </div>
+        </div>
+        <div class="panel-b fields">
+          <div class="field">
+            <label for="assoc">اسم الجمعية</label>
+            <input class="input" id="assoc" type="text" placeholder="مثال: جمعية البر الخيرية بالرياض" autocomplete="organization">
+          </div>
+          <div class="field">
+            <span class="lbl" id="lhLbl">كليشة الجمعية (ملف وورد)</span>
+            <label class="drop" id="lhDrop" aria-labelledby="lhLbl">
+              <input type="file" id="lhFile" accept=".docx,.dotx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);flex:none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 18v-6M9 15l3-3 3 3"/></svg>
+              <span class="fn" id="lhName"><span class="hint">اسحب الملف هنا أو اضغط للاختيار (.docx)</span></span>
+            </label>
+          </div>
+          <span class="note field full" id="assocNote" role="status"></span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-h">
+          <div class="chosen" id="chosen"><span class="none">لم تُختر سياسة بعد. اختر واحدة من المكتبة.</span></div>
+          <div class="row">
+            <button class="btn small" id="saveEdits" type="button" hidden>حفظ التعديلات في المكتبة</button>
+            <label class="hint" for="moveCat" id="moveLbl" hidden>التصنيف</label>
+            <select class="select move" id="moveCat" title="اختر تصنيفًا لنقل السياسة إليه" aria-label="نقل إلى تصنيف آخر" hidden></select>
+            <button class="btn small" id="histBtn" type="button" hidden>سجل الإصدارات</button>
+            <button class="btn small" id="editMeta" type="button" hidden>تعديل البيانات</button>
+            <button class="btn small danger" id="delBtn" type="button" hidden>حذف</button>
+          </div>
+        </div>
+        <div class="tabs ptabs" role="tablist" id="pTabs">
+          <button class="tab" role="tab" type="button" data-ptab="edit" aria-selected="true" aria-controls="tabEdit">تحرير النص</button>
+          <button class="tab" role="tab" type="button" data-ptab="preview" aria-selected="false" aria-controls="tabPreview">المعاينة على الكليشة</button>
+          <button class="tab" role="tab" type="button" data-ptab="approval" aria-selected="false" aria-controls="tabApproval">بيانات الاعتماد <span class="tab-dot" id="apDot" hidden></span></button>
+        </div>
+        <div class="panel-b" style="display:grid;gap:10px" id="tabEdit" role="tabpanel">
+          <div>
+            <div class="toolbar" role="toolbar" aria-label="تنسيق النص">
+              <div class="tg"><button class="tb" type="button" data-cmd="undo" title="تراجع (Ctrl+Z)" aria-label="تراجع (Ctrl+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 7l4 4-4 4"/><path d="M19 11H9a5 5 0 0 0 0 10h3"/></svg></button><button class="tb" type="button" data-cmd="redo" title="إعادة (Ctrl+Y)" aria-label="إعادة (Ctrl+Y)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7l-4 4 4 4"/><path d="M5 11h10a5 5 0 0 1 0 10h-3"/></svg></button></div>
+              <div class="tg tg-font">
+                <div class="fp">
+                  <button class="select fp-btn" id="fpBtn" type="button" title="خط النص في الملف" aria-haspopup="menu" aria-expanded="false" aria-label="خط النص في الملف"></button>
+                  <div class="fp-menu" id="fpMenu" role="menu" hidden></div>
+                  <input type="hidden" id="font">
+                </div>
+                <select class="tb-style tb-size" id="size" title="حجم الخط" aria-label="حجم الخط">
+                  <option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14" selected>14</option><option value="16">16</option><option value="18">18</option><option value="20">20</option>
+                </select>
+              </div>
+              <div class="tg"><select class="tb-style" id="tbStyle" title="النمط" aria-label="النمط">
+                <option value="P">عادي</option><option value="H1">عنوان 1</option><option value="H2">عنوان 2</option><option value="H3">عنوان 3</option>
+              </select></div>
+              <div class="tg"><button class="tb" type="button" data-cmd="bold" title="غامق (Ctrl+B)" aria-label="غامق (Ctrl+B)"><b class="glyph">B</b></button><button class="tb" type="button" data-cmd="italic" title="مائل (Ctrl+I)" aria-label="مائل (Ctrl+I)"><i class="glyph" style="font-family:Georgia,serif">I</i></button><button class="tb" type="button" data-cmd="underline" title="تسطير (Ctrl+U)" aria-label="تسطير (Ctrl+U)"><u class="glyph">U</u></button><button class="tb" type="button" data-cmd="strikeThrough" title="يتوسطه خط" aria-label="يتوسطه خط"><s class="glyph">ab</s></button></div>
+              <div class="tg">
+                <span class="tb-split"><button class="tb" type="button" data-cmd="foreColor" title="لون الخط" aria-label="لون الخط"><span class="glyph glyph-a">A<span class="swatch" id="fcSw" style="background:#C00000"></span></span></button><button class="tb tb-caret" type="button" data-pop="fc" title="ألوان الخط" aria-label="ألوان الخط" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button></span>
+                <span class="tb-split"><button class="tb" type="button" data-cmd="hiliteColor" title="تمييز النص" aria-label="تمييز النص"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15l-3 3h4l1-1"/><path d="M8 13l7-7 3 3-7 7z"/></svg><span class="swatch" id="hlSw" style="background:#FFFF00"></span></button><button class="tb tb-caret" type="button" data-pop="hl" title="ألوان التمييز" aria-label="ألوان التمييز" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button></span>
+              </div>
+              <div class="tg"><button class="tb" type="button" data-cmd="justifyRight" title="محاذاة لليمين" aria-label="محاذاة لليمين"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M8 10h12"/><path d="M4 14h16"/><path d="M8 18h12"/></svg></button><button class="tb" type="button" data-cmd="justifyCenter" title="توسيط" aria-label="توسيط"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 14h16"/><path d="M7 10h10M7 18h10"/></svg></button><button class="tb" type="button" data-cmd="justifyLeft" title="محاذاة لليسار" aria-label="محاذاة لليسار"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 14h16"/><path d="M4 10h12M4 18h12"/></svg></button><button class="tb" type="button" data-cmd="justifyFull" title="ضبط (محاذاة لليمين واليسار)" aria-label="ضبط (محاذاة لليمين واليسار)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 10h16"/><path d="M4 14h16"/><path d="M4 18h16"/></svg></button></div>
+              <div class="tg"><button class="tb" type="button" data-cmd="insertUnorderedList" title="تعداد نقطي" aria-label="تعداد نقطي"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h11"/><circle cx="19.5" cy="6" r="1" fill="currentColor"/><circle cx="19.5" cy="12" r="1" fill="currentColor"/><circle cx="19.5" cy="18" r="1" fill="currentColor"/></svg></button><button class="tb" type="button" data-cmd="insertOrderedList" title="ترقيم" aria-label="ترقيم"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 12h10M4 18h10"/><path d="M19 4v4M18 8h2" stroke-width="1.4"/><path d="M18 11h2l-2 3h2" stroke-width="1.4"/></svg></button><button class="tb" type="button" data-cmd="outdent" title="إنقاص المسافة البادئة" aria-label="إنقاص المسافة البادئة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M10 10h10M10 14h10M4 19h16"/><path d="M4 9.5l3 2.5-3 2.5"/></svg></button><button class="tb" type="button" data-cmd="indent" title="زيادة المسافة البادئة" aria-label="زيادة المسافة البادئة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M4 10h10M4 14h10M4 19h16"/><path d="M20 9.5l-3 2.5 3 2.5"/></svg></button></div>
+              <div class="tg last"><button class="tb" type="button" data-pop="tb" title="إدراج جدول" aria-label="إدراج جدول" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15M14.5 4.5v15"/></svg></button><button class="tb" type="button" data-cmd="textbox" title="إدراج مربع نص" aria-label="إدراج مربع نص"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5" stroke-dasharray="3 2"/><path d="M8.5 9h7M12 9v7"/></svg></button><button class="tb" type="button" data-cmd="removeFormat" title="مسح التنسيق" aria-label="مسح التنسيق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 5h12M12 5l-3 14"/><path d="M15 15l5 5M20 15l-5 5"/></svg></button><button class="tb tb-text" type="button" data-cmd="name" title="إدراج خانة اسم الجمعية">+ اسم الجمعية</button></div>
+              <div class="tb-pop" id="pop-fc" hidden></div>
+              <div class="tb-pop" id="pop-hl" hidden></div>
+              <div class="tb-pop" id="pop-tb" hidden></div>
+            </div>
+            <div class="tblbar" id="tblBar" role="toolbar" aria-label="أدوات الجدول" hidden>
+              <span class="lbl2">الجدول:</span>
+              <button class="tb" type="button" data-tbl="rowAbove">صف فوق</button>
+              <button class="tb" type="button" data-tbl="rowBelow">صف تحت</button>
+              <span class="sep"></span>
+              <button class="tb" type="button" data-tbl="colRight">عمود يمين</button>
+              <button class="tb" type="button" data-tbl="colLeft">عمود يسار</button>
+              <span class="sep"></span>
+              <button class="tb" type="button" data-tbl="delRow">حذف الصف</button>
+              <button class="tb" type="button" data-tbl="delCol">حذف العمود</button>
+              <button class="tb" type="button" data-tbl="equal" title="توزيع عرض الأعمدة بالتساوي وإرجاع ارتفاع الصفوف">توزيع متساوٍ</button>
+              <button class="tb danger" type="button" data-tbl="delTable">حذف الجدول</button>
+              <span class="hint">اسحب حدود الخانات بالماوس لتكبيرها أو تصغيرها</span>
+            </div>
+            <div class="editor" id="editor" contenteditable="true" aria-label="نص السياسة" spellcheck="false"></div>
+          </div>
+          <span class="note" id="fontNote" hidden>هذا الخط لا يُضمَّن داخل ملف الوورد (قيود الشركة المصممة)، فيظهر في الوورد فقط على جهاز مثبت عليه الخط. ملف PDF يظهر به دائماً.</span>
+          <p class="note" style="margin:0">أي موضع مكتوب فيه <code>{اسم الجمعية}</code> يُستبدل تلقائياً باسم الجمعية عند التصدير. التعديل هنا يخص هذا الإصدار فقط حتى تضغط «حفظ التعديلات في المكتبة».</p>
+        </div>
+        <div class="panel-b" id="tabPreview" role="tabpanel" hidden>
+          <div class="row preview-h"><span class="note">هكذا ستظهر الصفحات في ملف PDF، وبنفس الترتيب في ملف الوورد.</span><button class="btn small" id="refreshBtn" type="button">تحديث المعاينة</button></div>
+          <details class="settings" id="pageSettings" open>
+          <summary><span>إعدادات الصفحة والهوامش</span><span class="sum-hint" id="settingsHint"></span></summary>
+          <div class="settings-b">
+          <div class="field full">
+            <span class="lbl">هوامش النص داخل الصفحة (سم)</span>
+            <div class="margins">
+              <div class="mg"><label for="mgTop">أعلى</label><div class="mg-box"><input class="input" id="mgTop" type="number" min="0" max="15" step="0.1" inputmode="decimal"><span class="mg-steps"><button type="button" class="mg-step" data-for="mgTop" data-dir="1" aria-label="زيادة هامش أعلى"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button><button type="button" class="mg-step" data-for="mgTop" data-dir="-1" aria-label="إنقاص هامش أعلى"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button></span></div></div>
+              <div class="mg"><label for="mgBottom">أسفل</label><div class="mg-box"><input class="input" id="mgBottom" type="number" min="0" max="15" step="0.1" inputmode="decimal"><span class="mg-steps"><button type="button" class="mg-step" data-for="mgBottom" data-dir="1" aria-label="زيادة هامش أسفل"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button><button type="button" class="mg-step" data-for="mgBottom" data-dir="-1" aria-label="إنقاص هامش أسفل"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button></span></div></div>
+              <div class="mg"><label for="mgRight">يمين</label><div class="mg-box"><input class="input" id="mgRight" type="number" min="0" max="8" step="0.1" inputmode="decimal"><span class="mg-steps"><button type="button" class="mg-step" data-for="mgRight" data-dir="1" aria-label="زيادة هامش يمين"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button><button type="button" class="mg-step" data-for="mgRight" data-dir="-1" aria-label="إنقاص هامش يمين"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button></span></div></div>
+              <div class="mg"><label for="mgLeft">يسار</label><div class="mg-box"><input class="input" id="mgLeft" type="number" min="0" max="8" step="0.1" inputmode="decimal"><span class="mg-steps"><button type="button" class="mg-step" data-for="mgLeft" data-dir="1" aria-label="زيادة هامش يسار"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button><button type="button" class="mg-step" data-for="mgLeft" data-dir="-1" aria-label="إنقاص هامش يسار"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button></span></div></div>
+              <button class="btn small" id="mgReset" type="button">إرجاع هوامش الكليشة</button>
+            </div>
+            <span class="note" id="mgNote">تُضبط تلقائياً عند إرفاق الكليشة بحيث يبدأ النص بعد الكليشة وينتهي قبل تذييلها. إذا رأيت في المعاينة تداخلاً، زد الهامش العلوي أو السفلي.</span>
+          </div>
+          <div class="field full row">
+            <label class="check"><input type="checkbox" id="cover" checked> صفحة أولى باسم السياسة، والمحتوى يبدأ من الصفحة الثانية</label>
+            <label class="check"><input type="checkbox" id="addTitle"> إضافة عنوان السياسة أعلى صفحة المحتوى</label>
+            <label class="check"><input type="checkbox" id="pageNums" checked> ترقيم الصفحات في التذييل (صفحة ١ من …)</label>
+            <label class="check"><input type="checkbox" id="keepBody"> إبقاء نصوص متن الكليشة قبل السياسة</label>
+            <label class="check"><input type="checkbox" id="verTable"> إضافة جدول «سجل الإصدارات» في آخر السياسة</label>
+            <label class="check" id="embedWrap"><input type="checkbox" id="embedFont" checked> تضمين الخط داخل ملف الوورد ليظهر عند من لا يملكه</label>
+          </div>
+          </div>
+          </details>
+          <div class="pages" id="pages"><div class="placeholder">ستظهر هنا صفحات السياسة على كليشة الجمعية.</div></div>
+        </div>
+        <div class="panel-b fields" id="tabApproval" role="tabpanel" hidden>
+          <div class="field full stmt">
+            <label class="check"><input type="checkbox" id="stmtOn" checked> إضافة عبارة الاعتماد في نهاية السياسة</label>
+            <div class="stmt-prev" id="stmtPreview" aria-live="polite"></div>
+          </div>
+          <div class="field"><label for="apMinutes">رقم محضر مجلس الإدارة</label><select class="select" id="apMinutes"></select></div>
+          <div class="field"><label for="apMcal">تاريخ المحضر (اختياري)</label>
+            <select class="select" id="apMcal"><option value="">بدون تاريخ</option><option value="islamic">هجري</option><option value="gregory">ميلادي</option></select>
+          </div>
+          <div class="field full" id="apGWrap" hidden><label for="apMinutesDate">التاريخ الميلادي</label><input class="input" id="apMinutesDate" type="date"></div>
+          <div class="field full" id="apHWrap" hidden><span class="lbl">التاريخ الهجري</span>
+            <div class="hdate"><select class="select" id="apHd" aria-label="اليوم"></select><select class="select" id="apHm" aria-label="الشهر"></select><select class="select" id="apHy" aria-label="السنة"></select></div>
+          </div>
+          <p class="note field full" style="margin:0">ما تتركه فارغاً يظهر في الملف قوسين فارغين ( ) لتعبئتهما يدوياً. تُحفظ البيانات لكل سياسة مع بيانات الجمعية.</p>
+          <details class="field full settings">
+            <summary><span>بيانات إضافية لصفحة الغلاف (اختياري)</span></summary>
+            <div class="settings-b fields">
+              <p class="note field full" style="margin:0">تظهر في جدول صغير بصفحة الغلاف إذا عبّأت أياً منها.</p>
+              <div class="field"><label for="apVersion">رقم الإصدار</label><input class="input" id="apVersion" type="text" placeholder="مثال: الإصدار الأول ١.٠"></div>
+              <div class="field"><label for="apBy">جهة الاعتماد</label><input class="input" id="apBy" type="text" placeholder="مثال: مجلس الإدارة"></div>
+              <div class="field"><label for="apResolution">رقم قرار الاعتماد</label><input class="input" id="apResolution" type="text" placeholder="مثال: ق/١٢/٢٠٢٦"></div>
+              <div class="field"><label for="apDate">تاريخ الاعتماد</label><input class="input" id="apDate" type="date"><span class="note" id="apDateH"></span></div>
+              <div class="field"><label for="apReview">تاريخ المراجعة القادمة</label><input class="input" id="apReview" type="date"><span class="note" id="apReviewH"></span></div>
+              <div class="field" style="align-self:end"><button class="btn small" id="apReviewAuto" type="button">بعد سنتين من الاعتماد</button></div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+
+    </main>
+  </div>
+    </section>
+    <section class="view hr" data-view="hr/letters" hidden>
+      <header class="page-h">
+        <div><p class="crumb">الموارد البشرية</p><h1>الخطابات</h1></div>
+        <div class="actions"><div class="seg-tabs" role="tablist" aria-label="الخطابات">
+          <button type="button" role="tab" data-hrtab="new" aria-selected="true">خطاب جديد</button>
+          <button type="button" role="tab" data-hrtab="log" aria-selected="false">السجل</button>
+          <button type="button" role="tab" data-hrtab="tpl" aria-selected="false">القوالب</button>
+          <button type="button" role="tab" data-hrtab="heads" aria-selected="false">الكليشات</button>
+        </div></div>
+      </header>
+      <p class="muted-text s-signin" id="hrSignin">سجّل الدخول لحفظ الخطابات وترقيمها. تقدر تعاين وتطبع قبل تسجيل الدخول</p>
+
+      <div class="hr-new" id="hrNew">
+        <section class="card hr-form" aria-label="بيانات الخطاب">
+          <div class="s-row"><label for="hrTpl">نوع الخطاب</label><select class="select" id="hrTpl"></select></div>
+          <div class="s-row"><label for="hrHead">الكليشة</label><select class="select" id="hrHead"><option value="">بدون كليشة</option></select></div>
+          <div class="s-row"><label for="hrAssoc">الجمعية</label><input class="input" id="hrAssoc" list="hrAssocList" autocomplete="off"><datalist id="hrAssocList"></datalist></div>
+          <div class="s-row"><label for="hrDate">تاريخ الخطاب</label><input class="input" id="hrDate" type="date"></div>
+          <div class="hr-sep">بيانات الخطاب</div>
+          <div id="hrFields"></div>
+          <details class="hr-sign">
+            <summary>الاعتماد والتوقيع</summary>
+            <div class="s-row"><label for="hrSignRole">صفة المعتمد</label><input class="input" id="hrSignRole" placeholder="مثال: المدير التنفيذي"></div>
+            <div class="s-row"><label for="hrSignName">اسم المعتمد</label><input class="input" id="hrSignName"></div>
+            <p class="muted-text">الصفة والاسم تُحفظ في هذا المتصفح وتظهر في كل خطاب</p>
+            <div id="hrSealSection"><div class="hr-sep">الختم والتوقيع</div>
+            <p class="muted-text" id="hrSealSignin">سجّل الدخول لإضافة الختم والتوقيع</p>
+            <div id="hrSealBox" hidden>
+              <div class="s-row"><span class="lbl">التوقيع</span><div class="seal-pick"><div class="seal-prev" id="hrSigPrev"></div><div class="logo-btns"><label class="btn small">رفع صورة<input type="file" id="hrSigFile" accept="image/png,image/webp,image/*" hidden></label><button class="btn small ghost" type="button" id="hrSigClear">إزالة</button></div></div></div>
+              <div class="s-row"><label for="hrSigH">حجم التوقيع</label><div class="range"><input type="range" id="hrSigH" min="8" max="60"><span class="mono" id="hrSigHv"></span></div></div>
+              <div class="s-row"><span class="lbl">الختم</span><div class="seal-pick"><div class="seal-prev" id="hrStampPrev"></div><div class="logo-btns"><label class="btn small">رفع صورة<input type="file" id="hrStampFile" accept="image/png,image/webp,image/*" hidden></label><button class="btn small ghost" type="button" id="hrStampClear">إزالة</button></div></div></div>
+              <div class="s-row"><label for="hrStampW">حجم الختم</label><div class="range"><input type="range" id="hrStampW" min="15" max="80"><span class="mono" id="hrStampWv"></span></div></div>
+              <label class="s-check"><input type="checkbox" id="hrShowSig" checked> إظهار التوقيع في هذا الخطاب</label>
+              <label class="s-check"><input type="checkbox" id="hrShowStamp" checked> إظهار الختم في هذا الخطاب</label>
+              <p class="muted-text"><b>اسحب التوقيع والختم على الورقة</b> لتغيير مكانهما، واسحب أي زاوية من زواياهما لتكبيرهما أو تصغيرهما. يُحفظ المكان والحجم لكل الخطابات. <button class="linkbtn" type="button" id="hrSealReset">إرجاع المكان الافتراضي</button></p>
+              <p class="muted-text">ارفع صورتين PNG بخلفية شفافة. تُحفظان لكل الخطابات ويراهما من يملك صلاحية الدخول</p>
+            </div></div>
+          </details>
+        </section>
+
+        <div class="hr-sheet">
+          <div class="hr-stick">
+            <div class="hr-docbar">
+              <div class="hr-actions">
+                <button class="btn primary" type="button" id="hrSave">حفظ وطباعة</button>
+                <button class="btn primary" type="button" id="hrSubmit" hidden>رفع للاعتماد</button>
+                <button class="btn" type="button" id="hrPrint">طباعة بدون حفظ</button>
+                <button class="btn" type="button" id="hrPdf">حفظ PDF</button>
+                <button class="btn small ghost" type="button" id="hrClear">تفريغ الخانات</button>
+              </div>
+              <div class="hr-editing" id="hrEditing" hidden><span id="hrEditingText"></span> <button class="linkbtn" type="button" id="hrEditEnd">خطاب جديد</button></div>
+              <span class="hr-pdfnote" title="للحفظ كملف PDF اختر «حفظ بتنسيق PDF» في نافذة الطباعة، وفعّل «رسومات الخلفية» إذا لم تظهر الكليشة">PDF: اختر «حفظ بتنسيق PDF» في نافذة الطباعة</span>
+            </div>
+            <p class="s-msg" id="hrMsg" role="status"></p>
+            <div class="hr-tools" id="hrTools" role="toolbar" aria-label="تنسيق الخطاب">
+            <div class="tg"><button class="tb" type="button" data-cmd="undo" title="تراجع" aria-label="تراجع"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button><button class="tb" type="button" data-cmd="redo" title="إعادة" aria-label="إعادة"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button></div>
+            <div class="tg"><select class="select tsel" id="hrFont" aria-label="الخط"></select>
+              <select class="select tsel narrow" id="hrSize" aria-label="الحجم"><option value="">الحجم</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>32</option></select>
+              <select class="select tsel narrow" id="hrBlock" aria-label="النمط"><option value="">النمط</option><option value="p">عادي</option><option value="h3">عنوان</option><option value="h4">عنوان فرعي</option></select></div>
+            <div class="tg"><button class="tb" type="button" data-cmd="bold" title="عريض" aria-label="عريض"><b>B</b></button><button class="tb" type="button" data-cmd="italic" title="مائل" aria-label="مائل"><i>I</i></button><button class="tb" type="button" data-cmd="underline" title="تسطير" aria-label="تسطير"><u>U</u></button><button class="tb" type="button" data-cmd="strikeThrough" title="يتوسطه خط" aria-label="يتوسطه خط"><s>ab</s></button></div>
+            <div class="tg"><label class="tb tcolor" title="لون الخط"><span class="glyph">A</span><input type="color" id="hrColor" value="#c62828" aria-label="لون الخط"></label><label class="tb tcolor" title="تمييز"><svg viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg><input type="color" id="hrHilite" value="#fff59d" aria-label="لون التمييز"></label></div>
+            <div class="tg"><button class="tb" type="button" data-cmd="justifyRight" title="يمين" aria-label="محاذاة لليمين"><svg viewBox="0 0 24 24"><path d="M21 6H3M21 12H9M21 18H7"/></svg></button><button class="tb" type="button" data-cmd="justifyCenter" title="وسط" aria-label="توسيط"><svg viewBox="0 0 24 24"><path d="M21 6H3M17 12H7M19 18H5"/></svg></button><button class="tb" type="button" data-cmd="justifyLeft" title="يسار" aria-label="محاذاة لليسار"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h12M3 18h14"/></svg></button><button class="tb" type="button" data-cmd="justifyFull" title="ضبط" aria-label="ضبط"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button></div>
+            <div class="tg"><button class="tb" type="button" data-cmd="insertUnorderedList" title="تعداد نقطي" aria-label="تعداد نقطي"><svg viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button><button class="tb" type="button" data-cmd="insertOrderedList" title="تعداد رقمي" aria-label="تعداد رقمي"><svg viewBox="0 0 24 24"><path d="M10 6h11M10 12h11M10 18h11M4 4v4M3 18h3l-3 3h3"/></svg></button><button class="tb" type="button" data-cmd="outdent" title="إنقاص المسافة" aria-label="إنقاص المسافة"><svg viewBox="0 0 24 24"><path d="M21 6H11M21 12H11M21 18H11M3 9l3 3-3 3"/></svg></button><button class="tb" type="button" data-cmd="indent" title="زيادة المسافة" aria-label="زيادة المسافة"><svg viewBox="0 0 24 24"><path d="M21 6H11M21 12H11M21 18H11M7 9l-3 3 3 3"/></svg></button></div>
+            <div class="tg tbl-g"><button class="tb" type="button" id="hrTblBtn" title="إدراج جدول" aria-label="إدراج جدول" aria-haspopup="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg></button>
+              <div class="tbl-pop" id="hrTblPop" hidden><div class="tbl-grid" id="hrTblGrid"></div><span class="tbl-size" id="hrTblSize">اختر حجم الجدول</span></div>
+              <button class="tb txt" type="button" data-tbl="row" disabled title="إضافة صف">+ صف</button><button class="tb txt" type="button" data-tbl="col" disabled title="إضافة عمود">+ عمود</button><button class="tb txt" type="button" data-tbl="delrow" disabled title="حذف الصف">− صف</button><button class="tb txt" type="button" data-tbl="delcol" disabled title="حذف العمود">− عمود</button><button class="tb txt" type="button" data-tbl="up" disabled title="تحريك الجدول لأعلى">↑ تحريك</button><button class="tb txt" type="button" data-tbl="down" disabled title="تحريك الجدول لأسفل">↓ تحريك</button><button class="tb txt" type="button" data-tbl="del" disabled title="حذف الجدول">حذف الجدول</button></div>
+            <div class="tg"><button class="tb txt" type="button" id="hrHdrBtn" aria-pressed="true" title="إظهار الترويسة أعلى الصفحة">ترويسة</button><button class="tb txt" type="button" id="hrFtrBtn" aria-pressed="true" title="إظهار التذييل أسفل الصفحة">تذييل</button><button class="tb" type="button" data-cmd="removeFormat" title="مسح التنسيق" aria-label="مسح التنسيق"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16M15 15l6 6M21 15l-6 6"/></svg></button></div>
+          </div>
+          </div>
+          <p class="hr-manual" id="hrManual" hidden>عدّلت الخطاب على الورقة، وتعديلاتك محفوظة. قيم الخانات تبقى تتحدّث في أماكنها. <button class="linkbtn" type="button" id="hrRegen">إعادة البناء من القالب</button></p>
+          <div class="hr-paper-wrap"><article class="hr-paper" id="hrPaper" aria-label="الخطاب"></article></div>
+        </div>
+      </div>
+
+      <section class="card" id="hrLog" hidden aria-label="سجل الخطابات">
+        <div class="card-h"><h2>الخطابات الصادرة</h2><input class="input hr-q" id="hrLogQ" type="search" placeholder="بحث" aria-label="بحث في السجل"></div>
+        <div class="hr-bulk" id="hrBulk" hidden><span id="hrBulkN"></span><button class="btn small danger" type="button" id="hrBulkDel">حذف المحدد</button><button class="btn small ghost" type="button" id="hrBulkClear">إلغاء التحديد</button></div>
+        <div class="table-wrap"><table class="u-table hr-table"><thead>
+          <tr><th>الرقم</th><th>التاريخ</th><th>الخطاب</th><th>الموظف</th><th>الجمعية</th><th class="hr-selcol"><label class="hr-selall"><input type="checkbox" id="hrSelAll" aria-label="تحديد الكل"> الكل</label></th></tr>
+          <tr class="hr-filters">
+            <th><input class="input" id="hrFRef" placeholder="رقم" aria-label="فلترة بالرقم"></th>
+            <th><select class="select" id="hrFDate" aria-label="فلترة بالتاريخ"><option value="">كل التواريخ</option><option value="today">اليوم</option><option value="week">آخر 7 أيام</option><option value="month">هذا الشهر</option><option value="year">هذه السنة الهجرية</option></select></th>
+            <th><select class="select" id="hrFTitle" aria-label="فلترة بنوع الخطاب"><option value="">كل الخطابات</option></select></th>
+            <th><input class="input" id="hrFEmp" placeholder="الموظف" aria-label="فلترة بالموظف"></th>
+            <th><select class="select" id="hrFAssoc" aria-label="فلترة بالجمعية"><option value="">كل الجمعيات</option></select></th>
+            <th><button class="linkbtn" type="button" id="hrFReset">مسح الفلاتر</button></th>
+          </tr></thead><tbody id="hrLogList"></tbody></table></div>
+        <p class="muted-text" id="hrLogEmpty">لم يصدر أي خطاب بعد</p>
+      </section>
+
+      <div id="hrTpls" hidden>
+        <section class="card">
+          <div class="card-h"><h2>قوالب الخطابات</h2><button class="btn small" type="button" id="hrNewTpl">قالب جديد</button></div>
+          <ul class="hr-tpls" id="hrTplList"></ul>
+        </section>
+        <section class="card hr-editor" id="hrEditor" hidden>
+          <div class="card-h"><h2 id="hrEdHead">قالب جديد</h2></div>
+          <form id="hrEdForm">
+            <div class="s-row"><label for="hrEdTitle">عنوان الخطاب</label><input class="input" id="hrEdTitle" required maxlength="80"></div>
+            <div class="s-row"><label for="hrEdCat">التصنيف</label><select class="select" id="hrEdCat"></select></div>
+            <div class="hr-ed-head"><span class="lbl">نص الخطاب</span>
+              <div class="hr-ed-ins"><select class="select" id="hrEdField" aria-label="إدراج خانة"></select><input class="input" id="hrEdNew" placeholder="أو اسم خانة جديدة" aria-label="اسم خانة جديدة"><button class="btn small" type="button" id="hrEdNewBtn">إدراج</button></div>
+            </div>
+            <div class="hr-tools" id="hrEdTools" role="toolbar" aria-label="تنسيق القالب"></div>
+            <div class="hr-ed-rich" id="hrEdBody" contenteditable="true" spellcheck="false" aria-label="نص الخطاب"></div>
+            <p class="muted-text">اكتب الخانات بين قوسين مزدوجين، مثل <bdi>{{اسم الموظف}}</bdi>، فتظهر خانةً في النموذج. ولقيمة جاهزة اكتبها بعد خط عمودي: <bdi>{{اسم البرنامج|رحلات مسارات}}</bdi>. الخانة التي فيها «إنجازات» أو «قائمة» تصير قائمة نقاط (كل بند في سطر)، والتاريخ الذي فيه «يوم» يُكتب مع اسم اليوم بالهجري. الخانة التي فيها «تاريخ» تصير تقويماً، و«راتب» أو «بدل» أو «تكلفة» أو «عدد» تصير رقماً. <bdi>{{الجهة الموجه لها}}</bdi> تعطيك اختيار الصفة (السادة، سعادة…) واللقب الختامي تلقائياً، و<bdi>{{اسم الجمعية}}</bdi> و<bdi>{{صفة المعتمد}}</bdi> تُعبّأ تلقائياً. اترك سطراً فارغاً بين الفقرات</p>
+            <div class="hr-actions"><button class="btn primary" type="submit">حفظ القالب</button><button class="btn" type="button" id="hrEdCancel">إلغاء</button></div>
+          </form>
+        </section>
+      </div>
+
+      <div id="hrHeads" hidden>
+        <section class="card">
+          <div class="card-h"><h2>الكليشات</h2><button class="btn small" type="button" id="hdNew" hidden>كليشة جديدة</button></div>
+          <p class="muted-text" id="hdSignin">سجّل الدخول لإضافة الكليشات</p>
+          <ul class="hr-tpls" id="hdList"></ul>
+          <p class="muted-text" id="hdEmpty" hidden>لا توجد كليشات بعد. أضف صورة كليشتك (A4) وإطار التاريخ</p>
+        </section>
+        <div class="hd-editor" id="hdEditor" hidden>
+          <section class="card">
+            <div class="card-h"><h2 id="hdHead">كليشة جديدة</h2></div>
+            <form id="hdForm">
+              <div class="s-row"><label for="hdName">الاسم</label><input class="input" id="hdName" maxlength="60" placeholder="مثال: كليشة جمعية البر"></div>
+              <div class="s-row"><span class="lbl">صورة الكليشة</span><div class="logo-btns"><label class="btn small">اختيار صورة<input type="file" id="hdBg" accept="image/*" hidden></label><button class="btn small ghost" type="button" id="hdBgClear">إزالة</button></div></div>
+              <p class="muted-text">صدّر تصميم الكليشة صورةً بمقاس A4 (PNG أو JPG)، وتظهر خلف الخطاب كاملاً</p>
+              <div class="hr-sep">مساحة النص</div>
+              <div class="s-row"><label for="hdMt">هامش أعلى</label><div class="range"><input type="range" id="hdMt" min="10" max="120"><span class="mono" id="hdMtv"></span></div></div>
+              <div class="s-row"><label for="hdMb">هامش أسفل</label><div class="range"><input type="range" id="hdMb" min="10" max="100"><span class="mono" id="hdMbv"></span></div></div>
+              <div class="s-row"><label for="hdMs">هامش جانبي</label><div class="range"><input type="range" id="hdMs" min="8" max="45"><span class="mono" id="hdMsv"></span></div></div>
+              <div class="hr-sep">إطار التاريخ</div>
+              <div class="s-row"><span class="lbl">صورة الإطار</span><div class="logo-btns"><label class="btn small">اختيار صورة<input type="file" id="hdFrame" accept="image/*" hidden></label><button class="btn small ghost" type="button" id="hdFrameClear">إزالة</button></div></div>
+              <p class="muted-text">صورة PNG بخلفية شفافة. اليوم والتاريخ الهجري والميلادي والرقم تُكتب داخلها</p>
+              <div class="s-row"><label for="hdFx">من اليسار</label><div class="range"><input type="range" id="hdFx" min="0" max="180"><span class="mono" id="hdFxv"></span></div></div>
+              <div class="s-row"><label for="hdFy">من الأعلى</label><div class="range"><input type="range" id="hdFy" min="0" max="260"><span class="mono" id="hdFyv"></span></div></div>
+              <div class="s-row"><label for="hdFw">العرض</label><div class="range"><input type="range" id="hdFw" min="25" max="140"><span class="mono" id="hdFwv"></span></div></div>
+              <div class="s-row"><label for="hdFpt">بداية النص من أعلى الإطار</label><div class="range"><input type="range" id="hdFpt" min="0" max="40"><span class="mono" id="hdFptv"></span></div></div>
+              <div class="s-row"><label for="hdFps">بداية النص من جانب الإطار</label><div class="range"><input type="range" id="hdFps" min="0" max="40"><span class="mono" id="hdFpsv"></span></div></div>
+              <div class="s-row"><label for="hdFfs">حجم خط الإطار</label><div class="range"><input type="range" id="hdFfs" min="8" max="18"><span class="mono" id="hdFfsv"></span></div></div>
+              <div class="hr-sep">الترويسة والتذييل</div>
+              <div class="s-row"><label for="hdHdr">ترويسة أعلى</label><textarea class="input" id="hdHdr" rows="2" placeholder="اختياري"></textarea></div>
+              <div class="s-row"><label for="hdFtr">تذييل أسفل</label><textarea class="input" id="hdFtr" rows="2" placeholder="مثال: العنوان · الهاتف · البريد"></textarea></div>
+              <div class="hr-actions"><button class="btn primary" type="submit">حفظ الكليشة</button><button class="btn" type="button" id="hdCancel">إلغاء</button></div>
+            </form>
+          </section>
+          <div class="hr-paper-wrap"><article class="hr-paper" id="hdPaper" aria-label="معاينة الكليشة"></article></div>
+        </div>
+      </div>
+    </section>
+    <section class="view" data-view="hr/requests" hidden>
+      <header class="page-h">
+        <div><p class="crumb">الموارد البشرية</p><h1>الطلبات</h1></div>
+        <div class="actions"><div class="seg-tabs" role="tablist" aria-label="الطلبات">
+          <button type="button" role="tab" data-rqtab="inbox" aria-selected="true">بانتظار اعتمادي <span class="rq-count" id="rqInboxN"></span></button>
+          <button type="button" role="tab" data-rqtab="mine" aria-selected="false">طلباتي</button>
+          <button type="button" role="tab" data-rqtab="all" aria-selected="false" id="rqAllTab" hidden>كل الطلبات</button>
+        </div></div>
+      </header>
+      <p class="muted-text" id="rqSignin">سجّل الدخول لعرض الطلبات</p>
+      <div class="rq-layout" id="rqLayout" hidden>
+        <section class="card rq-list-card" aria-label="قائمة الطلبات"><ul class="rq-list" id="rqList"></ul><p class="muted-text" id="rqEmpty" hidden></p></section>
+        <section class="card rq-detail" id="rqDetail" hidden aria-label="تفاصيل الطلب">
+          <div class="rq-head"><h2 id="rqTitle"></h2><span class="rq-chip" id="rqStatus"></span></div>
+          <dl class="rq-meta" id="rqMeta"></dl>
+          <h3 class="rq-h3">مسار الاعتماد</h3>
+          <ol class="rq-steps" id="rqSteps"></ol>
+          <div id="rqNoteWrap" hidden><textarea class="input rq-note" id="rqNote" rows="2" placeholder="ملاحظة للمقدّم أو للمرحلة التالية"></textarea></div>
+          <div class="rq-actions" id="rqActions"></div>
+          <h3 class="rq-h3">سجل الطلب</h3>
+          <ol class="rq-history" id="rqHistory"></ol>
+          <h3 class="rq-h3">الخطاب</h3>
+          <div class="hr-paper-wrap"><article class="hr-paper" id="rqPaper" aria-label="معاينة الخطاب"></article></div>
+        </section>
+      </div>
+    </section>
+    <section class="view" data-view="admin/permissions" hidden>
+      <header class="page-h"><div><p class="crumb">التمكين التقني</p><h1>صلاحيات المستخدمين</h1></div></header>
+      <p class="muted-text" id="pmSignin">سجّل الدخول لضبط الصلاحيات</p>
+      <p class="muted-text" id="pmNoAdmin" hidden>هذه الصفحة للمديرين فقط</p>
+      <div id="pmBox" hidden>
+        <p class="muted-text pm-intro">لكل مستخدم بطاقة: اختر قالباً جاهزاً أو علّم الصلاحيات واحدة واحدة، والتغيير يُحفظ ويُطبّق فوراً. ما تُقفله يختفي من واجهة المستخدم. لإضافة مستخدم أو تغيير دوره إلى «مدير»: الإعدادات العامة ← المستخدمون</p>
+        <div class="pm-list" id="pmList"></div>
+        <p class="muted-text" id="pmEmpty" hidden>لا يوجد مستخدمون بعد</p>
+      </div>
+    </section>
+    <section class="view" data-view="admin/requests" hidden>
+      <header class="page-h"><div><p class="crumb">التمكين التقني</p><h1>إدارة الطلبات الإدارية</h1></div></header>
+      <p class="muted-text" id="raSignin">سجّل الدخول لضبط الطلبات الإدارية</p>
+      <p class="muted-text" id="raNoAdmin" hidden>هذه الصفحة للمديرين فقط</p>
+      <div class="s-grid" id="raBox" hidden>
+        <section class="card wide" aria-labelledby="ra1">
+          <div class="card-h"><h2 id="ra1">مسارات الاعتماد</h2><button class="btn small" type="button" id="raWfNew">مسار جديد</button></div>
+          <p class="muted-text">كل مسار يبدأ بمقدّم الطلب ثم مراحل الاعتماد بالترتيب. اختر لكل مرحلة معتمداً أو أكثر (يكفي اعتماد أحدهم)، وحدّد الخطابات التي تمشي عليه. الخطابات غير المحددة تمشي على المسار الافتراضي</p>
+          <ul class="hr-tpls" id="raWfList"></ul>
+          <p class="muted-text" id="raWfEmpty" hidden>لا توجد مسارات بعد</p>
+          <div class="ra-editor" id="raWfEditor" hidden>
+            <h3 id="raWfHead">مسار جديد</h3>
+            <div class="s-row"><label for="raWfName">اسم المسار</label><input class="input" id="raWfName" maxlength="60" placeholder="مثال: اعتماد الخطابات الخارجية"></div>
+            <label class="s-check"><input type="checkbox" id="raWfDefault"> المسار الافتراضي لكل الخطابات غير المحددة</label>
+            <div class="hr-sep">المراحل</div>
+            <div class="ra-stages" id="raStages"></div>
+            <button class="btn small" type="button" id="raStageAdd">+ مرحلة</button>
+            <div class="hr-sep">الخطابات التي تمشي على هذا المسار</div>
+            <div class="ra-tpls" id="raWfTpls"></div>
+            <div class="hr-actions" style="margin-top:16px"><button class="btn primary" type="button" id="raWfSave">حفظ المسار</button><button class="btn" type="button" id="raWfCancel">إلغاء</button></div>
+          </div>
+        </section>
+        <section class="card" aria-labelledby="ra3">
+          <div class="card-h"><h2 id="ra3">خيارات الاعتماد</h2></div>
+          <label class="s-check"><input type="checkbox" id="raOptEdit"> المعتمد يقدر يعدّل الخطاب قبل اعتماده</label>
+          <label class="s-check"><input type="checkbox" id="raOptNote"> إلزام كتابة السبب عند الإرجاع أو الرفض</label>
+        </section>
+      </div>
+    </section>
+    <section class="view admin" data-view="admin" hidden>
+      <header class="page-h">
+        <div><p class="crumb">الإدارة</p><h1>التمكين التقني</h1></div>
+        <div class="actions">
+          <span class="s-state" id="sState"></span>
+          <button class="btn small ghost" type="button" id="sReset">الإعدادات الأصلية</button>
+          <button class="btn small" type="button" id="sUndo">تراجع</button>
+          <button class="btn primary" type="button" id="sSave" disabled>حفظ التغييرات</button>
+        </div>
+      </header>
+      <div class="seg-tabs admin-tabs" role="tablist" aria-label="أقسام التمكين">
+        <button type="button" role="tab" data-atab="look" aria-selected="true">الهوية والمظهر</button>
+        <button type="button" role="tab" data-atab="fonts" aria-selected="false">الخطوط</button>
+        <button type="button" role="tab" data-atab="slider" aria-selected="false">السلايدر</button>
+        <button type="button" role="tab" data-atab="users" aria-selected="false">المستخدمون</button>
+      </div>
+      <p class="s-msg" id="sMsg" role="status"></p>
+      <p class="muted-text s-signin" id="sSignin">سجّل الدخول لحفظ الإعدادات. التغييرات هنا تظهر فوراً لكنها لا تُحفظ قبل تسجيل الدخول</p>
+      <div class="s-grid">
+        <section class="card" data-atab="look" aria-labelledby="s1"><div class="card-h"><h2 id="s1">الهوية</h2></div>
+          <div class="s-row"><label for="sName">اسم الموقع</label><input class="input" id="sName" maxlength="40"></div>
+          <div class="s-row"><span class="lbl">الشعار</span>
+            <div class="logo-pick"><div class="logo-prev" id="sLogoPrev"></div><div class="logo-btns"><label class="btn small">رفع شعار<input type="file" id="sLogoFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" hidden></label><button class="btn small ghost" type="button" data-clear="logo">إزالة</button></div></div></div>
+          <div class="s-row"><span class="lbl">شعار للخلفية الداكنة <span class="muted-text">اختياري</span></span>
+            <div class="logo-pick"><div class="logo-prev dark" id="sLogoDarkPrev"></div><div class="logo-btns"><label class="btn small">رفع شعار<input type="file" id="sLogoDarkFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" hidden></label><button class="btn small ghost" type="button" data-clear="logoDark">إزالة</button></div></div></div>
+          <div class="s-row"><label for="sLogoSize">حجم الشعار</label><div class="range"><input type="range" id="sLogoSize" min="20" max="64" step="4"><span class="mono" id="sLogoSizeV"></span></div></div>
+          <label class="s-check"><input type="checkbox" id="sShowName"> إظهار الاسم بجانب الشعار</label>
+        </section>
+
+        <section class="card" data-atab="look" aria-labelledby="s2"><div class="card-h"><h2 id="s2">الألوان</h2></div>
+          <div class="presets" id="sPresets"></div>
+          <div class="s-row two">
+            <div><label for="sA1">اللون الأول</label><div class="color"><input type="color" id="sA1"><bdi class="mono" id="sA1v"></bdi></div></div>
+            <div><label for="sA2">اللون الثاني</label><div class="color"><input type="color" id="sA2"><bdi class="mono" id="sA2v"></bdi></div></div>
+          </div>
+          <div class="s-preview"><span class="pv-btn">زر أساسي</span><span class="pv-link">رابط</span><span class="pv-soft">تحديد</span></div>
+          <p class="muted-text">التدرّج يظهر على الزر الأساسي والقسم المحدد ومربع الصلاة القادمة في كل المظاهر. اختر لونين متقاربين للون واحد بلا تدرّج</p>
+        </section>
+
+        <section class="card wide" data-atab="fonts" aria-labelledby="s3"><div class="card-h"><h2 id="s3">الخطوط</h2></div>
+          <div class="s-row"><label for="sFont">خط الواجهة</label><select class="select" id="sFont"></select></div>
+          <div class="s-row"><label for="sFontSize">حجم النص</label><select class="select" id="sFontSize"><option value="14">صغير</option><option value="15">متوسط</option><option value="16">كبير</option><option value="17">كبير جداً</option></select></div>
+          <p class="font-sample">لائحة الحوكمة لجمعية البر الخيرية · 1448 هـ</p>
+          <div class="f-up">
+            <h3>خطوط مرفوعة</h3>
+            <p class="muted-text">ارفع ملفات خطوطك (ttf أو otf). تظهر هنا في قائمة خط الواجهة، وفي قائمة خطوط المستندات في المكتبة. تُحفظ في قاعدة البيانات ولا يراها إلا من سجّل الدخول. الملف اللي يحمل نفس اسم أحد خطوط الجمعية، مثل <bdi>DINNextLTArabic-Regular.ttf</bdi>، يكمّل ذلك الخط في المعاينة والتصدير</p>
+            <p class="muted-text" id="fSignin">سجّل الدخول لرفع الخطوط</p>
+            <label class="f-drop" id="fUpload" hidden><input type="file" id="fFiles" accept=".ttf,.otf,.woff,.woff2" multiple hidden><span>اسحب ملفات الخطوط هنا أو اضغط للاختيار</span></label>
+            <p class="s-msg" id="fMsg" role="status"></p>
+            <ul class="f-list" id="fList"></ul>
+            <p class="muted-text" id="fEmpty" hidden>لم تُرفع خطوط بعد</p>
+          </div>
+        </section>
+
+        <section class="card" data-atab="look" aria-labelledby="s4"><div class="card-h"><h2 id="s4">الواجهة</h2></div>
+          <div class="s-row"><label for="sTheme">المظهر الافتراضي</label><select class="select" id="sTheme"><option value="system">حسب الجهاز</option><option value="light">فاتح</option><option value="dark">داكن</option><option value="neon">نيون</option></select></div>
+          <div class="s-row"><span class="lbl">انحناء الزوايا</span><div class="seg-pick">
+            <label><input type="radio" name="sRadius" value="small"><span>حاد</span></label>
+            <label><input type="radio" name="sRadius" value="medium"><span>متوسط</span></label>
+            <label><input type="radio" name="sRadius" value="large"><span>دائري</span></label></div></div>
+          <div class="s-row"><label for="sStart">الصفحة عند الفتح</label><select class="select" id="sStart"><option value="home">الرئيسية</option><option value="tasks">المهام</option><option value="governance/library">اللوائح والسياسات</option><option value="hr/letters">الخطابات</option></select></div>
+          <div class="s-row"><span class="lbl">الرئيسية تعرض</span>
+            <label class="s-check"><input type="checkbox" id="sHomeTasks"> لوحة المهام</label>
+            <label class="s-check"><input type="checkbox" id="sHomePrayer"> أوقات الصلاة</label></div>
+        </section>
+
+        <section class="card wide" data-atab="slider" aria-labelledby="s6"><div class="card-h"><h2 id="s6">السلايدر</h2><button class="btn small" type="button" id="slAdd" hidden>شريحة جديدة</button></div>
+          <div class="s-row"><label for="slSeconds">مدة كل شريحة</label><select class="select" id="slSeconds"><option value="4">4 ثوانٍ</option><option value="6">6 ثوانٍ</option><option value="8">8 ثوانٍ</option><option value="10">10 ثوانٍ</option><option value="15">15 ثانية</option></select></div>
+          <label class="s-check"><input type="checkbox" id="sHomeSlider"> إظهار السلايدر في الرئيسية</label>
+          <p class="muted-text">المدة والإظهار يُحفظان مع «حفظ التغييرات». الشرائح نفسها تُحفظ فوراً</p>
+          <p class="muted-text" id="slAdminSignin">سجّل الدخول لإضافة الشرائح</p>
+          <p class="s-msg" id="slMsg" role="status"></p>
+          <ul class="sl-admin" id="slList"></ul>
+          <p class="muted-text" id="slAdminEmpty" hidden>لا توجد شرائح بعد</p>
+          <div class="sl-editor" id="slEditor" hidden>
+            <h3 id="slEdHead">شريحة جديدة</h3>
+            <form id="slEdForm">
+              <div class="s-row"><span class="lbl">الصورة</span><div class="sl-img-pick"><div class="sl-img-prev" id="slImgPrev"></div><div class="logo-btns"><label class="btn small">اختيار صورة<input type="file" id="slImg" accept="image/*" hidden></label><button class="btn small ghost" type="button" id="slClearImg">إزالة</button></div></div></div>
+              <div class="s-row"><label for="slTitle">العنوان</label><input class="input" id="slTitle" maxlength="80"></div>
+              <div class="s-row"><label for="slText">النص</label><textarea class="input" id="slText" rows="2" maxlength="220"></textarea></div>
+              <div class="s-row"><label for="slLink">الرابط <span class="muted-text">اختياري</span></label><input class="input" id="slLink" dir="ltr" placeholder="#/hr/letters أو https://..."></div>
+              <div class="s-row"><label for="slLinkLabel">نص الزر</label><input class="input" id="slLinkLabel" maxlength="30" placeholder="التفاصيل"></div>
+              <p class="muted-text">الصورة تُصغَّر تلقائياً. الأنسب صورة عريضة (16:9). بدون صورة تظهر الشريحة بلون الموقع</p>
+              <div class="hr-actions"><button class="btn primary" type="submit">حفظ الشريحة</button><button class="btn" type="button" id="slEdCancel">إلغاء</button></div>
+            </form>
+          </div>
+        </section>
+
+        <section class="card wide" data-atab="users" aria-labelledby="s5"><div class="card-h"><h2 id="s5">المستخدمون والصلاحيات</h2></div>
+          <p class="muted-text" id="uSignin">سجّل الدخول لإدارة المستخدمين</p>
+          <div id="uNoAdmin" class="u-help" hidden>
+            <p>إدارة المستخدمين للمديرين فقط. لتفعيلها مرة واحدة:</p>
+            <ol>
+              <li>انشر القواعد الجديدة من ملف <bdi>firestore.rules</bdi> في Firebase ← Firestore ← Rules</li>
+              <li>في Firestore ← Data ← <bdi>allowed</bdi> افتح مستند بريدك وأضف حقلاً اسمه <bdi>role</bdi> قيمته <bdi>admin</bdi></li>
+              <li>حدّث الصفحة</li>
+            </ol>
+          </div>
+          <div id="uBox" hidden>
+            <form class="u-add" id="uAdd">
+              <input class="input" id="uEmail" type="email" dir="ltr" placeholder="name@gmail.com" aria-label="البريد" required>
+              <input class="input" id="uName" placeholder="الاسم (اختياري)" aria-label="الاسم">
+              <input class="input" id="uPass" type="text" dir="ltr" placeholder="كلمة مرور أولية" aria-label="كلمة مرور أولية" autocomplete="new-password">
+              <select class="select" id="uRole" aria-label="الدور"><option value="member">مستخدم</option><option value="admin">مدير</option></select>
+              <button class="btn primary" type="submit">إضافة</button>
+            </form>
+            <p class="s-msg" id="uMsg" role="status"></p>
+            <table class="u-table"><thead><tr><th>الحساب</th><th>الدور</th><th></th></tr></thead><tbody id="uList"></tbody></table>
+            <p class="muted-text">المستخدم يفتح كل أقسام الموقع ويعدّل فيها. المدير يقدر كذلك يضيف الأشخاص ويزيلهم ويغيّر أدوارهم</p>
+          </div>
+        </section>
+      </div>
+    </section>
+    </main>
+  </div>
+</div>
+
+<div class="ui-scrim" id="tkScrim" hidden></div>
+<div class="ui-dialog tk-dlg" id="tkDlg" role="dialog" aria-modal="true" aria-labelledby="tkDlgTitle" hidden>
+  <h2 id="tkDlgTitle">مهمة جديدة</h2>
+  <form id="tkForm">
+    <div class="s-row"><label for="tkTitle">المهمة</label><input class="input" id="tkTitle" required maxlength="160" autocomplete="off"></div>
+    <div class="s-row"><label for="tkNotes">ملاحظات</label><textarea class="input" id="tkNotes" rows="3"></textarea></div>
+    <div class="s-row"><label for="tkStatus">الحالة</label><select class="select" id="tkStatus"><option value="todo">جديدة</option><option value="doing">قيد التنفيذ</option><option value="done">مكتملة</option></select></div>
+    <div class="s-row"><label for="tkPriority">الأولوية</label><select class="select" id="tkPriority"><option value="normal">عادية</option><option value="high">عالية</option></select></div>
+    <div class="s-row"><label for="tkDue">تاريخ الاستحقاق</label><input class="input" id="tkDue" type="date"></div>
+    <div class="s-row"><label for="tkLink">مرتبطة بـ</label><select class="select" id="tkLink"></select></div>
+    <div class="ui-actions">
+      <button class="btn primary" type="submit" id="tkSave">حفظ</button>
+      <button class="btn" type="button" id="tkCancel">إلغاء</button>
+      <button class="btn ghost danger-text" type="button" id="tkDelete" hidden>حذف المهمة</button>
+    </div>
+  </form>
+</div>
+<div id="hrPrintArea" aria-hidden="true"></div>
+<div class="fp-fly" id="fpFly" role="menu" hidden></div>
+<div id="docxStyles"></div>
+<div id="stage" aria-hidden="true"></div>
+<div id="exportStage" aria-hidden="true"></div>
+
+<div class="overlay" id="dlg" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+    <div class="panel-h"><h2 id="dlgTitle">إضافة سياسة إلى المكتبة</h2><button class="btn small ghost" type="button" id="dlgClose" aria-label="إغلاق">إغلاق</button></div>
+    <div class="panel-b">
+      <div class="tabs" role="tablist" id="dlgTabs">
+        <button class="tab" role="tab" aria-selected="true" data-tab="file" type="button">من ملفات وورد</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="text" type="button">كتابة أو لصق نص</button>
+      </div>
+      <div id="tabFile" class="field">
+        <span class="lbl" id="pfLbl">ملفات السياسات (.docx) — يمكنك اختيار عدة ملفات دفعة واحدة، ويصبح اسم كل ملف عنواناً للسياسة</span>
+        <label class="drop" id="pfDrop" aria-labelledby="pfLbl">
+          <input type="file" id="pfFiles" multiple accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+          <span class="fn" id="pfNames"><span class="hint">اسحب الملفات هنا أو اضغط للاختيار</span></span>
+        </label>
+        <div class="dup-wrap" id="dupWrap" hidden><span id="dupCount"></span><label class="check"><input type="checkbox" id="skipDups" checked> تخطّيها وعدم رفعها مرة أخرى</label></div>
+      </div>
+      <div id="tabText" class="field" hidden>
+        <div class="field"><label for="pTitle">عنوان السياسة</label><input class="input" id="pTitle" type="text" placeholder="مثال: سياسة تعارض المصالح"></div>
+        <div class="field"><label for="pText">نص السياسة</label><textarea class="input" id="pText" placeholder="الصق النص هنا. كل سطر يصبح فقرة، والسطر الذي يبدأ بـ # يصبح عنواناً."></textarea></div>
+      </div>
+      <div class="fields">
+        <div class="field"><label for="pCat">التصنيف</label><select class="select" id="pCat"></select></div>
+        <div class="field"><label for="pCode">الرمز (اختياري)</label><input class="input" id="pCode" type="text" placeholder="مثال: ح-٠٣"></div>
+      </div>
+      <div class="row end">
+        <span class="msg" id="dlgMsg" style="margin-inline-end:auto"></span>
+        <button class="btn" type="button" id="dlgCancel">إلغاء</button>
+        <button class="btn primary" type="button" id="dlgSave">حفظ في المكتبة</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="bdlg" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="bTitle">
+    <div class="panel-h"><h2 id="bTitle">تصدير مجمّع</h2><button class="btn small ghost" type="button" id="bClose" aria-label="إغلاق">إغلاق</button></div>
+    <div class="panel-b">
+      <p class="note" id="bAssoc" style="margin:0"></p>
+      <div class="field">
+        <div class="row" style="justify-content:space-between"><span class="lbl">السياسات</span><button class="btn small ghost" type="button" id="bAll">تحديد الكل / إلغاء</button></div>
+        <div class="blist" id="bList"></div>
+      </div>
+      <fieldset class="field bfmt">
+        <legend class="lbl">الصيغة</legend>
+        <label class="check"><input type="radio" name="bFmt" value="merged" checked> ملف وورد واحد (دليل بغلاف وفهرس، وكل سياسة تبدأ بصفحة جديدة)</label>
+        <label class="check"><input type="radio" name="bFmt" value="mergedPdf"> ملف PDF واحد بنفس ترتيب الدليل</label>
+        <label class="check"><input type="radio" name="bFmt" value="docx"> ملفات وورد منفصلة داخل ملف مضغوط</label>
+        <label class="check"><input type="radio" name="bFmt" value="pdf"> ملفات PDF منفصلة داخل ملف مضغوط</label>
+      </fieldset>
+      <div class="field" id="bGuideWrap"><label for="bGuide">عنوان الدليل</label><input class="input" id="bGuide" type="text" value="دليل السياسات واللوائح"></div>
+      <div class="row end">
+        <span class="msg" id="bMsg" style="margin-inline-end:auto"></span>
+        <button class="btn" type="button" id="bCancel">إلغاء</button>
+        <button class="btn primary" type="button" id="bGo">تصدير</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tctx" id="tctx" role="menu" hidden>
+  <button type="button" role="menuitem" data-tctx="props">خصائص الجدول…</button>
+  <hr>
+  <button type="button" role="menuitem" data-tctx="copyTable">نسخ الجدول</button>
+  <button type="button" role="menuitem" data-tctx="cutTable">قص الجدول</button>
+  <hr>
+  <button type="button" role="menuitem" data-tctx="rowAbove">إدراج صف فوق</button>
+  <button type="button" role="menuitem" data-tctx="rowBelow">إدراج صف تحت</button>
+  <button type="button" role="menuitem" data-tctx="colRight">إدراج عمود يمين</button>
+  <button type="button" role="menuitem" data-tctx="colLeft">إدراج عمود يسار</button>
+  <hr>
+  <button type="button" role="menuitem" data-tctx="delRow">حذف الصف</button>
+  <button type="button" role="menuitem" data-tctx="delCol">حذف العمود</button>
+  <button type="button" role="menuitem" data-tctx="equal">توزيع الأعمدة بالتساوي</button>
+  <button type="button" role="menuitem" class="danger" data-tctx="delTable">حذف الجدول</button>
+</div>
+<button type="button" class="tmove" id="tmove" title="اسحب لتحريك الجدول، أو اضغط بالزر الأيمن لخصائصه" aria-label="تحريك الجدول" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg></button>
+<div class="tdrop" id="tdrop" hidden></div>
+<div class="tbx-bar" id="tbxBar" role="toolbar" aria-label="مربع النص" hidden>
+  <span class="seg" role="group" aria-label="الترتيب"><button type="button" data-tz="front" aria-pressed="true">أمام النص</button><button type="button" data-tz="behind" aria-pressed="false">خلف النص</button></span>
+  <span class="grp"><b>الحدود</b><input type="color" id="tbxBColor" title="لون الحدود" aria-label="لون الحدود"><select id="tbxBW" title="سمك الحدود" aria-label="سمك الحدود"><option value="0.5">٠٫٥ نقطة</option><option value="0.75">٠٫٧٥ نقطة</option><option value="1">١ نقطة</option><option value="1.5">١٫٥ نقطة</option><option value="2.25">٢٫٢٥ نقطة</option><option value="3">٣ نقاط</option></select><label class="ck"><input type="checkbox" id="tbxBNone"> بلا حدود</label></span>
+  <span class="grp"><b>التعبئة</b><input type="color" id="tbxFColor" title="لون التعبئة" aria-label="لون التعبئة"><label class="ck"><input type="checkbox" id="tbxFNone"> بلا تعبئة</label></span>
+  <span class="seg" role="group" aria-label="الحافظة"><button type="button" id="tbxCopy" title="نسخ (Ctrl+C)">نسخ</button><button type="button" id="tbxCut" title="قص (Ctrl+X)">قص</button><button type="button" id="tbxPaste" title="لصق (Ctrl+V)">لصق</button></span>
+  <button type="button" class="del" id="tbxDel">حذف</button>
+</div>
+<button type="button" class="tplus" id="tplus" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button>
+<div class="tplus-line" id="tplusLine" hidden></div>
+
+<div class="overlay" id="tpdlg" hidden>
+  <div class="dialog tpd" role="dialog" aria-modal="true" aria-labelledby="tpTitle">
+    <div class="panel-h"><h2 id="tpTitle">خصائص الجدول</h2><button class="btn small ghost" type="button" id="tpX" aria-label="إغلاق">إغلاق</button></div>
+    <div class="panel-b">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" type="button" data-tp="table" aria-selected="true">جدول</button>
+        <button class="tab" role="tab" type="button" data-tp="row" aria-selected="false">صف</button>
+        <button class="tab" role="tab" type="button" data-tp="col" aria-selected="false">عمود</button>
+        <button class="tab" role="tab" type="button" data-tp="cell" aria-selected="false">خلية</button>
+        <button class="tab" role="tab" type="button" data-tp="borders" aria-selected="false">حدود وتظليل</button>
+        <button class="tab" role="tab" type="button" data-tp="alt" aria-selected="false">نص بديل</button>
+      </div>
+
+      <section class="tp" data-tpp="table">
+        <h3>الحجم</h3>
+        <div class="tp-row">
+          <label class="check"><input type="checkbox" id="tpWOn"> العرض المفضّل:</label>
+          <input class="input tp-num" id="tpW" type="number" min="1" step="0.1">
+          <select class="select tp-unit" id="tpWUnit"><option value="pct">نسبة مئوية</option><option value="cm">سنتيمتر</option></select>
+        </div>
+        <h3>محاذاة</h3>
+        <div class="tp-pics" role="radiogroup" aria-label="محاذاة الجدول">
+          <label><input type="radio" name="tpAlign" value="right"><span class="pic al" style="justify-content:flex-start"><i></i></span>يمين</label>
+          <label><input type="radio" name="tpAlign" value="center"><span class="pic al" style="justify-content:center"><i></i></span>توسيط</label>
+          <label><input type="radio" name="tpAlign" value="left"><span class="pic al" style="justify-content:flex-end"><i></i></span>يسار</label>
+        </div>
+        <div class="tp-row"><label for="tpInd">مسافة بادئة من الحافة (سم):</label><input class="input tp-num" id="tpInd" type="number" min="0" step="0.1"></div>
+        <h3>اتجاه الجدول</h3>
+        <div class="tp-row">
+          <label class="check"><input type="radio" name="tpDir" value="rtl"> من اليمين لليسار</label>
+          <label class="check"><input type="radio" name="tpDir" value="ltr"> من اليسار لليمين</label>
+        </div>
+      </section>
+
+      <section class="tp" data-tpp="row" hidden>
+        <p class="tp-sub" id="tpRowLbl"></p>
+        <h3>الحجم</h3>
+        <div class="tp-row">
+          <label class="check"><input type="checkbox" id="tpHOn"> تحديد الارتفاع:</label>
+          <input class="input tp-num" id="tpH" type="number" min="0.3" step="0.1"><span class="hint">سم</span>
+          <select class="select tp-unit" id="tpHRule"><option value="atLeast">على الأقل</option><option value="exact">بالضبط</option></select>
+        </div>
+        <h3>خيارات</h3>
+        <label class="check"><input type="checkbox" id="tpSplit"> السماح بامتداد الصف على صفحتين</label>
+        <label class="check"><input type="checkbox" id="tpHead"> تكرار كصف رأس في أعلى كل صفحة</label>
+        <div class="tp-row"><button class="btn small" type="button" id="tpRowPrev">▲ الصف السابق</button><button class="btn small" type="button" id="tpRowNext">▼ الصف التالي</button></div>
+      </section>
+
+      <section class="tp" data-tpp="col" hidden>
+        <p class="tp-sub" id="tpColLbl"></p>
+        <h3>الحجم</h3>
+        <div class="tp-row"><label for="tpCW">العرض المفضّل (سم):</label><input class="input tp-num" id="tpCW" type="number" min="0.5" step="0.1"></div>
+        <div class="tp-row"><button class="btn small" type="button" id="tpColPrev">→ العمود السابق</button><button class="btn small" type="button" id="tpColNext">العمود التالي ←</button></div>
+      </section>
+
+      <section class="tp" data-tpp="cell" hidden>
+        <h3>الحجم</h3>
+        <div class="tp-row"><label for="tpCellW">العرض المفضّل (سم):</label><input class="input tp-num" id="tpCellW" type="number" min="0.5" step="0.1"></div>
+        <h3>محاذاة عمودية</h3>
+        <div class="tp-pics" role="radiogroup" aria-label="محاذاة النص داخل الخلية">
+          <label><input type="radio" name="tpVA" value="top"><span class="pic va" style="align-items:start"><i></i></span>أعلى</label>
+          <label><input type="radio" name="tpVA" value="middle"><span class="pic va" style="align-items:center"><i></i></span>توسيط</label>
+          <label><input type="radio" name="tpVA" value="bottom"><span class="pic va" style="align-items:end"><i></i></span>أسفل</label>
+        </div>
+      </section>
+
+      <section class="tp" data-tpp="borders" hidden>
+        <h3>الحدود</h3>
+        <div class="tp-pics" role="radiogroup" aria-label="شكل الحدود">
+          <label><input type="radio" name="tpB" value="none"><span class="pic bd bd-none"></span>بلا</label>
+          <label><input type="radio" name="tpB" value="box"><span class="pic bd bd-box"></span>إحاطة</label>
+          <label><input type="radio" name="tpB" value="all"><span class="pic bd bd-all"></span>الكل</label>
+          <label><input type="radio" name="tpB" value="inner"><span class="pic bd bd-inner"></span>داخلية فقط</label>
+        </div>
+        <div class="tp-grid">
+          <label>النمط<select class="select" id="tpBLine"><option value="single">خط متصل</option><option value="dotted">منقّط</option><option value="dashed">متقطّع</option><option value="double">مزدوج</option></select></label>
+          <label>العرض<select class="select" id="tpBSz"><option value="0.5">٠٫٥ نقطة</option><option value="1">١ نقطة</option><option value="1.5">١٫٥ نقطة</option><option value="2.25">٢٫٢٥ نقطة</option><option value="3">٣ نقاط</option></select></label>
+          <label>اللون<input class="input tp-color" id="tpBColor" type="color"></label>
+        </div>
+        <h3>التظليل</h3>
+        <div class="tp-grid">
+          <label>لون التعبئة<input class="input tp-color" id="tpShade" type="color"></label>
+          <label>تطبيق على<select class="select" id="tpShadeTo"><option value="cell">الخلية</option><option value="row">الصف</option><option value="col">العمود</option><option value="table">الجدول كله</option></select></label>
+          <label>&nbsp;<span class="row" style="gap:6px"><button class="btn small" type="button" id="tpShadeApply">تطبيق اللون</button><button class="btn small" type="button" id="tpShadeNone">بلا تعبئة</button></span></label>
+        </div>
+      </section>
+
+      <section class="tp" data-tpp="alt" hidden>
+        <div class="field"><label for="tpAltT">العنوان</label><input class="input" id="tpAltT" type="text"></div>
+        <div class="field"><label for="tpAltD">الوصف</label><textarea class="input" id="tpAltD" rows="4"></textarea></div>
+        <p class="note" style="margin:0">يُحفظ مع الجدول في ملف الوورد، ويساعد قارئات الشاشة على فهم محتواه.</p>
+      </section>
+
+      <div class="row end"><button class="btn" type="button" id="tpCancel">إلغاء الأمر</button><button class="btn primary" type="button" id="tpOk">موافق</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="hdlg" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="hTitle">
+    <div class="panel-h"><h2 id="hTitle">سجل الإصدارات</h2><button class="btn small ghost" type="button" id="hClose" aria-label="إغلاق">إغلاق</button></div>
+    <div class="panel-b">
+      <p class="note" style="margin:0">يُسجَّل إصدار جديد كل مرة تحفظ فيها تعديلاً على نص السياسة أو عنوانها، ويُحتفظ بآخر ٣٠ إصداراً. اكتب وصفاً لأي إصدار ليظهر في جدول «سجل الإصدارات» عند تصديره.</p>
+      <div class="blist hlist" id="hList"></div>
+      <div class="hview" id="hView" hidden><div class="lbl" id="hViewT"></div><div class="hview-b" id="hViewB"></div></div>
+      <div class="row end"><span class="msg" id="hMsg" style="margin-inline-end:auto"></span><button class="btn" type="button" id="hCancel">إغلاق</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="adlg" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="aTitle">
+    <div class="panel-h"><h2 id="aTitle">تصدير لكل الجمعيات</h2><button class="btn small ghost" type="button" id="aClose" aria-label="إغلاق">إغلاق</button></div>
+    <div class="panel-b">
+      <p class="note" id="aPolicy" style="margin:0"></p>
+      <div class="field">
+        <div class="row" style="justify-content:space-between"><span class="lbl">الجمعيات المحفوظة</span><button class="btn small ghost" type="button" id="aAll">تحديد الكل / إلغاء</button></div>
+        <div class="blist" id="aList"></div>
+      </div>
+      <fieldset class="field bfmt">
+        <legend class="lbl">الصيغة</legend>
+        <label class="check"><input type="radio" name="aFmt" value="docx" checked> ملفات وورد داخل ملف مضغوط (ملف لكل جمعية)</label>
+        <label class="check"><input type="radio" name="aFmt" value="pdf"> ملفات PDF داخل ملف مضغوط (ملف لكل جمعية)</label>
+      </fieldset>
+      <p class="note" style="margin:0">كل جمعية تُصدَّر باسمها وكليشتها وإعداداتها وبيانات اعتمادها المحفوظة. ويُستخدم نص السياسة كما هو الآن في المحرر.</p>
+      <div class="row end">
+        <span class="msg" id="aMsg" style="margin-inline-end:auto"></span>
+        <button class="btn" type="button" id="aCancel">إلغاء</button>
+        <button class="btn primary" type="button" id="aGo">تصدير</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.2/dist/docx-preview.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<!-- Firebase (Firestore + Google sign-in). If these fail to load (e.g. inside a Claude artifact), the page falls back to Claude's store or the browser. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/ui.js?v=20261118c"></script>
+<script src="js/library.js?v=20261118c"></script>
+<script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
+<script src="js/home.js?v=20261118c"></script>
+<script src="js/tasks.js?v=20261118c"></script>
+<script src="js/slider.js?v=20261118c"></script>
+<script src="js/settings.js?v=20261118c"></script>
+<script src="js/fonts.js?v=20261118c"></script>
+<script src="js/hr.js?v=20261118c"></script>
+<script src="js/requests.js?v=20261118c"></script>
+<script src="js/table-tools.js?v=20261118c"></script>
+<script src="js/login.js?v=20261118c"></script>
+<script src="js/shell.js?v=20261118c"></script>
+<script>setTimeout(async()=>{
+  const i=document.querySelector("#hrFields .hr-recip input"); i.value="مركز التنمية بجدة"; i.dispatchEvent(new Event("input"));
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const orig=Object.getOwnPropertyDescriptor(window,"jspdf");
+  let saved=null, imgW=0;
+  const t0=Date.now();
+  document.getElementById("hrPdf").click();
+  for(let k=0;k<60 && !window.jspdf;k++) await wait(200);
+  if(window.jspdf){ const P=window.jspdf.jsPDF.prototype; const s=P.save, a=P.addImage; P.save=function(n){saved=n;return this}; P.addImage=function(d){imgW=(d||"").length;return a.apply(this,arguments)}; }
+  for(let k=0;k<60 && !saved;k++) await wait(200);
+  document.title="saved="+saved+" img="+imgW+" host="+document.querySelectorAll(".pdf-host").length;
+},1500);</script></body>
+</html>

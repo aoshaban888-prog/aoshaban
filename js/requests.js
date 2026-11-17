@@ -14,12 +14,13 @@
   const PERMS = [
     ["submit", "رفع الخطاب للاعتماد"], ["issue", "إصدار الخطاب مباشرة برقم"], ["editText", "تعديل نص الخطاب وتنسيقه"],
     ["editIssued", "تعديل الخطابات الصادرة"], ["viewLog", "عرض سجل كل الخطابات"], ["deleteLog", "حذف الخطابات من السجل"],
+    ["pdf", "حفظ الخطاب PDF"],
   ];
   const SETUP = [["templates", "إدارة القوالب"], ["heads", "إدارة الكليشات"], ["seal", "إدارة الختم والتوقيع"]];
   const ALL_KEYS = [...PERMS, ...SETUP].map(x => x[0]);
   const PRESETS = [
     ["employee", "موظف: يرفع للاعتماد فقط", ["submit"]],
-    ["issuer", "موظف بإصدار مباشر", ["submit", "issue", "editText"]],
+    ["issuer", "موظف بإصدار مباشر", ["submit", "issue", "editText", "pdf"]],
     ["officer", "مسؤول الخطابات: كل الصلاحيات", ALL_KEYS],
   ];
   // a user's permissions: admins have all; older records with canIssue keep it
@@ -168,6 +169,7 @@
     if (r.submittedBy === me && r.status === "returned") add("تعديل وإعادة الرفع", "primary", () => editAs(r, "submitter"));
     if (r.submittedBy === me && (r.status === "pending" || r.status === "returned")) add("سحب الطلب", "ghost", () => act(r, "cancel"));
     if (r.status === "approved") add("طباعة الخطاب", "primary", () => HRLetters.print({ ...r.letter, ref: r.ref }));
+    if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...r.letter, ref: r.ref }));
     $("rqNoteWrap").hidden = !amApprover(r);
     // preview
     const pv = HRLetters.paper({ ...r.letter, ref: r.ref });

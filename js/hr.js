@@ -173,7 +173,7 @@ ${HELLO}
   const values = {};
   let manual = false, showHdr = true, showFtr = true;
   // what this user may do here (js/requests.js → HRLetters.setPerms); all allowed until known
-  let P = { submit: true, issue: true, editText: true, editIssued: true, viewLog: true, deleteLog: true, templates: true, heads: true, seal: true };
+  let P = { submit: true, issue: true, editText: true, editIssued: true, viewLog: true, deleteLog: true, templates: true, heads: true, seal: true, pdf: true };
   let editingLetter = null; // an issued letter opened from the log: saving updates it and keeps its number
   // signature and stamp images, shared by all letters (Firestore hrMeta/seal)
   // positions are millimetres from the page's top-left corner
@@ -643,6 +643,39 @@ ${HELLO}
     window.addEventListener("afterprint", done);
     setTimeout(() => window.print(), 80);
   }
+  const PDF_LIBS = ["https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"];
+  let pdfLibs = null;
+  function loadPdfLibs(){
+    if (window.html2canvas && window.jspdf) return Promise.resolve();
+    return pdfLibs ||= Promise.all(PDF_LIBS.map(src => new Promise((res, rej) => {
+      const el = document.createElement("script"); el.src = src; el.async = false; el.onload = res;
+      el.onerror = () => { pdfLibs = null; rej(new Error("lib_load")); }; document.head.append(el);
+    })));
+  }
+  const pdfName = L => {
+    const to = ((L.fields || {})["الجهة الموجه لها"] || L.employee || "").trim();
+    return `${L.ref ? String(L.ref).replace("/", "-") + " - " : ""}${L.title || "خطاب"}${to ? " - " + to : ""}`.replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 120) + ".pdf";
+  };
+  async function savePdf(L, head, parts){
+    UI.toast("جارٍ تجهيز ملف PDF…");
+    try {
+      await loadPdfLibs();
+      const host = document.createElement("div"); host.className = "pdf-host";
+      host.innerHTML = `<article class="hr-paper" style='${paperStyle(head)}'>${paperInner(L, head, parts, false)}</article>`;
+      document.body.append(host);
+      const paper = host.firstElementChild;
+      placeSeal(paper);
+      await document.fonts.ready;
+      await Promise.all([...paper.querySelectorAll("img")].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
+      await new Promise(r => setTimeout(r, 120));
+      const canvas = await html2canvas(paper, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
+      const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
+      pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
+      pdf.save(pdfName(L));
+      host.remove();
+      UI.toast("حُفظ ملف PDF");
+    } catch (e){ console.error(e); document.querySelectorAll(".pdf-host").forEach(x => x.remove()); UI.toast(e && e.message === "lib_load" ? "تعذّر تحميل أداة PDF. تأكد من الإنترنت" : "تعذّر إنشاء ملف PDF", "err"); }
+  }
   function partsOf(L, head){
     return L.parts ? { ...L.parts, title: clean(L.parts.title), body: clean(L.parts.body), sign: clean(L.parts.sign), hdr: clean(L.parts.hdr), ftr: clean(L.parts.ftr) }
       : { title: esc(L.title), body: genBody(L.body, vals(L), !!L.html), sign: genSign(L, L), ...headParts(head) };
@@ -745,6 +778,7 @@ ${HELLO}
     const on = document.querySelector("[data-hrtab][aria-selected=true]");
     if (on && on.hidden) setTab("new");
     $("hrTools").hidden = !P.editText;
+    $("hrPdf").hidden = !P.pdf;
     $("hrSealBox").hidden = !db || !P.seal; $("hrSealSignin").hidden = !!db || !P.seal;
     $("hrSealSection").hidden = !P.seal;
     $("hrBulkDel").hidden = !P.deleteLog; $("hrSelAll").closest("label").hidden = !P.deleteLog;
@@ -761,6 +795,7 @@ ${HELLO}
     open: (l, opts) => openLetter(l, { force: true, ...(opts || {}) }),
     paper(L){ const head = heads.find(h => h.id === L.headId) || null; return { style: paperStyle(head), html: paperInner(L, head, partsOf(L, head), false) }; },
     print: L => printLetter(L),
+    pdf: L => { const head = heads.find(h => h.id === L.headId) || null; return savePdf(L, head, partsOf(L, head)); },
     fit: () => fit(), place: el => placeSeal(el),
     setCanIssue(v){ canIssue = !!v; setEditing(editingLetter); },
     setPerms(p){ P = { ...P, ...p }; canIssue = !!P.issue; submitOn = !!P.submit; applyPerms(); },
@@ -809,11 +844,13 @@ ${HELLO}
     $("hrLogEmpty").textContent = letters.length ? "لا توجد نتائج" : "لم يصدر أي خطاب بعد";
     rows.forEach(l => {
       const tr = document.createElement("tr"); if (picked.has(l.id)) tr.classList.add("sel");
-      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small" type="button">تعديل</button> <button class="btn small" type="button">طباعة</button> <button class="btn small ghost" type="button">حذف</button></td>`;
+      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small" type="button">تعديل</button> <button class="btn small" type="button">طباعة</button> <button class="btn small hr-pdf" type="button">PDF</button> <button class="btn small ghost" type="button">حذف</button></td>`;
       const td = tr.querySelectorAll("td");
       const [cbx] = tr.querySelectorAll(".hr-pick"), btns = tr.querySelectorAll("button");
-      if (!P.deleteLog){ cbx.remove(); btns[2].remove(); }
+      if (!P.deleteLog){ cbx.remove(); btns[3].remove(); }
       if (!P.editIssued) btns[0].remove();
+      const pdfBtn = tr.querySelector(".hr-pdf");
+      if (!P.pdf) pdfBtn.remove(); else pdfBtn.addEventListener("click", () => { const head = heads.find(h => h.id === l.headId) || null; savePdf(l, head, partsOf(l, head)); });
       td[0].querySelector("bdi").textContent = l.ref;
       td[1].textContent = `${hijri(parseDay(l.date))} هـ`;
       td[2].textContent = l.title; td[3].textContent = l.employee || "—"; td[4].textContent = l.assoc || "";
@@ -1063,6 +1100,7 @@ ${HELLO}
   });
 
   $("hrSave").addEventListener("click", saveAndPrint);
+  $("hrPdf").addEventListener("click", () => { if (curTpl()) savePdf(draft(), curHead(), grab()); });
   $("hrPrint").addEventListener("click", () => { if (curTpl()) printParts(draft(), curHead(), grab()); });
   $("hrEditEnd").addEventListener("click", () => { setEditing(null); Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); });
   $("hrClear").addEventListener("click", () => { setEditing(null); Object.keys(values).forEach(k => delete values[k]); setManual(false); renderFields(); renderPaper(true); msg(""); });

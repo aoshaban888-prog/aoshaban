@@ -562,6 +562,8 @@ bdi{unicode-bidi:isolate}
 .hr-ed-rich h4{font-size:15px;font-weight:600;margin:12px 0 6px}
 .hr-ed-rich ul,.hr-ed-rich ol{margin:0 0 12px;padding-inline-start:24px}
 #hrPrintArea{display:none}
+.pdf-host{position:fixed;left:-10000px;top:0;width:210mm;pointer-events:none}
+.pdf-host .hr-paper{transform:none;box-shadow:none}
 @media (max-width:1100px){.hr-new,.hd-editor{grid-template-columns:minmax(0,1fr)}}
 @media print{
   @page{size:A4;margin:0}
