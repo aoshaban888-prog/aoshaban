@@ -245,6 +245,7 @@ function initFirebase(){
         return;
       }
       state.db = db; state.col = db.collection("policies"); state.mode = "db"; state.canWrite = true;
+      window.appDb = db; window.dispatchEvent(new CustomEvent("app:db", { detail: { db, user } }));
       setStore("ok", `المكتبة محفوظة في Firebase · ${user.email}`); storeButton("خروج", signOut);
       state.col.onSnapshot(snap => {
         state.policies = snap.docs.map(policyRow);

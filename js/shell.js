@@ -7,8 +7,7 @@
     "governance/associations": "الجمعيات",
     "governance/compliance": "متطلبات الامتثال",
   };
-  // until the home page is built, open on the library
-  const DEFAULT = "governance/library";
+  const DEFAULT = "home";
   const app = document.querySelector(".app");
   let current = null;
 

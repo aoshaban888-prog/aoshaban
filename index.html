@@ -39,9 +39,31 @@
   <div class="main-col">
     <div class="topbar"><button class="menu-btn" type="button" aria-label="القائمة" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><span class="t"></span></div>
     <main class="main">
-    <section class="view" data-view="home" hidden>
-      <header class="page-h"><div><h1>الرئيسية</h1></div></header>
-      <div class="empty-state"><h2>يُبنى في المرحلة القادمة</h2><p>نظرة على مهام اليوم والمتأخرة، ومتطلبات الامتثال الناقصة في كل جمعية</p></div>
+    <section class="view home" data-view="home" hidden>
+      <header class="home-h">
+        <div><p class="crumb" id="hHijri"></p><h1 id="hDate"></h1></div>
+        <div class="clock" aria-label="الوقت الآن"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div>
+      </header>
+      <div class="home-grid">
+        <section class="card tasks-card" aria-labelledby="tH">
+          <div class="card-h"><h2 id="tH">المهام</h2><span class="meta" id="tCount"></span><a href="#/tasks" class="link">كل المهام</a></div>
+          <form id="tAdd" class="t-add" hidden>
+            <input class="input" id="tTitle" placeholder="مهمة جديدة" aria-label="مهمة جديدة" autocomplete="off" required>
+            <input class="input" type="date" id="tDue" aria-label="تاريخ الاستحقاق">
+            <button class="btn primary" type="submit">إضافة</button>
+          </form>
+          <p id="tSignin" class="muted-text">سجّل الدخول من القائمة الجانبية لعرض مهامك</p>
+          <ul id="tList" class="t-list"></ul>
+          <p id="tEmpty" class="muted-text" hidden>لا توجد مهام مفتوحة</p>
+          <a id="tMore" href="#/tasks" class="link" hidden></a>
+        </section>
+        <section class="card prayer-card" aria-labelledby="pH">
+          <div class="card-h"><h2 id="pH">أوقات الصلاة</h2></div>
+          <div class="p-next"><span class="muted-text">الصلاة القادمة</span><strong id="pNext"></strong><span id="pLeft"></span></div>
+          <ul id="pList" class="p-list"></ul>
+          <p class="p-note"><span id="pNote"></span><button id="pLocBtn" class="linkbtn" type="button" hidden>استخدام موقعي</button></p>
+        </section>
+      </div>
     </section>
     <section class="view" data-view="tasks" hidden>
       <header class="page-h"><div><h1>المهام</h1></div></header>
@@ -498,6 +520,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="js/library.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
+<script src="js/home.js"></script>
 <script src="js/shell.js"></script>
 </body>
 </html>
