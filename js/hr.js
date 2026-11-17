@@ -192,19 +192,26 @@ ${HELLO}
   function recipHtml(vals){
     const name = (vals[RECIP] || "").trim(); const pre = vals[RECIP + "#p"] ?? "السادة";
     const chosen = vals[RECIP + "#s"];
-    if (!name) return `<span class="lt-blank">${esc(RECIP)}</span>`;
+    if (!name) return `<span class="lt-blank" data-f="${esc(RECIP)}">${esc(RECIP)}</span>`;
     const suffix = chosen != null ? chosen : (PREFIXES.find(p => p[0] === pre) || ["", ""])[1];
-    return `<span class="lt-to"><span>${pre ? esc(pre) + "/ " : ""}<span class="lt-v">${esc(name)}</span></span>${suffix ? `<span>${esc(suffix)}</span>` : ""}</span>`;
+    return `<span class="lt-to" data-f="${esc(RECIP)}"><span>${pre ? esc(pre) + "/ " : ""}<span class="lt-v">${esc(name)}</span></span>${suffix ? `<span>${esc(suffix)}</span>` : ""}</span>`;
   }
 
   /* ---------- letter parts ---------- */
-  function genBody(body, vals){
-    const fill = text => esc(text).replace(FIELD_RX, (_, f) => {
-      const raw = f.replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-      if (raw === RECIP) return recipHtml(vals);
-      const v = AUTO.has(raw) ? (vals[raw] || "").trim() || null : fieldValue(raw, vals);
-      return v ? `<span class="lt-v">${esc(v)}</span>` : `<span class="lt-blank">${esc(raw)}</span>`;
+  function fieldHtml(raw, vals){
+    if (raw === RECIP) return recipHtml(vals);
+    const v = AUTO.has(raw) ? (vals[raw] || "").trim() || null : fieldValue(raw, vals);
+    return v ? `<span class="lt-v" data-f="${esc(raw)}">${esc(v)}</span>` : `<span class="lt-blank" data-f="${esc(raw)}">${esc(raw)}</span>`;
+  }
+  // after hand edits, the values that came from fields still follow their fields
+  function refreshFields(paper, vals){
+    paper.querySelectorAll("[data-f]").forEach(el => {
+      const html = fieldHtml(el.dataset.f, vals);
+      if (el.outerHTML !== html){ const t = document.createElement("template"); t.innerHTML = html; el.replaceWith(t.content); }
     });
+  }
+  function genBody(body, vals){
+    const fill = text => esc(text).replace(FIELD_RX, (_, f) => fieldHtml(f.replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">"), vals));
     return (body || "").split(/\n\s*\n/).map(p => `<p>${fill(p).replace(/\n/g, "<br>")}</p>`).join("");
   }
   const sealOn = p => ({ sig: !!(p.showSig !== false && seal.sig), stamp: !!(p.showStamp !== false && seal.stamp) });
@@ -300,6 +307,7 @@ ${HELLO}
       paper.querySelectorAll(".lt-meta").forEach(el => { el.innerHTML = metaHtml(L); });
       const fr = head && head.frame && head.frame.image ? head.frame : null;
       paper.querySelectorAll(".lt-frame-t").forEach(el => { el.innerHTML = frameHtml(L, fr); });
+      refreshFields(paper, vals(L));
       return;
     }
     const keep = force === "head" || force === "sign" ? grab() : null;
