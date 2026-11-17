@@ -500,7 +500,12 @@ bdi{unicode-bidi:isolate}
 .hr-recip input{grid-column:1/-1}
 .hr-manual{margin:0;font-size:13px;color:var(--ink-2);background:var(--accent-soft);padding:8px 12px;border-radius:var(--r)}
 /* toolbar */
-.hr-tools{display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);position:sticky;top:8px;z-index:20;box-shadow:var(--shadow-sm)}
+.hr-stick{position:sticky;top:8px;z-index:20;display:flex;flex-direction:column;gap:6px}
+.hr-docbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:8px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);box-shadow:var(--shadow-sm)}
+.hr-docbar .hr-actions{margin:0}
+.hr-pdfnote{font-size:12px;color:var(--muted)}
+.hr-stick .s-msg{margin:0}
+.hr-tools{display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);box-shadow:var(--shadow-sm)}
 .hr-tools .tg{display:flex;align-items:center;gap:2px;padding-inline-end:4px;margin-inline-end:2px;border-inline-end:1px solid var(--line-soft);position:relative}
 .hr-tools .tg:last-child{border:0}
 .hr-tools .tb{min-width:32px;height:32px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink);display:inline-grid;place-items:center;cursor:pointer;font:inherit;font-size:14px;padding:0 6px;position:relative}

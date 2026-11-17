@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261117k"></script>
-<link rel="stylesheet" href="css/library.css?v=20261117k">
-<link rel="stylesheet" href="css/app.css?v=20261117k">
+<script src="js/boot.js?v=20261117l"></script>
+<link rel="stylesheet" href="css/library.css?v=20261117l">
+<link rel="stylesheet" href="css/app.css?v=20261117l">
 </head>
 <body>
 <div class="app">
@@ -358,17 +358,20 @@
               <p class="muted-text">ارفع صورتين PNG بخلفية شفافة. تُحفظان لكل الخطابات ويراهما من يملك صلاحية الدخول</p>
             </div>
           </details>
-          <div class="hr-actions">
-            <button class="btn primary" type="button" id="hrSave">حفظ وطباعة</button>
-            <button class="btn" type="button" id="hrPrint">طباعة بدون حفظ</button>
-            <button class="btn small ghost" type="button" id="hrClear">تفريغ الخانات</button>
-          </div>
-          <p class="s-msg" id="hrMsg" role="status"></p>
-          <p class="muted-text">للحفظ كملف PDF اختر «حفظ بتنسيق PDF» في نافذة الطباعة، وفعّل «رسومات الخلفية» إذا لم تظهر الكليشة</p>
         </section>
 
         <div class="hr-sheet">
-          <div class="hr-tools" id="hrTools" role="toolbar" aria-label="تنسيق الخطاب">
+          <div class="hr-stick">
+            <div class="hr-docbar">
+              <div class="hr-actions">
+                <button class="btn primary" type="button" id="hrSave">حفظ وطباعة</button>
+                <button class="btn" type="button" id="hrPrint">طباعة بدون حفظ</button>
+                <button class="btn small ghost" type="button" id="hrClear">تفريغ الخانات</button>
+              </div>
+              <span class="hr-pdfnote" title="للحفظ كملف PDF اختر «حفظ بتنسيق PDF» في نافذة الطباعة، وفعّل «رسومات الخلفية» إذا لم تظهر الكليشة">PDF: اختر «حفظ بتنسيق PDF» في نافذة الطباعة</span>
+            </div>
+            <p class="s-msg" id="hrMsg" role="status"></p>
+            <div class="hr-tools" id="hrTools" role="toolbar" aria-label="تنسيق الخطاب">
             <div class="tg"><button class="tb" type="button" data-cmd="undo" title="تراجع" aria-label="تراجع"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button><button class="tb" type="button" data-cmd="redo" title="إعادة" aria-label="إعادة"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button></div>
             <div class="tg"><select class="select tsel" id="hrFont" aria-label="الخط"></select>
               <select class="select tsel narrow" id="hrSize" aria-label="الحجم"><option value="">الحجم</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>32</option></select>
@@ -381,6 +384,7 @@
               <div class="tbl-pop" id="hrTblPop" hidden><div class="tbl-grid" id="hrTblGrid"></div><span class="tbl-size" id="hrTblSize">اختر حجم الجدول</span></div>
               <button class="tb txt" type="button" data-tbl="row" disabled title="إضافة صف">+ صف</button><button class="tb txt" type="button" data-tbl="col" disabled title="إضافة عمود">+ عمود</button><button class="tb txt" type="button" data-tbl="delrow" disabled title="حذف الصف">− صف</button><button class="tb txt" type="button" data-tbl="delcol" disabled title="حذف العمود">− عمود</button><button class="tb txt" type="button" data-tbl="up" disabled title="تحريك الجدول لأعلى">↑ تحريك</button><button class="tb txt" type="button" data-tbl="down" disabled title="تحريك الجدول لأسفل">↓ تحريك</button><button class="tb txt" type="button" data-tbl="del" disabled title="حذف الجدول">حذف الجدول</button></div>
             <div class="tg"><button class="tb txt" type="button" id="hrHdrBtn" aria-pressed="true" title="إظهار الترويسة أعلى الصفحة">ترويسة</button><button class="tb txt" type="button" id="hrFtrBtn" aria-pressed="true" title="إظهار التذييل أسفل الصفحة">تذييل</button><button class="tb" type="button" data-cmd="removeFormat" title="مسح التنسيق" aria-label="مسح التنسيق"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16M15 15l6 6M21 15l-6 6"/></svg></button></div>
+          </div>
           </div>
           <p class="hr-manual" id="hrManual" hidden>عدّلت الخطاب على الورقة، وتعديلاتك محفوظة. قيم الخانات تبقى تتحدّث في أماكنها. <button class="linkbtn" type="button" id="hrRegen">إعادة البناء من القالب</button></p>
           <div class="hr-paper-wrap"><article class="hr-paper" id="hrPaper" aria-label="الخطاب"></article></div>
@@ -815,16 +819,16 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261117k"></script>
-<script src="js/library.js?v=20261117k"></script>
+<script src="js/ui.js?v=20261117l"></script>
+<script src="js/library.js?v=20261117l"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/home.js?v=20261117k"></script>
-<script src="js/tasks.js?v=20261117k"></script>
-<script src="js/slider.js?v=20261117k"></script>
-<script src="js/settings.js?v=20261117k"></script>
-<script src="js/fonts.js?v=20261117k"></script>
-<script src="js/hr.js?v=20261117k"></script>
-<script src="js/table-tools.js?v=20261117k"></script>
-<script src="js/shell.js?v=20261117k"></script>
+<script src="js/home.js?v=20261117l"></script>
+<script src="js/tasks.js?v=20261117l"></script>
+<script src="js/slider.js?v=20261117l"></script>
+<script src="js/settings.js?v=20261117l"></script>
+<script src="js/fonts.js?v=20261117l"></script>
+<script src="js/hr.js?v=20261117l"></script>
+<script src="js/table-tools.js?v=20261117l"></script>
+<script src="js/shell.js?v=20261117l"></script>
 </body>
 </html>
