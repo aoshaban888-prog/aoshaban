@@ -423,6 +423,7 @@ bdi{unicode-bidi:isolate}
 .lt-body p.lt-close{text-align:center;font-weight:700;margin-top:8px}
 .lt-body p.lt-recip .lt-v,.lt-body p.lt-close .lt-v{font-weight:inherit}
 .lt-v{font-weight:600}
+.lt-v.lt-long{font-weight:inherit}
 .lt-blank{color:#a0a0a0;border-bottom:1px dotted #a0a0a0;padding:0 4px}
 .lt-table{width:100%;border-collapse:collapse;margin:8px 0 12px;font-size:13px}
 .lt-table td,.lt-table th{border:1px solid #9a9a9a;padding:4px 8px;vertical-align:top;min-width:20px;overflow-wrap:anywhere}

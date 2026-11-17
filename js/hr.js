@@ -15,11 +15,11 @@
   const CATS = ["التعريف والشهادات", "الدعم والمخاطبات", "التوظيف", "الانضباط وانتهاء الخدمة", "أخرى"];
   const SUFFIXES = ["المحترمين", "المكرمين", "وفقهم الله", "حفظهم الله", "المحترم", "حفظه الله", ""];
   const PREFIXES = [["السادة", "المحترمين"], ["سعادة", "المحترم"], ["معالي", "المحترم"], ["فضيلة", "حفظه الله"], ["المكرم", "المحترم"], ["", ""]];
-  const TPL_VERSION = 3;
+  const TPL_VERSION = 4;
   const HELLO = "السلام عليكم ورحمة الله وبركاته، وبعد:";
   // the closing line is a field with a list of phrases, like the recipient
   const CLOSING = "عبارة الختام";
-  const CLOSINGS = ["وتقبلوا وافر التحية والتقدير،،", "نشكر تعاونكم معنا،،", "والله يحفظكم ويرعاكم،،", "شاكرين لكم،،", "هذا وللأهمية،،", ""];
+  const CLOSINGS = ["وتقبلوا وافر التحية والتقدير،،", "نشكر تعاونكم معنا،،", "والله يحفظكم ويرعاكم،،", "شاكرين لكم،،", "شاكرين ومقدرين لكم تعاونكم، سائلين المولى أن يحفظكم ويرعاكم.", "هذا وللأهمية،،", ""];
   const THANKS = `{{${CLOSING}}}`;
 
   const DEFAULT_TEMPLATES = [
@@ -61,18 +61,25 @@ ${HELLO}
 وقد أُعطيت هذه الإفادة بناءً على طلب صاحب الشأن، دون أدنى مسؤولية على الجمعية.
 
 ${THANKS}` },
-    { order: 5, since: 2, category: "الدعم والمخاطبات", title: "طلب دعم عيني", body:
+    { order: 5, since: 2, category: "الدعم والمخاطبات", title: "طلب دعم عيني", v4: true, body:
 `{{الجهة الموجه لها}}
 
 ${HELLO}
 
-تتقدم {{اسم الجمعية}} بخالص الشكر والتقدير لكم على دعمكم المتواصل للعمل الخيري، ويسرها أن تتقدم إليكم بطلب دعم عيني يتمثل في: {{وصف الدعم العيني}}، بكمية {{الكمية}}، وذلك لصالح {{الفئة المستفيدة}}.
+تهديكم {{اسم الجمعية}} أطيب التحيات، وتتقدم لكم بوافر الشكر والتقدير على دعمكم اللامحدود للقطاع غير الربحي، ودوركم المتميز والملموس في خدمة المجتمع.
 
-وتأمل الجمعية أن يحظى طلبها بموافقتكم الكريمة، علماً بأن الدعم سيُوجَّه وفق الأنظمة المعتمدة ويُوثَّق بما يحقق الشفافية.
+وتفخر الجمعية بما حققته من إنجازات متتالية، إذ حصلت على:
+{{إنجازات الجمعية|المركز الأول: في جائزة التنمية الشبابية على مستوى المملكة.
+المركز الثاني: في جائزة الابتكار الشبابي على مستوى المملكة.
+المركز الرابع: في جائزة العاملين مع الشباب على مستوى المملكة.}}
 
-شاكرين لكم حسن تعاونكم، وجعله الله في موازين حسناتكم.
+وتواصل الجمعية رسالتها في {{رسالة الجمعية|تنمية قدرات الشباب ومهاراتهم، من خلال برامج ومبادرات نوعية تخدم بها جميع الشباب}}.
 
-${THANKS}` },
+ويأتي في مقدمتها برنامج «{{اسم البرنامج|رحلات مسارات}}»، وهو {{وصف البرنامج|مبادرة للشباب المتفوقين تهدف إلى إثرائهم معرفيًا ومهاريًا وقيميًا، عبر رحلات اجتماعية خارج جدة تتضمن برامج متنوعة}}. وضمن البرنامج تنظّم الجمعية {{النشاط|رحلة إلى المدينة المنورة}} من {{يوم وتاريخ البداية}} إلى {{يوم وتاريخ النهاية}}، بمشاركة {{عدد المستفيدين}} مستفيداً و{{عدد المشرفين}} مشرفين (بإجمالي {{إجمالي المشاركين}} مشاركاً).
+
+نأمل من سعادتكم التكرّم بدعم {{الدعم المطلوب|المرفق (السكن) للمشاركين طوال أيام الرحلة}}.
+
+{{عبارة الختام|شاكرين ومقدرين لكم تعاونكم، سائلين المولى أن يحفظكم ويرعاكم.}}` },
     { order: 6, since: 2, category: "الدعم والمخاطبات", title: "طلب دعم مشروع", body:
 `{{الجهة الموجه لها}}
 
@@ -183,12 +190,14 @@ ${HELLO}
   const fmtDateField = s => { const d = new Date(s + "T12:00:00"); return isNaN(d) ? s : `${hijri(d)} هـ الموافق ${greg(d)} م`; };
 
   /* ---------- fields ---------- */
-  function fieldsOf(body){ const out = []; for (const m of (body || "").matchAll(FIELD_RX)){ const f = m[1]; if (!AUTO.has(f) && !out.includes(f)) out.push(f); } return out; }
-  const kind = f => f === RECIP ? "recip" : f === CLOSING ? "closing" : /تاريخ/.test(f) ? "date" : /راتب|بدل|مبلغ|البدلات|تكلفة|عدد/.test(f) ? "number" : /وصف|سبب|موضوع|هدف/.test(f) ? "long" : "text";
+  const splitField = raw => { const i = raw.indexOf("|"); return i < 0 ? { name: raw.trim(), def: null } : { name: raw.slice(0, i).trim(), def: raw.slice(i + 1).trim() }; };
+  function fieldsOf(body){ const out = []; for (const m of (body || "").matchAll(FIELD_RX)){ const f = splitField(m[1]).name; if (!AUTO.has(f) && !out.includes(f)) out.push(f); } return out; }
+  function defaultsOf(body){ const d = {}; for (const m of (body || "").matchAll(FIELD_RX)){ const { name, def } = splitField(m[1]); if (def != null && !(name in d)) d[name] = def; } return d; }
+  const kind = f => f === RECIP ? "recip" : f === CLOSING ? "closing" : /إنجازات|قائمة|بنود|نقاط/.test(f) ? "list" : /تاريخ/.test(f) ? "date" : /راتب|بدل|مبلغ|البدلات|تكلفة|عدد|إجمالي/.test(f) ? "number" : /وصف|سبب|موضوع|هدف|رسالة/.test(f) ? "long" : "text";
   function fieldValue(f, vals){
     const v = (vals[f] ?? "").toString().trim();
     if (!v) return null;
-    if (kind(f) === "date") return fmtDateField(v);
+    if (kind(f) === "date"){ if (/يوم/.test(f)){ const d = new Date(v + "T12:00:00"); return isNaN(d) ? v : `${weekday(d)} ${hijri(d)}هـ`; } return fmtDateField(v); }
     if (kind(f) === "number" && !isNaN(+v)) return (+v).toLocaleString("en-US");
     return v;
   }
@@ -202,10 +211,16 @@ ${HELLO}
 
   /* ---------- letter parts ---------- */
   function fieldHtml(raw, vals){
+    raw = splitField(raw).name;
     if (raw === RECIP) return recipHtml(vals);
+    if (kind(raw) === "list"){ // one line per item, shown as bullets
+      const lines = (vals[raw] || "").split("\n").map(l => l.trim()).filter(Boolean);
+      return lines.length ? `<span class="lt-v lt-list lt-long" data-f="${esc(raw)}">${lines.map(l => "• " + esc(l.replace(/^[•\-*]\s*/, ""))).join("<br>")}</span>` : `<span class="lt-blank" data-f="${esc(raw)}">${esc(raw)}</span>`;
+    }
     if (raw === CLOSING){ const v = vals[CLOSING] ?? CLOSINGS[0]; return `<span class="lt-v" data-f="${esc(CLOSING)}">${esc(v)}</span>`; }
     const v = AUTO.has(raw) ? (vals[raw] || "").trim() || null : fieldValue(raw, vals);
-    return v ? `<span class="lt-v" data-f="${esc(raw)}">${esc(v)}</span>` : `<span class="lt-blank" data-f="${esc(raw)}">${esc(raw)}</span>`;
+    // long values (descriptions, missions) read as normal text; short ones (names, numbers, dates) stand out
+    return v ? `<span class="lt-v${kind(raw) === "long" ? " lt-long" : ""}" data-f="${esc(raw)}">${esc(v)}</span>` : `<span class="lt-blank" data-f="${esc(raw)}">${esc(raw)}</span>`;
   }
   // after hand edits, the values that came from fields still follow their fields
   function refreshFields(paper, vals){
@@ -217,8 +232,8 @@ ${HELLO}
   function genBody(body, vals){
     const fill = text => esc(text).replace(FIELD_RX, (_, f) => fieldHtml(f.replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">"), vals));
     const cls = p => { const t = p.trim();
-      if (new RegExp(`^\\{\\{\\s*${RECIP}\\s*\\}\\}$`).test(t)) return ' class="lt-recip"';
-      if (new RegExp(`^\\{\\{\\s*${CLOSING}\\s*\\}\\}$`).test(t)) return ' class="lt-close"';
+      if (new RegExp(`^\\{\\{\\s*${RECIP}\\s*(\\|[^}]*)?\\}\\}$`).test(t)) return ' class="lt-recip"';
+      if (new RegExp(`^\\{\\{\\s*${CLOSING}\\s*(\\|[^}]*)?\\}\\}$`).test(t)) return ' class="lt-close"';
       if (/^السلام عليكم ورحمة الله وبركاته/.test(t)) return ' class="lt-hello"';
       return ""; };
     return (body || "").split(/\n\s*\n/).map(p => `<p${cls(p)}>${fill(p).replace(/\n/g, "<br>")}</p>`).join("");
@@ -303,7 +318,8 @@ ${HELLO}
   const curHead = () => heads.find(h => h.id === $("hrHead").value) || null;
   function draft(){
     const t = curTpl() || { title: "", body: "" };
-    const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"], ...(values[f + "#s"] != null ? [[f + "#s", values[f + "#s"]]] : [])] : [[f, values[f] || ""]]));
+    const defs = defaultsOf(t.body);
+    const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"], ...(values[f + "#s"] != null ? [[f + "#s", values[f + "#s"]]] : [])] : [[f, values[f] ?? defs[f] ?? ""]]));
     return { title: t.title, body: t.body, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
              fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim(), showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked };
   }
@@ -375,15 +391,16 @@ ${HELLO}
       } else if (k === "closing"){
         row.innerHTML = `<label for="${id}"></label><select class="select" id="${id}"></select>`;
         const sel = row.querySelector("select");
-        CLOSINGS.forEach(x => sel.append(new Option(x ? x.replace(/،+$/, "") : "بدون", x)));
-        sel.value = values[f] ?? CLOSINGS[0];
+        const own = defaultsOf(t.body)[f];
+        [...(own != null && !CLOSINGS.includes(own) ? [own] : []), ...CLOSINGS].forEach(x => sel.append(new Option(x ? x.replace(/،+$/, "") : "بدون", x)));
+        sel.value = values[f] ?? own ?? CLOSINGS[0];
         sel.addEventListener("change", () => { values[f] = sel.value; renderPaper(); });
         row.querySelector("label").textContent = f; box.append(row); return;
       } else {
-        row.innerHTML = `<label for="${id}"></label>` + (k === "long" ? `<textarea class="input" id="${id}" rows="2"></textarea>` : `<input class="input" id="${id}" type="${k === "date" ? "date" : k === "number" ? "number" : "text"}"${k === "number" ? ' inputmode="decimal" min="0" step="any"' : ""}>`);
+        row.innerHTML = `<label for="${id}"></label>` + (k === "list" ? `<textarea class="input" id="${id}" rows="4" placeholder="كل بند في سطر"></textarea>` : k === "long" ? `<textarea class="input" id="${id}" rows="3"></textarea>` : `<input class="input" id="${id}" type="${k === "date" ? "date" : k === "number" ? "number" : "text"}"${k === "number" ? ' inputmode="decimal" min="0" step="any"' : ""}>`);
       }
       row.querySelector("label").textContent = f;
-      const inp = row.querySelector("input,textarea"); inp.value = values[f] || "";
+      const inp = row.querySelector("input,textarea"); inp.value = values[f] ?? defaultsOf(t.body)[f] ?? "";
       inp.addEventListener("input", () => { values[f] = inp.value; renderPaper(); });
       box.append(row);
     });
@@ -657,12 +674,13 @@ ${HELLO}
       const m = await ref.get(); const v = m.exists ? m.data().v || 1 : 1;
       if (v >= TPL_VERSION) return;
       const batch = db.batch(); const titles = new Set(templates.map(t => t.title));
-      DEFAULT_TEMPLATES.filter(t => (t.since || 1) > v && !titles.has(t.title)).forEach(t => { const { since, ...rest } = t; batch.set(db.collection("hrTemplates").doc(), { ...rest, builtin: true, updatedAt: new Date().toISOString() }); });
+      DEFAULT_TEMPLATES.filter(t => (t.since || 1) > v && !titles.has(t.title)).forEach(t => { const { since, v4, ...rest } = t; batch.set(db.collection("hrTemplates").doc(), { ...rest, builtin: true, updatedAt: new Date().toISOString() }); });
       const OLD = /إلى:\s*\{\{\s*الجهة الموجه لها\s*\}\}[ \t]*(المحترمين)?/g;
       const CL = /^[ \t]*وتقبلوا وافر التحية والتقدير[،,]*[ \t]*$/m;
       templates.forEach(t => {
         let b = t.body.replace(OLD, "{{الجهة الموجه لها}}");
         if (v < 3) b = b.replace(CL, THANKS);
+        if (v < 4 && t.builtin && t.title === "طلب دعم عيني"){ const d = DEFAULT_TEMPLATES.find(x => x.v4); if (d) b = d.body; }
         if (b !== t.body) batch.update(db.collection("hrTemplates").doc(t.id), { body: b });
       });
       batch.set(ref, { v: TPL_VERSION });
@@ -853,7 +871,7 @@ ${HELLO}
       if (!list.length && !seeding){ // first use: add the standard letters
         seeding = true;
         const batch = db.batch();
-        DEFAULT_TEMPLATES.forEach(t => { const { since, ...rest } = t; batch.set(db.collection("hrTemplates").doc(), { ...rest, builtin: true, updatedAt: new Date().toISOString() }); });
+        DEFAULT_TEMPLATES.forEach(t => { const { since, v4, ...rest } = t; batch.set(db.collection("hrTemplates").doc(), { ...rest, builtin: true, updatedAt: new Date().toISOString() }); });
         batch.set(db.collection("hrMeta").doc("templates"), { v: TPL_VERSION });
         await batch.commit().catch(console.error);
         return;
