@@ -1090,8 +1090,13 @@ function initFirebase(){
         return;
       }
       setStore("", "جارٍ التحقق من الصلاحية…");
-      let ok = false;
-      try { ok = (await db.collection("allowed").doc(user.email).get()).exists; } catch (e){ console.error(e); }
+      let ok = false, err = null;
+      try { ok = (await db.collection("allowed").doc(user.email).get()).exists; } catch (e){ console.error(e); err = e; }
+      if (err && err.code !== "permission-denied"){
+        setStore("warn", "تعذّر التحقق من الصلاحية. تأكد من الاتصال بالإنترنت ثم أعد المحاولة");
+        storeButton("إعادة المحاولة", () => location.reload()); storeButton("خروج", signOut);
+        return;
+      }
       if (!ok){
         setStore("warn", `حساب ${user.email} غير مصرّح له بفتح المكتبة`); storeButton("تبديل الحساب", signOut);
         return;
@@ -2877,7 +2882,7 @@ function buildBodyXml(html, opt){
     `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>${st.u ? '<w:u w:val="single"/>' : ""}${st.hl ? `<w:shd w:val="clear" w:color="auto" w:fill="${st.hl}"/>` : ""}<w:rtl/></w:rPr>`;
   const run = (text, st, sz) => text ? `<w:r>${rPr(st, sz)}<w:t xml:space="preserve">${xmlEsc(text)}</w:t></w:r>` : "";
   const pPr = (jc, after, keepNext, ind, extra = {}) =>
-    `<w:pPr>${keepNext ? "<w:keepNext/>" : ""}${extra.num ? `<w:numPr><w:ilvl w:val="${extra.num.lvl}"/><w:numId w:val="${extra.num.id}"/></w:numPr>` : ""}<w:bidi/><w:spacing w:before="0" w:after="${after}" w:line="300" w:lineRule="auto"/>${ind ? `<w:ind w:${opt.forPreview ? "right" : "start"}="${ind}"/>` : ""}<w:jc w:val="${opt.forPreview ? ({ start: "right", end: "left" }[jc] || jc) : jc}"/>${extra.outline !== undefined ? `<w:outlineLvl w:val="${extra.outline}"/>` : ""}</w:pPr>`;
+    `<w:pPr>${keepNext ? "<w:keepNext/>" : ""}${extra.num ? `<w:numPr><w:ilvl w:val="${extra.num.lvl}"/><w:numId w:val="${extra.num.id}"/></w:numPr>` : ""}<w:bidi/><w:spacing w:before="0" w:after="${after}" w:line="300" w:lineRule="auto"/>${ind ? `<w:ind w:${opt.forPreview ? "right" : "start"}="${ind}"/>` : ""}<w:jc w:val="${opt.forPreview ? ({ start: "right", end: "left" }[jc] || jc) : jc}"/>${extra.outline !== undefined ? `<w:outlineLvl w:val="${Math.min(9, Math.max(0, extra.outline | 0))}"/>` : ""}</w:pPr>`;
   const hex = c => {
     if (!c) return "";
     let m = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
@@ -3277,7 +3282,12 @@ async function buildDocx({ forPreview = false, ctx = uiCtx(), merged = null } = 
   zip.file("word/document.xml", outXml);
   if (!forPreview && numbering && numbering.used()) await writeNumbering(zip, numbering, opt);
   if (merged && !forPreview) await setUpdateFields(zip);
-  if (!forPreview && fdef && !fdef.noEmbed && ctx.embed) await embedFont(zip, fdef);
+  if (!forPreview && fdef && !fdef.noEmbed && ctx.embed){
+    // a font file that can't be fetched only skips embedding; the document still exports
+    let fontOk = true;
+    try { await fontBytes(fdef.file); } catch (e){ fontOk = false; console.warn("font embed skipped:", fdef.file, e); }
+    if (fontOk) await embedFont(zip, fdef);
+  }
   const ct = zip.file("[Content_Types].xml");
   if (ct){ const s = await ct.async("string"); zip.file("[Content_Types].xml", s.replace(/wordprocessingml\.template\.main\+xml/g, "wordprocessingml.document.main+xml")); }
   return zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 }, mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
@@ -3897,7 +3907,7 @@ async function saveAssoc(){
       for (let i = 0; i < n; i++) await store.set("letterheads", `${id}_${i}`, { assoc: id, i, n, data: b64.slice(i * LH_CHUNK, (i + 1) * LH_CHUNK) });
       for (let i = n; i < lhChunks; i++) await store.del("letterheads", `${id}_${i}`).catch(() => {});
       lhChunks = n; lhName = state.letterheadName; state.lhSavedFor = id;
-    } else if (!state.letterheadRaw && lhChunks){
+    } else if (!state.letterheadRaw && lhChunks && state.lhLoadFailed !== id){
       for (let i = 0; i < lhChunks; i++) await store.del("letterheads", `${id}_${i}`).catch(() => {});
       lhChunks = 0; lhName = "";
     }
@@ -3927,6 +3937,7 @@ async function loadAssoc(id){
   }
   const a = state.assocs.find(x => x.id === id) || await store.get("associations", id);
   if (!a){ renderAssocSel(); return; }
+  state.lhLoadFailed = null;
   state.assocId = id;
   try { localStorage.setItem("assoc-policies-assoc", id); } catch {}
   $("assoc").value = a.name || "";
@@ -3949,7 +3960,14 @@ async function loadAssoc(id){
       state.lhSavedFor = id;
       if (st.margins) setMargins(st.margins);
       assocNote("");
-    } catch { assocNote("تعذّر تحميل كليشة هذه الجمعية. أرفقها من جديد ثم اضغط «حفظ التغييرات».", "err"); }
+    } catch {
+      if (state.assocId !== id) return;
+      state.letterhead = null; state.letterheadRaw = null; state.letterheadName = ""; state.lhMargins = null; state.lhSavedFor = null;
+      state.lhLoadFailed = id; // keep the stored letterhead: saving now must not delete it
+      $("lhName").innerHTML = '<span class="hint">اسحب الملف هنا أو اضغط للاختيار (.docx)</span>';
+      setMargins(st.margins || DEFAULT_MARGINS);
+      assocNote("تعذّر تحميل كليشة هذه الجمعية. أرفقها من جديد ثم اضغط «حفظ التغييرات».", "err");
+    }
   } else {
     state.letterhead = null; state.letterheadRaw = null; state.letterheadName = ""; state.lhMargins = null;
     $("lhName").innerHTML = '<span class="hint">اسحب الملف هنا أو اضغط للاختيار (.docx)</span>';
