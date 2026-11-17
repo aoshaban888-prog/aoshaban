@@ -13,6 +13,7 @@
   const ASSOC_FIELD = "اسم الجمعية", RECIP = "الجهة الموجه لها";
   const AUTO = new Set([ASSOC_FIELD, "صفة المعتمد", "اسم المعتمد"]);
   const CATS = ["التعريف والشهادات", "الدعم والمخاطبات", "التوظيف", "الانضباط وانتهاء الخدمة", "أخرى"];
+  const SUFFIXES = ["المحترمين", "المكرمين", "وفقهم الله", "حفظهم الله", "المحترم", "حفظه الله", ""];
   const PREFIXES = [["السادة", "المحترمين"], ["سعادة", "المحترم"], ["معالي", "المحترم"], ["فضيلة", "حفظه الله"], ["المكرم", "المحترم"], ["", ""]];
   const TPL_VERSION = 2;
   const HELLO = "السلام عليكم ورحمة الله وبركاته، وبعد:";
@@ -190,8 +191,9 @@ ${HELLO}
   }
   function recipHtml(vals){
     const name = (vals[RECIP] || "").trim(); const pre = vals[RECIP + "#p"] ?? "السادة";
+    const chosen = vals[RECIP + "#s"];
     if (!name) return `<span class="lt-blank">${esc(RECIP)}</span>`;
-    const suffix = (PREFIXES.find(p => p[0] === pre) || ["", ""])[1];
+    const suffix = chosen != null ? chosen : (PREFIXES.find(p => p[0] === pre) || ["", ""])[1];
     return `<span class="lt-to"><span>${pre ? esc(pre) + "/ " : ""}<span class="lt-v">${esc(name)}</span></span>${suffix ? `<span>${esc(suffix)}</span>` : ""}</span>`;
   }
 
@@ -285,7 +287,7 @@ ${HELLO}
   const curHead = () => heads.find(h => h.id === $("hrHead").value) || null;
   function draft(){
     const t = curTpl() || { title: "", body: "" };
-    const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"]] : [[f, values[f] || ""]]));
+    const fields = Object.fromEntries(fieldsOf(t.body).flatMap(f => f === RECIP ? [[f, values[f] || ""], [f + "#p", values[f + "#p"] ?? "السادة"], ...(values[f + "#s"] != null ? [[f + "#s", values[f + "#s"]]] : [])] : [[f, values[f] || ""]]));
     return { title: t.title, body: t.body, templateId: t.id || "", headId: $("hrHead").value || "", assoc: $("hrAssoc").value.trim(), date: $("hrDate").value || ymd(new Date()),
              fields, signName: $("hrSignName").value.trim(), signRole: $("hrSignRole").value.trim(), showSig: $("hrShowSig").checked, showStamp: $("hrShowStamp").checked };
   }
@@ -343,11 +345,16 @@ ${HELLO}
       const id = "hrf-" + Math.random().toString(36).slice(2, 8);
       const k = kind(f);
       if (k === "recip"){
-        row.innerHTML = `<label for="${id}"></label><div class="hr-recip"><select class="select" aria-label="الصفة"></select><input class="input" id="${id}" type="text"></div>`;
-        const sel = row.querySelector("select");
-        PREFIXES.forEach(([p]) => sel.append(new Option(p || "بدون", p)));
+        row.innerHTML = `<label for="${id}"></label><div class="hr-recip"><select class="select" aria-label="الصفة"></select><select class="select" aria-label="اللقب الختامي"></select><input class="input" id="${id}" type="text" placeholder="اسم الجهة"></div>`;
+        const [sel, suf] = row.querySelectorAll("select");
+        PREFIXES.forEach(([p]) => sel.append(new Option(p || "بدون صفة", p)));
+        SUFFIXES.forEach(x => suf.append(new Option(x || "بدون لقب", x)));
+        const defSuf = () => (PREFIXES.find(p => p[0] === sel.value) || ["", ""])[1];
         sel.value = values[f + "#p"] ?? "السادة";
-        sel.addEventListener("change", () => { values[f + "#p"] = sel.value; renderPaper(); });
+        suf.value = values[f + "#s"] ?? defSuf();
+        // the closing title follows the prefix until it is picked by hand
+        sel.addEventListener("change", () => { values[f + "#p"] = sel.value; if (values[f + "#s"] == null) suf.value = defSuf(); renderPaper(); });
+        suf.addEventListener("change", () => { values[f + "#s"] = suf.value; renderPaper(); });
       } else {
         row.innerHTML = `<label for="${id}"></label>` + (k === "long" ? `<textarea class="input" id="${id}" rows="2"></textarea>` : `<input class="input" id="${id}" type="${k === "date" ? "date" : k === "number" ? "number" : "text"}"${k === "number" ? ' inputmode="decimal" min="0" step="any"' : ""}>`);
       }

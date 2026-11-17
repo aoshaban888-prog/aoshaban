@@ -484,7 +484,8 @@ bdi{unicode-bidi:isolate}
 .hr-paper [contenteditable="true"]:focus{box-shadow:0 0 0 1.5px rgba(124,58,237,.55)}
 .hr-paper .lt-hdr[contenteditable="true"]:empty::before,.hr-paper .lt-ftr[contenteditable="true"]:empty::before{content:attr(data-ph);color:#b5b5b5}
 .lt-empty{color:#999;text-align:center;position:absolute;inset:0;display:grid;place-items:center;margin:0}
-.hr-recip{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px}
+.hr-recip{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.hr-recip input{grid-column:1/-1}
 .hr-manual{margin:0;font-size:13px;color:var(--ink-2);background:var(--accent-soft);padding:8px 12px;border-radius:var(--r)}
 /* toolbar */
 .hr-tools{display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);position:sticky;top:8px;z-index:20;box-shadow:var(--shadow-sm)}
