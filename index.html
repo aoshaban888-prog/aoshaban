@@ -7,14 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script>try{var t=localStorage.getItem("app-theme")||localStorage.getItem("assoc-policies-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<script src="js/boot.js"></script>
 <link rel="stylesheet" href="css/library.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <div class="app">
   <aside class="side" id="side" aria-label="القائمة">
-    <a class="brand" href="#/home">مكتب الحوكمة</a>
+    <a class="brand" href="#/home"><img class="logo-img" alt="" hidden><span class="brand-name">مكتب الحوكمة</span></a>
     <nav class="nav">
       <a href="#/home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>الرئيسية</a>
       <a href="#/tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>المهام</a>
@@ -22,6 +22,8 @@
       <a href="#/governance/library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>اللوائح والسياسات</a>
       <a href="#/governance/associations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg>الجمعيات</a>
       <a href="#/governance/compliance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>متطلبات الامتثال</a>
+      <div class="nav-label">الإدارة</div>
+      <a href="#/admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>التمكين التقني</a>
     </nav>
     <div class="side-foot">
       <div class="store-note" id="storeNote"><span class="dot"></span><span>جارٍ الاتصال بالمكتبة…</span></div>
@@ -282,6 +284,82 @@
       <header class="page-h"><div><p class="crumb">الحوكمة</p><h1>متطلبات الامتثال</h1></div></header>
       <div class="empty-state"><h2>يُبنى في المرحلة القادمة</h2><p>قائمة متطلبات لكل جمعية وحالة كل متطلب، مربوطة باللوائح والمهام</p></div>
     </section>
+    <section class="view admin" data-view="admin" hidden>
+      <header class="page-h">
+        <div><p class="crumb">الإدارة</p><h1>التمكين التقني</h1></div>
+        <div class="actions">
+          <span class="s-state" id="sState"></span>
+          <button class="btn small ghost" type="button" id="sReset">الإعدادات الأصلية</button>
+          <button class="btn small" type="button" id="sUndo">تراجع</button>
+          <button class="btn primary" type="button" id="sSave" disabled>حفظ التغييرات</button>
+        </div>
+      </header>
+      <p class="s-msg" id="sMsg" role="status"></p>
+      <p class="muted-text s-signin" id="sSignin">سجّل الدخول لحفظ الإعدادات. التغييرات هنا تظهر فوراً لكنها لا تُحفظ قبل تسجيل الدخول</p>
+      <div class="s-grid">
+        <section class="card" aria-labelledby="s1"><div class="card-h"><h2 id="s1">الهوية</h2></div>
+          <div class="s-row"><label for="sName">اسم الموقع</label><input class="input" id="sName" maxlength="40"></div>
+          <div class="s-row"><span class="lbl">الشعار</span>
+            <div class="logo-pick"><div class="logo-prev" id="sLogoPrev"></div><div class="logo-btns"><label class="btn small">رفع شعار<input type="file" id="sLogoFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" hidden></label><button class="btn small ghost" type="button" data-clear="logo">إزالة</button></div></div></div>
+          <div class="s-row"><span class="lbl">شعار للخلفية الداكنة <span class="muted-text">اختياري</span></span>
+            <div class="logo-pick"><div class="logo-prev dark" id="sLogoDarkPrev"></div><div class="logo-btns"><label class="btn small">رفع شعار<input type="file" id="sLogoDarkFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" hidden></label><button class="btn small ghost" type="button" data-clear="logoDark">إزالة</button></div></div></div>
+          <div class="s-row"><label for="sLogoSize">حجم الشعار</label><div class="range"><input type="range" id="sLogoSize" min="20" max="64" step="4"><span class="mono" id="sLogoSizeV"></span></div></div>
+          <label class="s-check"><input type="checkbox" id="sShowName"> إظهار الاسم بجانب الشعار</label>
+        </section>
+
+        <section class="card" aria-labelledby="s2"><div class="card-h"><h2 id="s2">الألوان</h2></div>
+          <div class="presets" id="sPresets"></div>
+          <div class="s-row two">
+            <div><label for="sA1">اللون الأول</label><div class="color"><input type="color" id="sA1"><bdi class="mono" id="sA1v"></bdi></div></div>
+            <div><label for="sA2">اللون الثاني</label><div class="color"><input type="color" id="sA2"><bdi class="mono" id="sA2v"></bdi></div></div>
+          </div>
+          <div class="s-preview"><span class="pv-btn">زر أساسي</span><span class="pv-link">رابط</span><span class="pv-soft">تحديد</span></div>
+          <p class="muted-text">التدرّج يظهر على الزر الأساسي والقسم المحدد ومربع الصلاة القادمة في كل المظاهر. اختر لونين متقاربين للون واحد بلا تدرّج</p>
+        </section>
+
+        <section class="card" aria-labelledby="s3"><div class="card-h"><h2 id="s3">الخطوط</h2></div>
+          <div class="s-row"><label for="sFont">خط الواجهة</label><select class="select" id="sFont"></select></div>
+          <div class="s-row"><label for="sFontSize">حجم النص</label><select class="select" id="sFontSize"><option value="14">صغير</option><option value="15">متوسط</option><option value="16">كبير</option><option value="17">كبير جداً</option></select></div>
+          <p class="font-sample">لائحة الحوكمة لجمعية البر الخيرية · 1448 هـ</p>
+          <p class="muted-text">خطوط المستندات المصدّرة (وورد وPDF) تُختار من المكتبة نفسها</p>
+        </section>
+
+        <section class="card" aria-labelledby="s4"><div class="card-h"><h2 id="s4">الواجهة</h2></div>
+          <div class="s-row"><label for="sTheme">المظهر الافتراضي</label><select class="select" id="sTheme"><option value="system">حسب الجهاز</option><option value="light">فاتح</option><option value="dark">داكن</option><option value="neon">نيون</option></select></div>
+          <div class="s-row"><span class="lbl">انحناء الزوايا</span><div class="seg-pick">
+            <label><input type="radio" name="sRadius" value="small"><span>حاد</span></label>
+            <label><input type="radio" name="sRadius" value="medium"><span>متوسط</span></label>
+            <label><input type="radio" name="sRadius" value="large"><span>دائري</span></label></div></div>
+          <div class="s-row"><label for="sStart">الصفحة عند الفتح</label><select class="select" id="sStart"><option value="home">الرئيسية</option><option value="tasks">المهام</option><option value="governance/library">اللوائح والسياسات</option><option value="governance/associations">الجمعيات</option><option value="governance/compliance">متطلبات الامتثال</option></select></div>
+          <div class="s-row"><span class="lbl">الرئيسية تعرض</span>
+            <label class="s-check"><input type="checkbox" id="sHomeTasks"> لوحة المهام</label>
+            <label class="s-check"><input type="checkbox" id="sHomePrayer"> أوقات الصلاة</label></div>
+        </section>
+
+        <section class="card wide" aria-labelledby="s5"><div class="card-h"><h2 id="s5">المستخدمون والصلاحيات</h2></div>
+          <p class="muted-text" id="uSignin">سجّل الدخول لإدارة المستخدمين</p>
+          <div id="uNoAdmin" class="u-help" hidden>
+            <p>إدارة المستخدمين للمديرين فقط. لتفعيلها مرة واحدة:</p>
+            <ol>
+              <li>انشر القواعد الجديدة من ملف <bdi>firestore.rules</bdi> في Firebase ← Firestore ← Rules</li>
+              <li>في Firestore ← Data ← <bdi>allowed</bdi> افتح مستند بريدك وأضف حقلاً اسمه <bdi>role</bdi> قيمته <bdi>admin</bdi></li>
+              <li>حدّث الصفحة</li>
+            </ol>
+          </div>
+          <div id="uBox" hidden>
+            <form class="u-add" id="uAdd">
+              <input class="input" id="uEmail" type="email" dir="ltr" placeholder="name@gmail.com" aria-label="البريد" required>
+              <input class="input" id="uName" placeholder="الاسم (اختياري)" aria-label="الاسم">
+              <select class="select" id="uRole" aria-label="الدور"><option value="member">مستخدم</option><option value="admin">مدير</option></select>
+              <button class="btn primary" type="submit">إضافة</button>
+            </form>
+            <p class="s-msg" id="uMsg" role="status"></p>
+            <table class="u-table"><thead><tr><th>الحساب</th><th>الدور</th><th></th></tr></thead><tbody id="uList"></tbody></table>
+            <p class="muted-text">المستخدم يفتح كل أقسام الموقع ويعدّل فيها. المدير يقدر كذلك يضيف الأشخاص ويزيلهم ويغيّر أدوارهم</p>
+          </div>
+        </section>
+      </div>
+    </section>
     </main>
   </div>
 </div>
@@ -522,6 +600,7 @@
 <script src="js/library.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
 <script src="js/home.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/shell.js"></script>
 </body>
 </html>

@@ -6,20 +6,21 @@
     "governance/library": "اللوائح والسياسات",
     "governance/associations": "الجمعيات",
     "governance/compliance": "متطلبات الامتثال",
+    "admin": "التمكين التقني",
   };
-  const DEFAULT = "home";
+  const DEFAULT = () => (window.siteSettings && ROUTES[window.siteSettings.startPage]) ? window.siteSettings.startPage : "home";
   const app = document.querySelector(".app");
   let current = null;
 
   function route(){
     let r = location.hash.replace(/^#\/?/, "");
-    if (!ROUTES[r]) r = DEFAULT;
+    if (!ROUTES[r]) r = DEFAULT();
     document.querySelectorAll(".view").forEach(v => { v.hidden = v.dataset.view !== r; });
     document.querySelectorAll(".nav a").forEach(a => {
       if (a.getAttribute("href") === "#/" + r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     document.querySelector(".topbar .t").textContent = ROUTES[r];
-    document.title = ROUTES[r] + " · مكتب الحوكمة";
+    document.title = ROUTES[r] + " · " + ((window.siteSettings && window.siteSettings.siteName) || "مكتب الحوكمة");
     app.classList.remove("nav-open");
     if (r !== current){ current = r; window.scrollTo(0, 0); window.dispatchEvent(new CustomEvent("app:view", { detail: r })); }
   }
@@ -42,5 +43,6 @@
     paintPick();
   }));
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paintPick);
+  window.addEventListener("app:settings", () => { paintPick(); if (current) document.title = ROUTES[current] + " · " + window.siteSettings.siteName; });
   paintPick();
 })();

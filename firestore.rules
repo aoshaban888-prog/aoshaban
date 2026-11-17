@@ -1,23 +1,33 @@
 rules_version = '2';
 // Only signed-in Google accounts whose email has a document in the "allowed" collection
-// (document ID = the email, e.g. allowed/someone@gmail.com) can read or write the library.
-// Add or remove people from the Firebase console: Firestore > Data > allowed.
+// (document ID = the email, e.g. allowed/someone@gmail.com) can read or write the site.
+// A person whose document has role: "admin" can also add, remove and change people
+// from the site (التمكين التقني). The first admin is set by hand in the console.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
       return request.auth != null && request.auth.token.email_verified == true;
     }
+    function me() {
+      return /databases/$(database)/documents/allowed/$(request.auth.token.email);
+    }
     function allowed() {
-      return signedIn() && exists(/databases/$(database)/documents/allowed/$(request.auth.token.email));
+      return signedIn() && exists(me());
+    }
+    function isAdmin() {
+      return allowed() && get(me()).data.get("role", "") == "admin";
     }
 
-    // each user may only check their own entry; the list is edited from the console only
+    // everyone may check their own entry; admins see and edit the whole list but cannot remove or demote themselves
     match /allowed/{email} {
-      allow read: if signedIn() && request.auth.token.email == email;
-      allow write: if false;
+      allow get: if signedIn() && request.auth.token.email == email;
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && (email != request.auth.token.email || request.resource.data.get("role", "") == "admin");
+      allow delete: if isAdmin() && email != request.auth.token.email;
     }
 
-    // the library: policies, associations, letterheads, vindex, versions, prefs
+    // everything else: policies, associations, letterheads, versions, tasks, settings, ...
     match /{col}/{id} {
       allow read, write: if col != "allowed" && allowed();
     }
