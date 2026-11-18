@@ -73,9 +73,19 @@
     } catch (e){ console.error(e); }
     finally { fixing = false; }
   }
+  // stand-ins: delegations/{approver} = { to, startMs, endMs }
+  let delegs = {};
+  const activeDeleg = e => { const d = delegs[e]; const t = Date.now(); return d && t >= d.startMs && t < d.endMs ? d : null; };
+  // whose approval I give on this request: my own, or an approver I stand in for (null when neither)
+  function actingFor(r){
+    const list = Array.isArray(r.currentApprovers) ? r.currentApprovers : (stageOf(r) ? (stageOf(r).approvers || []).map(a => a.email) : []);
+    if (list.includes(me)) return me;
+    const e = list.slice(0, 3).find(x => { const d = activeDeleg(x); return d && d.to === me; });
+    return e || null;
+  }
+  const nameOf = e => { for (const w of workflows) for (const s of w.stages || []) for (const a of s.approvers || []) if (a.email === e && a.name) return a.name; const u = users.find(x => x.id === e); return (u && u.name) || e; };
   // approvers never act on their own request (an admin still can)
-  const amApprover = r => r.status === "pending" && !!stageOf(r) && (Array.isArray(r.currentApprovers) ? r.currentApprovers.includes(me) : (stageOf(r).approvers || []).some(a => a.email === me))
-    && (r.submittedBy !== me || isAdmin());
+  const amApprover = r => r.status === "pending" && !!stageOf(r) && !!actingFor(r) && (r.submittedBy !== me || isAdmin());
 
   /* ---------- access: sections and admin pages follow the user's permissions ---------- */
   function applyAccess(){
@@ -125,6 +135,45 @@
       location.hash = "#/hr/requests"; setTab("mine");
     } catch (e){ console.error(e); UI.toast("تعذّر رفع الطلب", "err"); }
   }
+
+  /* ---------- delegation: an approver names a stand-in for a period ---------- */
+  const isApproverAnywhere = () => workflows.some(w => (w.stages || []).some(s => (s.approvers || []).some(a => a.email === me)));
+  function renderDeleg(){
+    if (!db) return;
+    $("rqDelegBtn").hidden = !(isApproverAnywhere() || isAdmin());
+    const mine = delegs[me], act = activeDeleg(me), day = ms => new Date(ms).toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "long" });
+    $("rqDelegNow").textContent = mine ? `${act ? "مفوَّض الآن" : mine.startMs > Date.now() ? "تفويض قادم" : "انتهى التفويض"}: ${mine.toName || mine.to} ينوب عنك من ${day(mine.startMs)} إلى ${day(mine.endMs - 1)}` : "لا يوجد تفويض. اختر من ينوب عنك في الاعتماد أثناء غيابك.";
+    $("rqDelegEnd").hidden = !mine;
+    const forMe = Object.entries(delegs).filter(([from, d]) => d.to === me && activeDeleg(from));
+    $("rqDelegIn").hidden = !forMe.length;
+    $("rqDelegIn").textContent = forMe.length ? "تنوب الآن عن: " + forMe.map(([from, d]) => d.fromName || from).join("، ") : "";
+    $("rqDelegBtn").classList.toggle("on", !!act || forMe.length > 0);
+    const dl = $("rqDelegList"); dl.innerHTML = "";
+    const people = new Map(); workflows.forEach(w => (w.stages || []).forEach(s => (s.approvers || []).forEach(a => people.set(a.email, a.name || a.email)))); users.forEach(u => people.set(u.id, u.name || u.id));
+    people.delete(me); people.forEach((n, e) => { const o = document.createElement("option"); o.value = e; o.label = n; dl.append(o); });
+  }
+  $("rqDelegBtn").addEventListener("click", () => {
+    const p = $("rqDeleg"); p.hidden = !p.hidden; if (p.hidden) return;
+    const ymd = d => d.toISOString().slice(0, 10), mine = delegs[me];
+    $("rqDelegTo").value = mine ? mine.to : ""; $("rqDelegFrom").value = mine ? ymd(new Date(mine.startMs)) : ymd(new Date());
+    $("rqDelegUntil").value = mine ? ymd(new Date(mine.endMs - 86400e3)) : ""; $("rqDelegTo").focus();
+  });
+  $("rqDelegForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const to = $("rqDelegTo").value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return UI.toast("اكتب بريداً صحيحاً", "err");
+    if (to === me) return UI.toast("لا يمكن تفويض نفسك", "err");
+    const startMs = new Date($("rqDelegFrom").value + "T00:00:00").getTime(), endMs = new Date($("rqDelegUntil").value + "T00:00:00").getTime() + 86400e3;
+    if (!(endMs > startMs)) return UI.toast("تاريخ النهاية قبل البداية", "err");
+    try {
+      await db.collection("delegations").doc(me).set({ to, toName: nameOf(to), from: me, fromName: myName, startMs, endMs, at: new Date().toISOString() });
+      $("rqDeleg").hidden = true; UI.toast(`فوّضت ${nameOf(to)} بالاعتماد عنك`);
+    } catch (err){ console.error(err); UI.toast("تعذّر حفظ التفويض", "err"); }
+  });
+  $("rqDelegEnd").addEventListener("click", async () => {
+    if (!(await UI.confirm("إنهاء التفويض؟ تعود الطلبات إليك فقط.", { ok: "إنهاء" }))) return;
+    try { await db.collection("delegations").doc(me).delete(); $("rqDeleg").hidden = true; UI.toast("انتهى التفويض"); } catch (err){ console.error(err); UI.toast("تعذّر إنهاء التفويض", "err"); }
+  });
 
   /* ---------- requests page ---------- */
   function setTab(t){
@@ -245,7 +294,7 @@
       const li = document.createElement("li");
       li.innerHTML = `<span class="rq-hw"></span><span class="rq-ha"></span><span class="rq-hn"></span>`;
       li.querySelector(".rq-hw").textContent = fmt(x.at);
-      li.querySelector(".rq-ha").textContent = `${x.name || x.by} ${ACTION[x.action] || x.action}${x.stage ? ` (${x.stage})` : ""}`;
+      li.querySelector(".rq-ha").textContent = `${x.name || x.by} ${ACTION[x.action] || x.action}${x.onBehalf ? ` نيابة عن ${x.onBehalfName || x.onBehalf}` : ""}${x.stage ? ` (${x.stage})` : ""}`;
       li.querySelector(".rq-hn").textContent = [x.reason, x.note].filter(Boolean).join(" · ");
       h.append(li);
     });
@@ -286,7 +335,8 @@
       if (!v) return; reason = v.choice; note = v.note;
     } else if (!(await UI.confirm(words[0], { ok: words[1], danger: false }))) return;
     const now = new Date().toISOString(), stage = stageOf(r) ? stageOf(r).name : "";
-    const entry = { at: now, by: me, name: myName, action: action === "approve" && last ? "final" : action, stage, note, ...(reason ? { reason } : {}) };
+    const forWho = action !== "cancel" ? actingFor(r) : me;
+    const entry = { at: now, by: me, name: myName, action: action === "approve" && last ? "final" : action, stage, note, ...(reason ? { reason } : {}), ...(forWho && forWho !== me ? { onBehalf: forWho, onBehalfName: nameOf(forWho) } : {}) };
     const ref = db.collection("requests").doc(r.id);
     try {
       if (action === "approve" && last){
@@ -326,7 +376,9 @@
         const now = new Date().toISOString();
         const entry = { at: now, by: me, name: myName, action: who === "submitter" ? "resubmit" : "edit", stage: who === "submitter" ? "" : (stageOf(r) || {}).name || "" };
         const patch = { letter: L, title: L.title, assoc: L.assoc || "", employee: L.employee || "", updatedAt: now, history: [...(r.history || []), entry] };
-        if (who === "submitter") Object.assign(patch, { status: "pending", stageIndex: 0, currentApprovers: (r.stages[0] || {}).emails || [] });
+        // after a return the request can carry on from the stage that returned it
+        const at = who === "submitter" && r.status === "returned" && opts.resumeStage !== false ? (r.stageIndex || 0) : 0;
+        if (who === "submitter") Object.assign(patch, { status: "pending", stageIndex: at, currentApprovers: (r.stages[at] || {}).emails || [] });
         else patch.currentApprovers = r.currentApprovers || [];
         await db.collection("requests").doc(r.id).update(patch);
         UI.toast(who === "submitter" ? "أُعيد رفع الطلب" : "حُفظ تعديل الخطاب");
@@ -357,6 +409,7 @@
       db2.addEventListener("click", async () => { if (await UI.confirm(`حذف مسار «${w.name}»؟ الطلبات الجارية تكمل على مسارها.`, { ok: "حذف", danger: true })) saveWorkflows(workflows.filter(x => x.id !== w.id), "حُذف المسار"); });
       ul.append(li);
     });
+    $("raOptResume").checked = opts.resumeStage !== false;
     $("raOptEdit").checked = opts.approverEdit !== false; $("raOptNote").checked = opts.noteRequired !== false; $("raOptSla").value = +opts.slaDays || 2;
   }
   /* ---------- التمكين التقني ← صلاحيات المستخدمين ---------- */
@@ -469,7 +522,7 @@
     $("raWfEditor").hidden = true; wDraft = null;
   });
   ["raOptEdit", "raOptNote"].forEach(id => $(id).addEventListener("change", async () => {
-    try { await db.collection("settings").doc("requests").set({ approverEdit: $("raOptEdit").checked, noteRequired: $("raOptNote").checked, slaDays: Math.max(1, Math.min(30, +$("raOptSla").value || 2)) }); UI.toast("حُفظت الخيارات"); }
+    try { await db.collection("settings").doc("requests").set({ approverEdit: $("raOptEdit").checked, resumeStage: $("raOptResume").checked, noteRequired: $("raOptNote").checked, slaDays: Math.max(1, Math.min(30, +$("raOptSla").value || 2)) }); UI.toast("حُفظت الخيارات"); }
     catch (e){ UI.toast("تعذّر الحفظ", "err"); }
   }));
 
@@ -480,8 +533,9 @@
     try { const a = await db.collection("allowed").doc(me).get(); if (a.exists) my = { ...my, ...a.data() }; } catch (e){ console.error(e); }
     applyAccess();
     db.collection("allowed").doc(me).onSnapshot(a => { if (a.exists){ my = { role: "member", canIssue: false, sections: null, ...a.data() }; applyAccess(); renderAdmin(); renderList(); renderPerms(); backfill(); } }, () => {});
-    db.collection("settings").doc("workflows").onSnapshot(x => { workflows = (x.exists && x.data().list) || []; renderAdmin(); backfill(); }, () => {});
+    db.collection("settings").doc("workflows").onSnapshot(x => { workflows = (x.exists && x.data().list) || []; renderAdmin(); renderDeleg(); backfill(); }, () => {});
     db.collection("settings").doc("requests").onSnapshot(x => { if (x.exists) opts = { ...opts, ...x.data() }; renderAdmin(); if (current) show(current.id, true); }, () => {});
+    db.collection("delegations").onSnapshot(s => { delegs = {}; s.docs.forEach(d => { delegs[d.id] = d.data(); }); renderDeleg(); renderList(); toHome(); }, () => {});
     db.collection("requests").onSnapshot(s => { requests = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); toHome(); backfill(); }, e => console.error(e));
     db.collection("hrTemplates").onSnapshot(s => { templates = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.order || 0) - (b.order || 0)); renderAdmin(); }, () => {});
     if (isAdmin()) db.collection("allowed").onSnapshot(s => { users = s.docs.map(x => ({ id: x.id, ...x.data() })); renderAdmin(); renderPerms(); }, () => {});

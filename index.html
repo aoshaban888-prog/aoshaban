@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261118s"></script>
-<link rel="stylesheet" href="css/library.css?v=20261118s">
-<link rel="stylesheet" href="css/app.css?v=20261118s">
+<script src="js/boot.js?v=20261118t"></script>
+<link rel="stylesheet" href="css/library.css?v=20261118t">
+<link rel="stylesheet" href="css/app.css?v=20261118t">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -534,12 +534,23 @@
     <section class="view" data-view="hr/requests" hidden>
       <header class="page-h">
         <div><p class="crumb">الموارد البشرية</p><h1>الطلبات</h1></div>
-        <div class="actions"><div class="seg-tabs" role="tablist" aria-label="الطلبات">
+        <div class="actions"><button class="btn small" type="button" id="rqDelegBtn" hidden>التفويض</button><div class="seg-tabs" role="tablist" aria-label="الطلبات">
           <button type="button" role="tab" data-rqtab="inbox" aria-selected="true">بانتظار اعتمادي <span class="rq-count" id="rqInboxN"></span></button>
           <button type="button" role="tab" data-rqtab="mine" aria-selected="false">طلباتي</button>
           <button type="button" role="tab" data-rqtab="all" aria-selected="false" id="rqAllTab" hidden>كل الطلبات</button>
         </div></div>
       </header>
+      <section class="card rq-deleg" id="rqDeleg" hidden aria-labelledby="rqDelegH">
+        <div class="card-h"><h2 id="rqDelegH">التفويض</h2></div>
+        <p class="muted-text" id="rqDelegNow"></p>
+        <p class="muted-text" id="rqDelegIn" hidden></p>
+        <form class="rq-dform" id="rqDelegForm">
+          <div class="s-row"><label for="rqDelegTo">ينوب عني</label><input class="input" id="rqDelegTo" list="rqDelegList" dir="ltr" placeholder="بريد الشخص" autocomplete="off" required><datalist id="rqDelegList"></datalist></div>
+          <div class="s-row"><label for="rqDelegFrom">من</label><input class="input" id="rqDelegFrom" type="date" required></div>
+          <div class="s-row"><label for="rqDelegUntil">إلى (يشمل اليوم)</label><input class="input" id="rqDelegUntil" type="date" required></div>
+          <div class="hr-actions"><button class="btn primary" type="submit">حفظ التفويض</button><button class="btn ghost danger-text" type="button" id="rqDelegEnd" hidden>إنهاء التفويض</button></div>
+        </form>
+      </section>
       <p class="muted-text" id="rqSignin">سجّل الدخول لعرض الطلبات</p>
       <div class="rq-layout" id="rqLayout" hidden>
         <section class="card rq-list-card" aria-label="قائمة الطلبات">
@@ -607,6 +618,7 @@
         <section class="card" aria-labelledby="ra3">
           <div class="card-h"><h2 id="ra3">خيارات الاعتماد</h2></div>
           <label class="s-check"><input type="checkbox" id="raOptEdit"> المعتمد يقدر يعدّل الخطاب قبل اعتماده</label>
+          <label class="s-check"><input type="checkbox" id="raOptResume"> عند إعادة الرفع يكمل الطلب من المرحلة التي أرجعته (بدل البدء من أول مرحلة)</label>
           <label class="s-check"><input type="checkbox" id="raOptNote"> إلزام كتابة التفاصيل مع سبب الإرجاع أو الرفض (اختيار السبب إلزامي دائماً)</label>
           <label class="s-check ra-sla">يتلوّن الطلب كمتأخر إذا انتظر في مرحلة أكثر من <input class="input" type="number" id="raOptSla" min="1" max="30" step="1" value="2" aria-label="عدد الأيام"> أيام</label>
         </section>
@@ -990,20 +1002,20 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261118s"></script>
-<script src="js/library.js?v=20261118s"></script>
+<script src="js/ui.js?v=20261118t"></script>
+<script src="js/library.js?v=20261118t"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/smart-task.js?v=20261118s"></script>
-<script src="js/reminders.js?v=20261118s"></script>
-<script src="js/home.js?v=20261118s"></script>
-<script src="js/tasks.js?v=20261118s"></script>
-<script src="js/slider.js?v=20261118s"></script>
-<script src="js/settings.js?v=20261118s"></script>
-<script src="js/fonts.js?v=20261118s"></script>
-<script src="js/hr.js?v=20261118s"></script>
-<script src="js/requests.js?v=20261118s"></script>
-<script src="js/table-tools.js?v=20261118s"></script>
-<script src="js/login.js?v=20261118s"></script>
-<script src="js/shell.js?v=20261118s"></script>
+<script src="js/smart-task.js?v=20261118t"></script>
+<script src="js/reminders.js?v=20261118t"></script>
+<script src="js/home.js?v=20261118t"></script>
+<script src="js/tasks.js?v=20261118t"></script>
+<script src="js/slider.js?v=20261118t"></script>
+<script src="js/settings.js?v=20261118t"></script>
+<script src="js/fonts.js?v=20261118t"></script>
+<script src="js/hr.js?v=20261118t"></script>
+<script src="js/requests.js?v=20261118t"></script>
+<script src="js/table-tools.js?v=20261118t"></script>
+<script src="js/login.js?v=20261118t"></script>
+<script src="js/shell.js?v=20261118t"></script>
 </body>
 </html>

@@ -848,3 +848,18 @@ html.gate-wait .gate-loader{display:grid;place-items:center;position:fixed;inset
 .hr-off td{color:var(--muted)}
 .hr-off td:not(.u-act){text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
 .hr-offchip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger);text-decoration:none}
+
+/* ---------- delegation and letter versions ---------- */
+.rq-deleg{margin-bottom:16px}
+.rq-deleg .card-h{margin-bottom:4px}
+.rq-dform{margin-top:12px;max-width:560px}
+#rqDelegIn{color:var(--accent);margin-top:4px}
+#rqDelegBtn.on{border-color:var(--accent);color:var(--accent)}
+.hr-verchip{display:inline-block;font:inherit;font-size:11px;padding:1px 7px;border-radius:999px;border:0;cursor:pointer;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.hr-verchip:hover{background:color-mix(in srgb,var(--accent) 24%,transparent)}
+.hr-vers{width:min(480px,calc(100vw - 32px))}
+.hr-vlist{list-style:none;margin:0 0 12px;padding:0}
+.hr-vlist li{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;border-top:1px solid var(--line-soft)}
+.hr-vlist li:first-child{border-top:0}
+.hr-vlist span{display:flex;flex-direction:column;gap:2px}
+.hr-vlist small{color:var(--muted);font-size:12px}

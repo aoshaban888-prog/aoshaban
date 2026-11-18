@@ -839,8 +839,16 @@ ${HELLO}
       L.employee = L.fields["اسم الموظف"] || ""; L.parts = grab();
       if (editingLetter){
         const E = editingLetter;
-        Object.assign(L, { no: E.no, year: E.year, ref: E.ref, createdAt: E.createdAt, createdBy: E.createdBy || "", updatedAt: new Date().toISOString(), updatedBy: me });
-        await db.collection("hrLetters").doc(E.id).set(L);
+        const now = new Date().toISOString();
+        // what the letter carried from its approval stays with it
+        const keep = {}; ["requestId", "approvedBy", "approvals", "status", "cancelReason", "cancelNote", "cancelledBy", "cancelledAt"].forEach(k => { if (E[k] !== undefined) keep[k] = E[k]; });
+        Object.assign(L, keep, { no: E.no, year: E.year, ref: E.ref, createdAt: E.createdAt, createdBy: E.createdBy || "", updatedAt: now, updatedBy: me, edits: (E.edits || 0) + 1 });
+        // the wording before this edit is kept as a version
+        const prev = { ...E }; delete prev.id; delete prev.kind;
+        const ref = db.collection("hrLetters").doc(E.id), b = db.batch();
+        b.set(ref.collection("versions").doc(), { ...prev, versionAt: now, versionBy: me });
+        b.set(ref, L);
+        await b.commit();
         editingLetter = { ...L, id: E.id };
         msg(""); UI.toast(`حُفظ تعديل الخطاب ${L.ref}`);
       } else {
@@ -988,6 +996,31 @@ ${HELLO}
     $("hrBulkN").textContent = `محدد ${picked.size}`;
     const all = $("hrSelAll"); all.checked = rows.length > 0 && vis === rows.length; all.indeterminate = vis > 0 && vis < rows.length;
   }
+  // earlier wordings of an edited letter, newest first, each one can be previewed
+  async function showVersions(l){
+    try {
+      const s = await db.collection("hrLetters").doc(l.id).collection("versions").get();
+      const vs = s.docs.map(d => d.data()).sort((a, b) => String(b.versionAt).localeCompare(String(a.versionAt)));
+      if (!vs.length) return UI.alert("لا توجد نسخ سابقة محفوظة لهذا الخطاب");
+      const back = document.createElement("div"); back.className = "ui-scrim";
+      const box = document.createElement("div"); box.className = "ui-dialog hr-vers"; box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true");
+      box.innerHTML = `<h2></h2><ul class="hr-vlist"></ul><div class="ui-actions"><button class="btn" type="button">إغلاق</button></div>`;
+      box.querySelector("h2").textContent = `النسخ السابقة للخطاب ${l.ref}`;
+      const ul = box.querySelector("ul");
+      const fmtAt = iso => new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+      vs.forEach((v, i) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<span><b></b><small></small></span><button class="btn small" type="button">معاينة</button>`;
+        li.querySelector("b").textContent = i === vs.length - 1 ? "النص الأصلي" : `قبل التعديل ${vs.length - i}`;
+        li.querySelector("small").textContent = `حتى ${fmtAt(v.versionAt)}`;
+        li.querySelector("button").addEventListener("click", () => { const head = heads.find(h => h.id === v.headId) || null; close(); preview(v, head, partsOf(v, head), { title: `${l.ref} · ${li.querySelector("b").textContent}` }); });
+        ul.append(li);
+      });
+      const close = () => { back.remove(); box.remove(); };
+      back.addEventListener("click", close); box.querySelector(".ui-actions button").addEventListener("click", close);
+      document.body.append(back, box); box.querySelector(".ui-actions button").focus();
+    } catch (e){ console.error(e); UI.toast("تعذّر فتح النسخ السابقة", "err"); }
+  }
   const CANCEL_REASONS = ["صدر بالخطأ", "خطأ في البيانات وأُعيد إصداره", "طُلب إلغاؤه", "أخرى"];
   async function cancelLetters(ids){
     if (!ids.length || !db) return;
@@ -1025,6 +1058,8 @@ ${HELLO}
       const pdfBtn = tr.querySelector(".hr-pdf");
       if (!P.pdf) pdfBtn.remove(); else pdfBtn.addEventListener("click", () => { const head = heads.find(h => h.id === l.headId) || null; savePdf(l, head, partsOf(l, head)); });
       td[0].querySelector("bdi").textContent = l.ref;
+      if (l.edits && P.viewLog){ const v = document.createElement("button"); v.type = "button"; v.className = "hr-verchip"; v.textContent = l.edits === 1 ? "معدّل" : `معدّل ${l.edits}`; v.title = "النسخ السابقة";
+        v.addEventListener("click", () => showVersions(l)); td[0].append(" ", v); }
       if (off){ const c = document.createElement("span"); c.className = "hr-offchip"; c.textContent = "ملغى"; c.title = [l.cancelReason, l.cancelNote].filter(Boolean).join(" · "); td[0].append(" ", c); }
       td[1].textContent = `${hijri(parseDay(l.date))} هـ`;
       td[2].textContent = l.title; td[3].textContent = l.employee || "—"; td[4].textContent = l.assoc || "";

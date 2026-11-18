@@ -106,11 +106,21 @@ service cloud.firestore {
         && (resource == null ? n.last == 1
             : (n.year == resource.data.year ? n.last == resource.data.last + 1 : n.last == 1));
     }
+    // a stand-in approver: delegations/{approver} = { to, startMs, endMs } while the dates last
+    function delegateFor(e) {
+      let p = /databases/$(database)/documents/delegations/$(e);
+      return exists(p) && get(p).data.to == myEmail()
+        && request.time.toMillis() >= get(p).data.startMs && request.time.toMillis() < get(p).data.endMs;
+    }
+    function actsFor(list) {
+      return myEmail() in list
+        || (list.size() > 0 && delegateFor(list[0])) || (list.size() > 1 && delegateFor(list[1])) || (list.size() > 2 && delegateFor(list[2]));
+    }
     // the approver of a request's last stage, at the moment the letter is issued
     function finalApprover(rid) {
       let r = get(/databases/$(database)/documents/requests/$(rid)).data;
       return r.status == "pending" && r.stageIndex == r.stages.size() - 1
-        && (isAdmin() || (myEmail() in r.get("currentApprovers", []) && r.submittedBy != myEmail()));
+        && (isAdmin() || (actsFor(r.get("currentApprovers", [])) && r.submittedBy != myEmail()));
     }
 
     // issued letters: everyone sees their own, the whole log needs viewLog
@@ -122,9 +132,22 @@ service cloud.firestore {
       allow update: if perm("editIssued")
                     || (perm("deleteLog") && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status", "cancelReason", "cancelNote", "cancelledBy", "cancelledAt"]));
       allow delete: if isAdmin();
+      // earlier wording of a letter, kept each time an issued letter is edited
+      match /versions/{v} {
+        allow read: if perm("viewLog");
+        allow create: if perm("editIssued");
+        allow delete: if isAdmin();
+      }
     }
 
-    // administrative requests
+    // each approver names their own stand-in for a period
+    match /delegations/{email} {
+      allow read: if allowed();
+      allow create, update: if allowed() && (email == myEmail() || isAdmin()) && request.resource.data.to != email
+                            && request.resource.data.endMs > request.resource.data.startMs;
+      allow delete: if allowed() && (email == myEmail() || isAdmin());
+    }
+
     // the path is copied from settings/workflows when the request is made and can't be changed afterwards;
     // currentApprovers always holds the emails of the stage the request waits at
     function samePath() {
@@ -139,7 +162,7 @@ service cloud.firestore {
     // an approver of the current stage, never on their own request: next stage, edit, return, reject, or final approval
     function asApprover() {
       let o = resource.data; let n = request.resource.data;
-      return o.status == "pending" && myEmail() in o.get("currentApprovers", []) && o.submittedBy != myEmail()
+      return o.status == "pending" && actsFor(o.get("currentApprovers", [])) && o.submittedBy != myEmail()
         && ((n.status == "pending" && (n.stageIndex == o.stageIndex || n.stageIndex == o.stageIndex + 1))
             || (n.status in ["returned", "rejected"] && n.stageIndex == o.stageIndex)
             || (n.status == "approved" && n.stageIndex == o.stageIndex && o.stageIndex == o.stages.size() - 1));
@@ -148,7 +171,8 @@ service cloud.firestore {
     function asSubmitter() {
       let o = resource.data; let n = request.resource.data;
       return o.submittedBy == myEmail() && o.status in ["pending", "returned"]
-        && ((n.status == "cancelled" && n.stageIndex == o.stageIndex) || (n.status == "pending" && n.stageIndex == 0))
+        && ((n.status == "cancelled" && n.stageIndex == o.stageIndex)
+            || (n.status == "pending" && (n.stageIndex == 0 || (o.status == "returned" && n.stageIndex == o.stageIndex))))
         && n.get("letterId", null) == o.get("letterId", null) && n.get("ref", null) == o.get("ref", null);
     }
     match /requests/{id} {
