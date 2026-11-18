@@ -240,11 +240,28 @@ ${HELLO}
   }
   // after hand edits, the values that came from fields still follow their fields
   function refreshFields(paper, vals){
+    const s = getSelection(), at = s.rangeCount ? s.anchorNode : null;
     paper.querySelectorAll("[data-f]").forEach(el => {
+      if (at && el.contains(at)) return;
       const html = fieldHtml(el.dataset.f, vals);
       if (el.outerHTML !== html){ const t = document.createElement("template"); t.innerHTML = html; el.replaceWith(t.content); }
     });
     paper.querySelectorAll(`[data-f="${CLOSING}"]`).forEach(el => { const p = el.closest("p"); if (p && p.textContent.trim() === el.textContent.trim()) p.classList.add("lt-close"); });
+    island(paper);
+  }
+  // on the editable page each typable value is its own small editing area inside the letter:
+  // the browser can't delete or split it while typing, so the link to its box never breaks
+  function island(paper){
+    if (paper.id !== "hrPaper" || !P.editText) return;
+    paper.querySelectorAll(".lt-body [data-f]").forEach(el => {
+      if (!typable(el.dataset.f) || el.querySelector(":scope > .lt-in")) return;
+      const inn = document.createElement("span"); inn.className = "lt-in"; inn.contentEditable = "true"; inn.spellcheck = false;
+      inn.append(...el.childNodes); el.append(inn); el.contentEditable = "false";
+    });
+  }
+  function unisland(root){
+    root.querySelectorAll(".lt-in").forEach(inn => { const el = inn.parentElement; inn.replaceWith(...inn.childNodes); if (el && el.dataset.f && typable(el.dataset.f)) el.removeAttribute("contenteditable"); });
+    return root;
   }
   // recipient, greeting and closing paragraphs get their own look (bold; the closing centred)
   function clsOf(text){
@@ -385,6 +402,7 @@ ${HELLO}
       { title: esc(t.title), body: genBody(t.body, vals(L), !!t.html), sign: signHtml, ...headParts(head), showHdr, showFtr, ...sw };
     paper.setAttribute("style", paperStyle(head));
     paper.innerHTML = paperInner(L, head, parts, P.editText, P.seal);
+    island(paper);
     fit(); placeSeal(paper);
     lastVals = vals(L);
   }
@@ -424,20 +442,22 @@ ${HELLO}
     $("hrPaper").querySelectorAll(`[data-f="${CSS.escape(f)}"]`).forEach(o => {
       if (o === span) return; const t = document.createElement("template"); t.innerHTML = fieldHtml(f, v); o.replaceWith(t.content);
     });
+    island($("hrPaper"));
     lastVals = v;
   }
   $("hrPaper").addEventListener("input", syncFromPaper);
+  $("hrPaper").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.closest && e.target.closest(".lt-in")) e.preventDefault(); });
   // clicking a value on the page opens its box in the form
   $("hrPaper").addEventListener("click", e => {
     const el = e.target.closest("[data-f]"); if (!el || !el.closest(".lt-body,.lt-frame-t")) return;
-    if (typable(el.dataset.f) && el.isContentEditable){ const row = [...$("hrFields").querySelectorAll(".s-row")].find(r => r.dataset.f === el.dataset.f); if (row){ row.classList.remove("hr-flash"); void row.offsetWidth; row.classList.add("hr-flash"); } return; }
+    if (typable(el.dataset.f) && el.querySelector(".lt-in")){ const row = [...$("hrFields").querySelectorAll(".s-row")].find(r => r.dataset.f === el.dataset.f); if (row){ row.classList.remove("hr-flash"); void row.offsetWidth; row.classList.add("hr-flash"); } return; }
     const row = [...$("hrFields").querySelectorAll(".s-row")].find(r => r.dataset.f === el.dataset.f); if (!row) return;
     const inp = row.querySelector("input,textarea,select"); if (!inp) return;
     row.scrollIntoView({ block: "center", behavior: "smooth" }); inp.focus({ preventScroll: true });
     row.classList.remove("hr-flash"); void row.offsetWidth; row.classList.add("hr-flash");
   });
   function grab(){
-    const p = $("hrPaper"), g = sel => { const el = p.querySelector(sel); return el ? clean(el.innerHTML) : ""; };
+    const p = $("hrPaper"), g = sel => { const el = p.querySelector(sel); return el ? clean(unisland(el.cloneNode(true)).innerHTML) : ""; };
     return { title: g(".lt-title"), body: g(".lt-body"), sign: g(".lt-sign"), hdr: g(".lt-hdr"), ftr: g(".lt-ftr"), showHdr, showFtr, showSig: !pendSign() && $("hrShowSig").checked, showStamp: !pendSign() && $("hrShowStamp").checked, sealPos: sealNow(), sealSize: sealSizeNow() };
   }
   function sealNow(){
