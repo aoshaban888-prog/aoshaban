@@ -20,7 +20,9 @@
   const PERIOD_AT = { "الصبح": "09:00", "الصباح": "09:00", "صباحا": "09:00", "بالصباح": "09:00", "الفجر": "05:00", "الظهر": "12:00", "ظهرا": "12:00", "بالظهر": "12:00", "الضهر": "12:00", "العصر": "15:30", "عصرا": "15:30", "بالعصر": "15:30", "المغرب": "18:00", "العشاء": "19:30", "العشا": "19:30", "الليل": "21:00", "بالليل": "21:00", "الليله": "20:00", "المساء": "18:00", "مساء": "18:00" };
   const ASK = new Set(["ذكرني", "ذكريني", "فكرني", "نبهني", "تذكير", "ذكرنا", "ذكرو", "لاتنساني", "لاتنسى", "ابغى", "ابغا", "ابي", "ودي", "ابغاك", "ابيك", "ممكن", "سجل", "اضف", "حط", "اكتب"]);
   const LINK = new Set(["في", "يوم", "على", "الساعه", "ساعه", "تمام", "بتاريخ", "تاريخ", "موعد", "الموعد", "عند", "قبل", "حوالي"]);
-  const HIGH = new Set(["مهم", "مهمه", "ضروري", "ضروريه", "عاجل", "عاجله", "مستعجل", "مستعجله", "هام"]);
+  const HIGH = new Set(["مهم", "مهمه", "ضروري", "ضروريه", "هام"]);
+  const URGENT = new Set(["عاجل", "عاجله", "مستعجل", "مستعجله", "فوري"]);
+  const PRI = { "عاليه": "high", "عالي": "high", "مهم": "high", "عاجل": "urgent", "عاجله": "urgent", "متوسط": "medium", "متوسطه": "medium", "منخفض": "low", "منخفضه": "low", "high": "high", "urgent": "urgent", "low": "low" };
   const HAMZA = { "اعداد": "إعداد", "ارسال": "إرسال", "انهاء": "إنهاء", "اكمال": "إكمال", "ابلاغ": "إبلاغ", "اضافه": "إضافة", "اضافة": "إضافة", "اعتماد": "اعتماد", "اصدار": "إصدار", "اغلاق": "إغلاق", "انجاز": "إنجاز", "ارفاق": "إرفاق", "اعاده": "إعادة", "اعادة": "إعادة", "اجراء": "إجراء", "ايداع": "إيداع", "اخبار": "إخبار", "الغاء": "إلغاء", "ابلاغه": "إبلاغه" };
 
   const numOf = w => /^\d+$/.test(w) ? +w : NUMS[w] ?? null;
@@ -29,7 +31,8 @@
     const src = (text || "").replace(/(\d)([؀-ۿ])/g, "$1 $2").replace(/([؀-ۿ])(\d)/g, "$1 $2").replace(/[،,؛]/g, " ").trim();
     const raw = src.split(/\s+/).filter(Boolean), t = raw.map(norm);
     const used = new Array(t.length).fill(false);
-    let date = null, hh = null, mm = 0, ampm = null, period = null, priority = "normal", at = null, mentionedDate = false;
+    let date = null, hh = null, mm = 0, ampm = null, period = null, priority = "medium", at = null, mentionedDate = false;
+    const tags = [];
     const take = (...ix) => ix.forEach(i => { if (i >= 0 && i < t.length) used[i] = true; });
 
     for (let i = 0; i < t.length; i++){
@@ -37,7 +40,11 @@
       if (used[i]) continue;
       // "لا تنساني"
       if (w === "لا" && /^تنسا?ني|^تنسى/.test(nx)){ take(i, i + 1); continue; }
-      if (HIGH.has(w)){ priority = "high"; take(i); continue; }
+      // #وسم and !أولوية
+      if (/^#\S/.test(raw[i])){ tags.push(raw[i].slice(1).replace(/[،,.]+$/, "")); take(i); continue; }
+      if (/^!\S/.test(raw[i])){ const p = norm(raw[i].slice(1)); const v = PRI[p]; if (v){ priority = v; take(i); continue; } }
+      if (URGENT.has(w)){ priority = "urgent"; take(i); continue; }
+      if (HIGH.has(w)){ priority = priority === "urgent" ? priority : "high"; take(i); continue; }
       if (w === "اليوم"){ date = ymd(now); mentionedDate = true; take(i); continue; }
       if (w === "الليله"){ date = ymd(now); mentionedDate = true; period = period || w; take(i); continue; }
       if (/^(بكره|بكرا|بكرة|غدا|غدوه|الغد|باكر|باجر)$/.test(w)){ date = ymd(addDays(now, 1)); mentionedDate = true; take(i); continue; }
@@ -126,7 +133,7 @@
     while (words.length && LINK.has(norm(words[words.length - 1]))) words.pop();
     let title = words.map(w => HAMZA[norm(w)] || w).join(" ").replace(/\s+([.!؟?])/g, "$1").trim();
     if (!title) title = (text || "").trim();
-    return { title, date, time, priority, mentionedDate: mentionedDate || !!time, source: "local" };
+    return { title, date, time, priority, tags, mentionedDate: mentionedDate || !!time || tags.length > 0 || priority !== "medium", source: "local" };
   }
 
   // the AI endpoint (Vercel); unavailable when the site runs locally or the key is not set
@@ -142,7 +149,7 @@
       if (res.status === 404 || res.status === 501){ aiOff = true; return null; }
       if (!res.ok) return null;
       const r = await res.json();
-      return r && r.title ? { title: r.title, date: r.date || null, time: r.time || null, priority: r.priority === "high" ? "high" : "normal", source: "ai" } : null;
+      return r && r.title ? { title: r.title, date: r.date || null, time: r.time || null, priority: ["low", "medium", "high", "urgent"].includes(r.priority) ? r.priority : "medium", source: "ai" } : null;
     } catch { return null; }
     finally { clearTimeout(timer); }
   }
@@ -152,7 +159,8 @@
     const a = await ai(text, now);
     if (!a) return l;
     // keep a date or time the local reader was sure of when the AI left it out
-    return { ...a, date: a.date || l.date, time: a.time || l.time, priority: a.priority === "high" || l.priority === "high" ? "high" : "normal" };
+    const rank = { low: 0, medium: 1, high: 2, urgent: 3 };
+    return { ...a, tags: l.tags, date: a.date || l.date, time: a.time || l.time, priority: rank[l.priority] > rank[a.priority] ? l.priority : a.priority };
   }
 
   const fmtDay = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long" });

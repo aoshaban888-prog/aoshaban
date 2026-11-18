@@ -16,7 +16,7 @@ Return:
 - title: the task itself as a short, clear Modern Standard Arabic phrase, usually starting with a verbal noun (مصدر) such as "إعداد محضر اجتماع" or "الاتصال بمدير الجمعية". Drop the request words (ذكرني، لا تنساني، أبغى، ...) and every word that only expresses the date or time. Keep names, numbers and details that belong to the task. Correct hamzas and spelling. No trailing punctuation.
 - date: the day the task is due, as YYYY-MM-DD, computed from the current date and weekday given in the message; null when the text names no day and no time. A weekday name means its next occurrence after today (the same weekday as today means next week). "الجاي/القادم" after a weekday also means its next occurrence. If only a time is given, use today when that time is still ahead, otherwise tomorrow.
 - time: 24-hour HH:MM, or null when no time or part of the day is given. ص/صباحاً/الصبح = morning, م/مساءً/العصر/المغرب/الليل = afternoon or evening. An hour from 1 to 6 with no marker means the afternoon. Parts of the day alone: الصبح 09:00، الظهر 12:00، العصر 15:30، المغرب 18:00، الليل 21:00. "بعد ساعتين" and similar are counted from the current time.
-- priority: "high" only when the text says it is important or urgent (مهم، ضروري، عاجل، مستعجل), otherwise "normal".`;
+- priority: "urgent" when the text says it is urgent (عاجل، مستعجل، فوري), "high" when it says it is important (مهم، ضروري), "low" when it says it can wait (منخفضة، مو مستعجل), otherwise "medium". A word after "!" such as "!عالية" sets it.`;
 
 const SCHEMA = {
   type: "object",
@@ -24,7 +24,7 @@ const SCHEMA = {
     title: { type: "string" },
     date: { anyOf: [{ type: "string" }, { type: "null" }] },
     time: { anyOf: [{ type: "string" }, { type: "null" }] },
-    priority: { type: "string", enum: ["normal", "high"] },
+    priority: { type: "string", enum: ["low", "medium", "high", "urgent"] },
   },
   required: ["title", "date", "time", "priority"],
   additionalProperties: false,
@@ -70,7 +70,7 @@ export default async function handler(req, res){
     if (!out || !out.title) return res.status(502).json({ error: "empty" });
     const date = /^\d{4}-\d{2}-\d{2}$/.test(out.date || "") ? out.date : null;
     const time = /^([01]\d|2[0-3]):[0-5]\d$/.test(out.time || "") ? out.time : null;
-    return res.status(200).json({ title: String(out.title).slice(0, 160), date, time, priority: out.priority === "high" ? "high" : "normal" });
+    return res.status(200).json({ title: String(out.title).slice(0, 160), date, time, priority: ["low", "medium", "high", "urgent"].includes(out.priority) ? out.priority : "medium" });
   } catch (e){
     if (e instanceof Anthropic.RateLimitError) return res.status(429).json({ error: "rate_limited" });
     if (e instanceof Anthropic.APIError) return res.status(502).json({ error: "upstream", status: e.status });

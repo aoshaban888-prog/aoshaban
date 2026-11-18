@@ -136,6 +136,15 @@
     } catch (e){ console.error(e); UI.toast("تعذّر رفع الطلب", "err"); }
   }
 
+  // names and emails of the people with access, readable by everyone (for choosing who a task is assigned to)
+  let dirSent = "";
+  function publishDirectory(){
+    if (!isAdmin() || !users.length) return;
+    const people = users.map(u => ({ email: u.id, name: u.name || u.id.split("@")[0] })).sort((a, b) => a.name.localeCompare(b.name));
+    const key = JSON.stringify(people); if (key === dirSent) return; dirSent = key;
+    db.collection("settings").doc("directory").set({ people, updatedAt: new Date().toISOString() }).catch(console.error);
+  }
+
   /* ---------- delegation: an approver names a stand-in for a period ---------- */
   const isApproverAnywhere = () => workflows.some(w => (w.stages || []).some(s => (s.approvers || []).some(a => a.email === me)));
   function renderDeleg(){
@@ -538,7 +547,7 @@
     db.collection("delegations").onSnapshot(s => { delegs = {}; s.docs.forEach(d => { delegs[d.id] = d.data(); }); renderDeleg(); renderList(); toHome(); }, () => {});
     db.collection("requests").onSnapshot(s => { requests = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); toHome(); backfill(); }, e => console.error(e));
     db.collection("hrTemplates").onSnapshot(s => { templates = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.order || 0) - (b.order || 0)); renderAdmin(); }, () => {});
-    if (isAdmin()) db.collection("allowed").onSnapshot(s => { users = s.docs.map(x => ({ id: x.id, ...x.data() })); renderAdmin(); renderPerms(); }, () => {});
+    if (isAdmin()) db.collection("allowed").onSnapshot(s => { users = s.docs.map(x => ({ id: x.id, ...x.data() })); renderAdmin(); renderPerms(); publishDirectory(); }, () => {});
     renderAdmin(); renderList(); renderPerms();
   }
   window.Requests = { submit };

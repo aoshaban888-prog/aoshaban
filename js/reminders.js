@@ -43,10 +43,10 @@
     el.addEventListener("click", async e => {
       const a = e.target.closest("[data-a]"); if (!a) return;
       const now = new Date();
-      if (a.dataset.a === "done") await db.collection("tasks").doc(t.id).update({ status: "done", doneAt: now.toISOString(), updatedAt: now.toISOString() }).catch(console.error);
+      if (a.dataset.a === "done") await Tasks.update(t.id, { status: "done" });
       if (a.dataset.a === "snooze"){
         const x = new Date(now.getTime() + 10 * 60e3);
-        await db.collection("tasks").doc(t.id).update({ due: ymd(x), time: `${pad(x.getHours())}:${pad(x.getMinutes())}`, remindedFor: null, updatedAt: now.toISOString() }).catch(console.error);
+        await Tasks.update(t.id, { due: ymd(x), time: `${pad(x.getHours())}:${pad(x.getMinutes())}`, remindedFor: null }, { log: false });
         UI.toast("أجّلت التذكير 10 دقائق");
       }
       close();
@@ -60,11 +60,13 @@
     if (!db) return;
     const now = Date.now();
     tasks.forEach(t => {
-      if (t.status === "done" || !t.due || !t.time || t.remindedFor === keyOf(t)) return;
+      if (TaskCore.CLOSED.has(t.status) || t.status === "deferred" || !t.due || !t.time || t.remindedFor === keyOf(t)) return;
       const at = new Date(`${t.due}T${t.time}:00`).getTime(); if (isNaN(at) || at > now) return;
-      if (now - at > LATE_MAX){ db.collection("tasks").doc(t.id).update({ remindedFor: keyOf(t) }).catch(() => {}); return; }
+      // only the person responsible is reminded (or the owner when nobody is)
+      if ((t.assignee || t.owner) && (t.assignee || t.owner) !== Tasks.me) return;
+      if (now - at > LATE_MAX){ Tasks.update(t.id, { remindedFor: keyOf(t) }, { log: false }); return; }
       t.remindedFor = keyOf(t);
-      db.collection("tasks").doc(t.id).update({ remindedFor: keyOf(t) }).catch(() => {});
+      Tasks.update(t.id, { remindedFor: keyOf(t) }, { log: false });
       ring(t);
     });
   }
@@ -92,7 +94,7 @@
 
   function connect(d){
     if (db) return; db = d.db;
-    db.collection("tasks").onSnapshot(s => { tasks = s.docs.map(x => ({ id: x.id, ...x.data() })); check(); }, () => {});
+    window.addEventListener("app:tasks", e => { tasks = e.detail.tasks; check(); });
   }
   const stack = document.createElement("div"); stack.id = "rmStack"; stack.className = "rm-stack"; stack.setAttribute("aria-live", "assertive");
   document.body.append(stack);

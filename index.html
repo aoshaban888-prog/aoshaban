@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261118t"></script>
-<link rel="stylesheet" href="css/library.css?v=20261118t">
-<link rel="stylesheet" href="css/app.css?v=20261118t">
+<script src="js/boot.js?v=20261118u"></script>
+<link rel="stylesheet" href="css/library.css?v=20261118u">
+<link rel="stylesheet" href="css/app.css?v=20261118u">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -172,6 +172,7 @@
       </header>
       <div class="tk-skel" id="tkSkel" aria-hidden="true"><div class="skel-col"><i></i><i></i><i></i></div><div class="skel-col"><i></i><i></i></div><div class="skel-col"><i></i></div></div>
       <p class="muted-text" id="tkSignin" hidden>سجّل الدخول من القائمة الجانبية لعرض مهامك</p>
+      <section class="tk-sum" id="tkSum" hidden aria-label="نسب الإنجاز"></section>
       <div class="tk-board" id="tkBoard" hidden></div>
       <div class="tk-list" id="tkList" hidden></div>
     </section>
@@ -742,24 +743,6 @@
   </div>
 </div>
 
-<div class="ui-scrim" id="tkScrim" hidden></div>
-<div class="ui-dialog tk-dlg" id="tkDlg" role="dialog" aria-modal="true" aria-labelledby="tkDlgTitle" hidden>
-  <h2 id="tkDlgTitle">مهمة جديدة</h2>
-  <form id="tkForm">
-    <div class="s-row"><label for="tkTitle">المهمة</label><div><input class="input" id="tkTitle" required maxlength="300" autocomplete="off" placeholder="اكتب بكلامك، مثل: ذكرني بكرة 10 الصبح بإرسال التقرير"><p class="smart-hint" id="tkSmart" hidden></p></div></div>
-    <div class="s-row"><label for="tkNotes">ملاحظات</label><textarea class="input" id="tkNotes" rows="3"></textarea></div>
-    <div class="s-row"><label for="tkStatus">الحالة</label><select class="select" id="tkStatus"><option value="todo">جديدة</option><option value="doing">قيد التنفيذ</option><option value="done">مكتملة</option></select></div>
-    <div class="s-row"><label for="tkPriority">الأولوية</label><select class="select" id="tkPriority"><option value="normal">عادية</option><option value="high">عالية</option></select></div>
-    <div class="s-row"><label for="tkDue">الموعد</label><div class="tk-when"><input class="input" id="tkDue" type="date" aria-label="التاريخ"><input class="input" id="tkTime" type="time" aria-label="الوقت"><button class="btn small ghost" type="button" id="tkIcs" hidden title="ينزّل ملف تقويم فيه تنبيه، افتحه في الجوال ليضاف لتقويمك">إضافة لتقويم الجوال</button></div></div>
-    <p class="muted-text tk-rmnote" id="tkRmNote" hidden>بيجيك تنبيه في هذا الوقت والموقع مفتوح. للتنبيه والموقع مغلق، أضفها لتقويم الجوال</p>
-    <div class="s-row"><label for="tkLink">مرتبطة بـ</label><select class="select" id="tkLink"></select></div>
-    <div class="ui-actions">
-      <button class="btn primary" type="submit" id="tkSave">حفظ</button>
-      <button class="btn" type="button" id="tkCancel">إلغاء</button>
-      <button class="btn ghost danger-text" type="button" id="tkDelete" hidden>حذف المهمة</button>
-    </div>
-  </form>
-</div>
 <div class="pv" id="pv" role="dialog" aria-modal="true" aria-labelledby="pvTitle" hidden>
   <div class="pv-bar">
     <span class="pv-title" id="pvTitle"></span>
@@ -1002,20 +985,22 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261118t"></script>
-<script src="js/library.js?v=20261118t"></script>
+<script src="js/ui.js?v=20261118u"></script>
+<script src="js/library.js?v=20261118u"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/smart-task.js?v=20261118t"></script>
-<script src="js/reminders.js?v=20261118t"></script>
-<script src="js/home.js?v=20261118t"></script>
-<script src="js/tasks.js?v=20261118t"></script>
-<script src="js/slider.js?v=20261118t"></script>
-<script src="js/settings.js?v=20261118t"></script>
-<script src="js/fonts.js?v=20261118t"></script>
-<script src="js/hr.js?v=20261118t"></script>
-<script src="js/requests.js?v=20261118t"></script>
-<script src="js/table-tools.js?v=20261118t"></script>
-<script src="js/login.js?v=20261118t"></script>
-<script src="js/shell.js?v=20261118t"></script>
+<script src="js/task-core.js?v=20261118u"></script>
+<script src="js/smart-task.js?v=20261118u"></script>
+<script src="js/reminders.js?v=20261118u"></script>
+<script src="js/home.js?v=20261118u"></script>
+<script src="js/tasks.js?v=20261118u"></script>
+<script src="js/task-detail.js?v=20261118u"></script>
+<script src="js/slider.js?v=20261118u"></script>
+<script src="js/settings.js?v=20261118u"></script>
+<script src="js/fonts.js?v=20261118u"></script>
+<script src="js/hr.js?v=20261118u"></script>
+<script src="js/requests.js?v=20261118u"></script>
+<script src="js/table-tools.js?v=20261118u"></script>
+<script src="js/login.js?v=20261118u"></script>
+<script src="js/shell.js?v=20261118u"></script>
 </body>
 </html>

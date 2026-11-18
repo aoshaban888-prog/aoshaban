@@ -142,8 +142,9 @@
     $("tAdd").hidden = false; $("tSignin").hidden = true;
     db.collection("hrLetters").onSnapshot(snap => { letters = snap.docs.map(d => d.data()).filter(l => l.status !== "cancelled"); renderStats(); }, () => {});
     db.collection("associations").onSnapshot(snap => { assocs = snap.docs.map(d => d.data()); renderStats(); }, () => {});
-    unsub = col.onSnapshot(snap => { tasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); gotTasks = true; renderTasks(); },
-      e => { console.error(e); $("tEmpty").textContent = "تعذّر تحميل المهام"; $("tEmpty").hidden = false; });
+    // tasks come from the task store (js/tasks.js), which reads only what this person may see
+    window.addEventListener("app:tasks", e => { tasks = e.detail.tasks.filter(t => !t.parentId); gotTasks = true; renderTasks(); });
+    if (window.Tasks && Tasks.list.length){ tasks = Tasks.list.filter(t => !t.parentId); gotTasks = true; }
   }
   /* ---------- the numbers row: today, overdue, letters this month, reviews due ---------- */
   function renderStats(){
@@ -152,7 +153,7 @@
     box.hidden = !!signedOut;
     if (!col || !gotTasks){ box.classList.add("loading"); return; }
     box.classList.remove("loading");
-    const open = tasks.filter(t => t.status !== "done");
+    const open = tasks.filter(t => !TaskCore.CLOSED.has(t.status) && t.status !== "deferred");
     const dToday = open.filter(t => dayDiff(t.due) === 0).length;
     const late = open.filter(t => (dayDiff(t.due) ?? 1) < 0).length;
     const now = new Date(), ym = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
@@ -182,9 +183,9 @@
     const list = $("tList"); if (!list) return;
     const loading = !col && !(window.appAuth && window.appAuth.user === null);
     $("tSkel").hidden = !loading; $("tSignin").hidden = !!col || loading;
-    const open = tasks.filter(t => t.status !== "done");
+    const open = tasks.filter(t => !TaskCore.CLOSED.has(t.status) && t.status !== "deferred");
     const rank = t => { const d = dayDiff(t.due); return d === null ? 9999 : d; };
-    open.sort((a, b) => rank(a) - rank(b) || (b.priority === "high") - (a.priority === "high") || String(a.createdAt).localeCompare(String(b.createdAt)));
+    open.sort((a, b) => rank(a) - rank(b) || ({ urgent: 0, high: 1, medium: 2, low: 3 }[a.priority] ?? 2) - ({ urgent: 0, high: 1, medium: 2, low: 3 }[b.priority] ?? 2) || String(a.createdAt).localeCompare(String(b.createdAt)));
     const late = open.filter(t => (dayDiff(t.due) ?? 1) < 0).length;
     const today = open.filter(t => dayDiff(t.due) === 0).length;
     $("tCount").textContent = col ? `${open.length} مفتوحة` + (today ? ` · ${today} اليوم` : "") + (late ? ` · ${late} متأخرة` : "") : "";
@@ -192,11 +193,12 @@
     open.slice(0, 8).forEach(t => {
       const li = document.createElement("li");
       const d = dayDiff(t.due);
-      li.className = "task" + (d !== null && d < 0 ? " late" : "") + (t.priority === "high" ? " high" : "");
+      li.className = "task" + (d !== null && d < 0 ? " late" : "") + (t.priority === "high" || t.priority === "urgent" ? " high" : "");
       li.innerHTML = `<label class="tk"><input type="checkbox" aria-label="تمت"><span class="tt"></span></label><span class="td mono"></span>`;
       li.querySelector(".tt").textContent = t.title;
       li.querySelector(".td").textContent = dueLabel(t.due) + (t.due && t.time && window.SmartTask ? " · " + SmartTask.timeLabel(t.time) : "");
-      li.querySelector("input").addEventListener("change", () => col.doc(t.id).update({ status: "done", doneAt: new Date().toISOString(), updatedAt: new Date().toISOString() }).catch(console.error));
+      li.querySelector("input").addEventListener("change", () => Tasks.update(t.id, { status: "done" }));
+      li.querySelector(".tt").addEventListener("click", e => { e.preventDefault(); TaskDetail.open(t.id); });
       list.append(li);
     });
     $("tEmpty").hidden = !col || open.length > 0;
@@ -220,7 +222,7 @@
       const r = window.SmartTask && !$("tDue").value ? await SmartTask.parse(text) : { title: text, date: null, time: null, priority: "normal" };
       const due = $("tDue").value || r.date || null, time = due ? r.time || null : null;
       if (time) Reminders.ask();
-      await col.add({ title: r.title || text, status: "todo", due, time, priority: r.priority || "normal", notes: "", remindedFor: null, createdAt: now, updatedAt: now });
+      await Tasks.create({ title: r.title || text, status: "todo", due, time, priority: ["low", "medium", "high", "urgent"].includes(r.priority) ? r.priority : "medium", tags: r.tags || [] });
       if (due) UI.toast(`أُضيفت «${r.title || text}» · ${SmartTask.describe({ date: due, time })}` + (time ? "، وبيجيك تنبيه" : ""));
       $("tTitle").value = ""; $("tDue").value = ""; $("tSmart").hidden = true; $("tTitle").focus();
     } catch (err){ console.error(err); UI.toast("تعذّر حفظ المهمة", "err"); }
