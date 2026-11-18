@@ -37,6 +37,14 @@
   const isAdmin = () => my.role === "admin";
   const fmt = iso => { if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return ""; return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(d); };
   const stageOf = r => (r.stages || [])[r.stageIndex || 0];
+  // the home page shows what waits for me and where my own requests are
+  function toHome(){
+    window.dispatchEvent(new CustomEvent("app:requests", { detail: {
+      inbox: requests.filter(amApprover),
+      mine: requests.filter(r => r.submittedBy === me).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))),
+      label: r => r.status === "pending" && stageOf(r) ? `عند: ${stageOf(r).name}` : STATUS[r.status] || r.status,
+    } }));
+  }
   const amApprover = r => r.status === "pending" && !!stageOf(r) && (stageOf(r).approvers || []).some(a => a.email === me);
 
   /* ---------- access: sections and admin pages follow the user's permissions ---------- */
@@ -432,7 +440,7 @@
     db.collection("allowed").doc(me).onSnapshot(a => { if (a.exists){ my = { role: "member", canIssue: false, sections: null, ...a.data() }; applyAccess(); renderAdmin(); renderList(); renderPerms(); } }, () => {});
     db.collection("settings").doc("workflows").onSnapshot(x => { workflows = (x.exists && x.data().list) || []; renderAdmin(); }, () => {});
     db.collection("settings").doc("requests").onSnapshot(x => { if (x.exists) opts = { ...opts, ...x.data() }; renderAdmin(); if (current) show(current.id, true); }, () => {});
-    db.collection("requests").onSnapshot(s => { requests = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); }, e => console.error(e));
+    db.collection("requests").onSnapshot(s => { requests = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); toHome(); }, e => console.error(e));
     db.collection("hrTemplates").onSnapshot(s => { templates = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.order || 0) - (b.order || 0)); renderAdmin(); }, () => {});
     if (isAdmin()) db.collection("allowed").onSnapshot(s => { users = s.docs.map(x => ({ id: x.id, ...x.data() })); renderAdmin(); renderPerms(); }, () => {});
     renderAdmin(); renderList(); renderPerms();

@@ -22,10 +22,50 @@
       lastDay = ymd(now);
       $("hDate").textContent = fmtG.format(now);
       $("hHijri").textContent = fmtH.format(now).replace(/\s*هـ$/, "") + " هـ";
+      greet();
       renderPrayers(); renderTasks();
     }
     markNextPrayer(now);
   }
+
+  /* ---------- greeting ---------- */
+  let who = "";
+  function greet(){
+    const h = new Date().getHours();
+    const part = h < 12 ? "صباح الخير" : "مساء الخير";
+    $("hGreet").textContent = who ? `${part}، ${who}` : part;
+  }
+  window.addEventListener("app:auth", e => { const u = e.detail && e.detail.user; who = u ? (u.displayName || "").split(" ")[0] || u.email.split("@")[0] : ""; greet(); });
+  setInterval(greet, 10 * 60 * 1000);
+
+  /* ---------- shortcuts ---------- */
+  // some shortcuts open a tab or a form once their page is shown
+  document.querySelectorAll('.view.home [data-qa]').forEach(a => a.addEventListener("click", () => {
+    const k = a.dataset.qa;
+    setTimeout(() => {
+      if (k === "task"){ const b = $("tkNew"); b && b.click(); }
+      else { const t = document.querySelector(`[data-rqtab="${k}"]`); t && t.click(); }
+    }, 120);
+  }));
+
+  /* ---------- requests ---------- */
+  window.addEventListener("app:requests", e => {
+    const { inbox, mine, label } = e.detail;
+    $("rhInbox").textContent = inbox.length; $("rhMine").textContent = mine.filter(r => r.status === "pending").length;
+    $("rhInbox").closest(".rh-box").classList.toggle("hot", inbox.length > 0);
+    const ul = $("rhList"); ul.innerHTML = "";
+    const rows = [...inbox.slice(0, 2).map(r => [r, "inbox"]), ...mine.filter(r => !inbox.includes(r)).slice(0, 4 - Math.min(2, inbox.length)).map(r => [r, "mine"])];
+    rows.forEach(([r, tab]) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<a href="#/hr/requests"><span class="rh-t"></span><span class="rh-s"></span></a>`;
+      li.querySelector(".rh-t").textContent = r.title || "طلب";
+      const s = li.querySelector(".rh-s"); s.textContent = tab === "inbox" ? `من ${r.submitterName || r.submittedBy}` : label(r); s.dataset.st = tab === "inbox" ? "wait" : r.status;
+      li.querySelector("a").addEventListener("click", () => setTimeout(() => { const t = document.querySelector(`[data-rqtab="${tab}"]`); t && t.click(); }, 120));
+      ul.append(li);
+    });
+    $("rhEmpty").hidden = rows.length > 0;
+    document.querySelector(".rh-card").hidden = false;
+  });
 
   /* ---------- prayer times (computed in the browser, Umm al-Qura method) ---------- */
   const PRAYERS = [["fajr", "الفجر"], ["sunrise", "الشروق"], ["dhuhr", "الظهر"], ["asr", "العصر"], ["maghrib", "المغرب"], ["isha", "العشاء"]];

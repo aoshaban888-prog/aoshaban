@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261118p"></script>
-<link rel="stylesheet" href="css/library.css?v=20261118p">
-<link rel="stylesheet" href="css/app.css?v=20261118p">
+<script src="js/boot.js?v=20261118q"></script>
+<link rel="stylesheet" href="css/library.css?v=20261118q">
+<link rel="stylesheet" href="css/app.css?v=20261118q">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -102,15 +102,9 @@
     <main class="main">
     <section class="view home" data-view="home" hidden>
       <header class="home-h">
-        <div><p class="crumb" id="hHijri"></p><h1 id="hDate"></h1></div>
+        <div><p class="home-greet" id="hGreet"></p><h1 id="hDate"></h1><p class="crumb" id="hHijri"></p></div>
         <div class="clock" aria-label="الوقت الآن"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div>
       </header>
-      <div class="stats loading" id="hStats">
-        <a class="stat" data-stat="today" href="#/tasks"><span class="st-l">مهام اليوم</span><span class="st-n">0</span><span class="st-sub"></span></a>
-        <a class="stat" data-stat="late" href="#/tasks"><span class="st-l">متأخرة</span><span class="st-n">0</span><span class="st-sub"></span></a>
-        <a class="stat" data-stat="letters" href="#/hr/letters"><span class="st-l">خطابات هذا الشهر</span><span class="st-n">0</span><span class="st-sub"></span></a>
-        <a class="stat" data-stat="reviews" href="#/governance/library"><span class="st-l">مراجعات لوائح قريبة</span><span class="st-n">0</span><span class="st-sub"></span></a>
-      </div>
       <section class="slider" id="slider" aria-roledescription="سلايدر" aria-label="الشرائح" tabindex="0" hidden>
         <div class="sl-viewport"><div class="sl-track" id="slTrack" aria-live="off"></div></div>
         <button class="sl-nav prev" id="slPrev" type="button" aria-label="الشريحة السابقة"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
@@ -118,6 +112,18 @@
         <div class="sl-dots" id="slDots"></div>
       </section>
       <p class="muted-text sl-empty" id="sliderEmpty" hidden>السلايدر فارغ. أضف شرائح من <a class="link" href="#/admin">التمكين التقني</a></p>
+      <nav class="qa" aria-label="اختصارات">
+        <a class="qa-i" href="#/hr/letters" data-sec="hr"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="qa-t"><b>خطاب جديد</b><small>من القوالب الجاهزة</small></span></a>
+        <a class="qa-i" href="#/hr/requests" data-sec="hr" data-qa="inbox"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z"/></svg></span><span class="qa-t"><b>الطلبات والاعتماد</b><small>تابع طلباتك واعتمد المعلّق</small></span></a>
+        <a class="qa-i" href="#/tasks" data-sec="tasks" data-qa="task"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></span><span class="qa-t"><b>مهمة جديدة</b><small>أضفها وحدد موعدها</small></span></a>
+        <a class="qa-i" href="#/governance/library" data-sec="governance"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span><span class="qa-t"><b>اللوائح والسياسات</b><small>راجع وحدّث المكتبة</small></span></a>
+      </nav>
+      <div class="stats loading" id="hStats">
+        <a class="stat" data-stat="today" href="#/tasks"><span class="st-l">مهام اليوم</span><span class="st-n">0</span><span class="st-sub"></span></a>
+        <a class="stat" data-stat="late" href="#/tasks"><span class="st-l">متأخرة</span><span class="st-n">0</span><span class="st-sub"></span></a>
+        <a class="stat" data-stat="letters" href="#/hr/letters"><span class="st-l">خطابات هذا الشهر</span><span class="st-n">0</span><span class="st-sub"></span></a>
+        <a class="stat" data-stat="reviews" href="#/governance/library"><span class="st-l">مراجعات لوائح قريبة</span><span class="st-n">0</span><span class="st-sub"></span></a>
+      </div>
       <div class="home-grid">
         <section class="card tasks-card" aria-labelledby="tH">
           <div class="card-h"><h2 id="tH">المهام</h2><span class="meta" id="tCount"></span><a href="#/tasks" class="link">كل المهام</a></div>
@@ -132,12 +138,23 @@
           <p id="tEmpty" class="muted-text" hidden>لا توجد مهام مفتوحة</p>
           <a id="tMore" href="#/tasks" class="link" hidden></a>
         </section>
+        <div class="home-side">
+          <section class="card rh-card" data-sec="hr" aria-labelledby="rhH" hidden>
+            <div class="card-h"><h2 id="rhH">الطلبات</h2><a href="#/hr/requests" class="link">كل الطلبات</a></div>
+            <div class="rh-n">
+              <a class="rh-box" href="#/hr/requests" data-qa="inbox"><span class="rh-num" id="rhInbox">0</span><span>بانتظار اعتمادك</span></a>
+              <a class="rh-box" href="#/hr/requests" data-qa="mine"><span class="rh-num" id="rhMine">0</span><span>طلباتي قيد الاعتماد</span></a>
+            </div>
+            <ul class="rh-list" id="rhList"></ul>
+            <p class="muted-text" id="rhEmpty" hidden>ما فيه طلبات حتى الآن</p>
+          </section>
         <section class="card prayer-card" aria-labelledby="pH">
           <div class="card-h"><h2 id="pH">أوقات الصلاة</h2></div>
           <div class="p-next"><span class="muted-text">الصلاة القادمة</span><strong id="pNext"></strong><span id="pLeft"></span></div>
           <ul id="pList" class="p-list"></ul>
           <p class="p-note"><span id="pNote"></span><button id="pLocBtn" class="linkbtn" type="button" hidden>استخدام موقعي</button></p>
         </section>
+        </div>
       </div>
     </section>
     <section class="view tasks" data-view="tasks" hidden>
@@ -671,6 +688,7 @@
             <h3 id="slEdHead">شريحة جديدة</h3>
             <form id="slEdForm">
               <div class="s-row"><span class="lbl">الصورة</span><div class="sl-img-pick"><div class="sl-img-prev" id="slImgPrev"></div><div class="logo-btns"><label class="btn small">اختيار صورة<input type="file" id="slImg" accept="image/*" hidden></label><button class="btn small ghost" type="button" id="slClearImg">إزالة</button></div></div></div>
+              <div class="s-row"><span class="lbl">صور جاهزة</span><div class="sl-ready" id="slReady"></div></div>
               <div class="s-row"><label for="slTitle">العنوان</label><input class="input" id="slTitle" maxlength="80"></div>
               <div class="s-row"><label for="slText">النص</label><textarea class="input" id="slText" rows="2" maxlength="220"></textarea></div>
               <div class="s-row"><label for="slLink">الرابط <span class="muted-text">اختياري</span></label><input class="input" id="slLink" dir="ltr" placeholder="#/hr/letters أو https://..."></div>
@@ -969,18 +987,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261118p"></script>
-<script src="js/library.js?v=20261118p"></script>
+<script src="js/ui.js?v=20261118q"></script>
+<script src="js/library.js?v=20261118q"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/home.js?v=20261118p"></script>
-<script src="js/tasks.js?v=20261118p"></script>
-<script src="js/slider.js?v=20261118p"></script>
-<script src="js/settings.js?v=20261118p"></script>
-<script src="js/fonts.js?v=20261118p"></script>
-<script src="js/hr.js?v=20261118p"></script>
-<script src="js/requests.js?v=20261118p"></script>
-<script src="js/table-tools.js?v=20261118p"></script>
-<script src="js/login.js?v=20261118p"></script>
-<script src="js/shell.js?v=20261118p"></script>
+<script src="js/home.js?v=20261118q"></script>
+<script src="js/tasks.js?v=20261118q"></script>
+<script src="js/slider.js?v=20261118q"></script>
+<script src="js/settings.js?v=20261118q"></script>
+<script src="js/fonts.js?v=20261118q"></script>
+<script src="js/hr.js?v=20261118q"></script>
+<script src="js/requests.js?v=20261118q"></script>
+<script src="js/table-tools.js?v=20261118q"></script>
+<script src="js/login.js?v=20261118q"></script>
+<script src="js/shell.js?v=20261118q"></script>
 </body>
 </html>

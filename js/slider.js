@@ -7,7 +7,14 @@
   let db = null, slides = [], idx = 0, timer = null, paused = false, editing = null, pendingImage = null;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
   const seconds = () => Math.max(3, +(window.siteSettings && window.siteSettings.sliderSeconds) || 6);
-  const shown = () => slides.filter(s => s.active !== false);
+  // built-in slides (original illustrations in img/slides) show until the admin adds their own
+  const READY = [
+    { image: "img/slides/governance.svg", title: "حوكمة واضحة، وقرارات أسرع", text: "اللوائح والسياسات في مكتبة وحدة، بإصداراتها ومواعيد مراجعتها.", link: "#/governance/library", linkLabel: "فتح المكتبة" },
+    { image: "img/slides/letters.svg", title: "خطابات رسمية بخطوات أقل", text: "اختر القالب، عبّئ الخانات، والخطاب جاهز بالكليشة والرقم والختم.", link: "#/hr/letters", linkLabel: "خطاب جديد" },
+    { image: "img/slides/approvals.svg", title: "مسار اعتماد واضح لكل طلب", text: "من مقدّم الطلب إلى المدير المباشر ثم الإدارة التنفيذية، وكل خطوة مسجّلة.", link: "#/hr/requests", linkLabel: "الطلبات" },
+    { image: "img/slides/tasks.svg", title: "مهامك في مكان واحد", text: "لوحة وقائمة، بمواعيد استحقاق وتنبيه للمتأخر.", link: "#/tasks", linkLabel: "المهام" },
+  ];
+  const shown = () => { const own = slides.filter(s => s.active !== false); return own.length || slides.length ? own : READY; };
 
   /* ---------- home ---------- */
   function renderHome(){
@@ -15,7 +22,7 @@
     const list = shown();
     const enabled = !window.siteSettings || window.siteSettings.home.slider !== false;
     box.hidden = !enabled || !list.length;
-    $("sliderEmpty").hidden = !enabled || !db || list.length > 0;
+    $("sliderEmpty").hidden = true;
     const track = $("slTrack"), dots = $("slDots");
     track.innerHTML = ""; dots.innerHTML = "";
     if (box.hidden) return stop();
@@ -151,6 +158,15 @@
     finally { btn.disabled = false; }
   });
   $("slAdd").addEventListener("click", () => openEditor(null));
+  READY.forEach(r => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "sl-ready-i"; b.style.backgroundImage = `url("${r.image}")`;
+    b.setAttribute("aria-label", r.title); b.title = r.title;
+    b.addEventListener("click", () => {
+      pendingImage = r.image; showImg(r.image);
+      if (!$("slTitle").value.trim()){ $("slTitle").value = r.title; $("slText").value = r.text; $("slLink").value = r.link; $("slLinkLabel").value = r.linkLabel; }
+    });
+    $("slReady").append(b);
+  });
   $("slEdCancel").addEventListener("click", () => { $("slEditor").hidden = true; editing = null; pendingImage = null; });
   $("slClearImg").addEventListener("click", () => { pendingImage = ""; showImg(""); });
 
