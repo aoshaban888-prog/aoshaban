@@ -221,7 +221,11 @@ ${HELLO}
   }
 
   /* ---------- letter parts ---------- */
-  function fieldHtml(raw, vals){
+  // a field's value sits in the letter as one locked piece: typing around it never breaks it,
+  // so it keeps following its box even after the letter is edited by hand
+  const atom = h => h.replace(/^<span /, '<span contenteditable="false" ');
+  function fieldHtml(raw, vals){ return atom(fieldHtml0(raw, vals)); }
+  function fieldHtml0(raw, vals){
     raw = splitField(raw).name;
     if (raw === RECIP) return recipHtml(vals);
     if (kind(raw) === "list"){ // one line per item, shown as bullets
@@ -365,7 +369,9 @@ ${HELLO}
       paper.querySelectorAll(".lt-meta").forEach(el => { el.innerHTML = metaHtml(L); });
       const fr = head && head.frame && head.frame.image ? head.frame : null;
       paper.querySelectorAll(".lt-frame-t").forEach(el => { el.innerHTML = frameHtml(L, fr); });
+      relink(paper, L);
       refreshFields(paper, vals(L));
+      lastVals = vals(L);
       return;
     }
     const keep = force === "head" || force === "sign" ? grab() : null;
@@ -379,7 +385,34 @@ ${HELLO}
     paper.setAttribute("style", paperStyle(head));
     paper.innerHTML = paperInner(L, head, parts, P.editText, P.seal);
     fit(); placeSeal(paper);
+    lastVals = vals(L);
   }
+  // letters edited before values were locked: a field whose piece is gone is found again by its old text
+  let lastVals = null;
+  function relink(paper, L){
+    const body = paper.querySelector(".lt-body"); if (!body || !lastVals) return;
+    const now = vals(L);
+    fieldsOf(L.body).forEach(f => {
+      if (kind(f) === "list" || f === RECIP || body.querySelector(`[data-f="${CSS.escape(f)}"]`)) return;
+      const old = AUTO.has(f) ? (lastVals[f] || "").trim() : fieldValue(f, lastVals);
+      if (!old || old === (AUTO.has(f) ? (now[f] || "").trim() : fieldValue(f, now))) return;
+      const w = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+      for (let n; (n = w.nextNode());){
+        const i = n.data.indexOf(old); if (i < 0 || n.parentElement.closest("[data-f]")) continue;
+        const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + old.length);
+        const t = document.createElement("template"); t.innerHTML = fieldHtml(f, lastVals);
+        r.deleteContents(); r.insertNode(t.content); break;
+      }
+    });
+  }
+  // clicking a value on the page opens its box in the form
+  $("hrPaper").addEventListener("click", e => {
+    const el = e.target.closest("[data-f]"); if (!el || !el.closest(".lt-body,.lt-frame-t")) return;
+    const row = [...$("hrFields").querySelectorAll(".s-row")].find(r => r.dataset.f === el.dataset.f); if (!row) return;
+    const inp = row.querySelector("input,textarea,select"); if (!inp) return;
+    row.scrollIntoView({ block: "center", behavior: "smooth" }); inp.focus({ preventScroll: true });
+    row.classList.remove("hr-flash"); void row.offsetWidth; row.classList.add("hr-flash");
+  });
   function grab(){
     const p = $("hrPaper"), g = sel => { const el = p.querySelector(sel); return el ? clean(el.innerHTML) : ""; };
     return { title: g(".lt-title"), body: g(".lt-body"), sign: g(".lt-sign"), hdr: g(".lt-hdr"), ftr: g(".lt-ftr"), showHdr, showFtr, showSig: !pendSign() && $("hrShowSig").checked, showStamp: !pendSign() && $("hrShowStamp").checked, sealPos: sealNow(), sealSize: sealSizeNow() };
@@ -417,7 +450,7 @@ ${HELLO}
     const box = $("hrFields"); box.innerHTML = "";
     const t = curTpl(); if (!t) return;
     fieldsOf(t.body).forEach(f => {
-      const row = document.createElement("div"); row.className = "s-row";
+      const row = document.createElement("div"); row.className = "s-row"; row.dataset.f = f;
       const id = "hrf-" + Math.random().toString(36).slice(2, 8);
       const k = kind(f);
       if (k === "recip"){
