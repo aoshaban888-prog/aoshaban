@@ -221,10 +221,11 @@ ${HELLO}
   }
 
   /* ---------- letter parts ---------- */
-  // a field's value sits in the letter as one locked piece: typing around it never breaks it,
-  // so it keeps following its box even after the letter is edited by hand
+  // plain text values are edited right on the page and their box follows (see syncFromPaper);
+  // formatted ones (dates, numbers, lists, recipient, closing) are one locked piece changed from their box
+  const typable = f => AUTO.has(f) || kind(f) === "text" || kind(f) === "long";
   const atom = h => h.replace(/^<span /, '<span contenteditable="false" ');
-  function fieldHtml(raw, vals){ return atom(fieldHtml0(raw, vals)); }
+  function fieldHtml(raw, vals){ const h = fieldHtml0(raw, vals); return typable(splitField(raw).name) ? h : atom(h); }
   function fieldHtml0(raw, vals){
     raw = splitField(raw).name;
     if (raw === RECIP) return recipHtml(vals);
@@ -405,9 +406,31 @@ ${HELLO}
       }
     });
   }
+  // typing inside a value on the page updates its box, and the same value elsewhere in the letter
+  const SRC = { [ASSOC_FIELD]: "hrAssoc", "اسم المعتمد": "hrSignName", "صفة المعتمد": "hrSignRole" };
+  function syncFromPaper(){
+    const s = getSelection(); if (!s.rangeCount) return;
+    const n = s.anchorNode, el = n && (n.nodeType === 1 ? n : n.parentElement);
+    const span = el && el.closest("#hrPaper [data-f]"); if (!span || !typable(span.dataset.f)) return;
+    const f = span.dataset.f, text = span.textContent;
+    span.classList.toggle("lt-blank", !text.trim()); span.classList.toggle("lt-v", !!text.trim());
+    if (SRC[f]){ $(SRC[f]).value = text; if (f !== ASSOC_FIELD) sign = { name: $("hrSignName").value, role: $("hrSignRole").value }; }
+    else {
+      values[f] = text;
+      const row = [...$("hrFields").querySelectorAll(".s-row")].find(r => r.dataset.f === f), inp = row && row.querySelector("input,textarea");
+      if (inp) inp.value = text;
+    }
+    const v = vals(draft());
+    $("hrPaper").querySelectorAll(`[data-f="${CSS.escape(f)}"]`).forEach(o => {
+      if (o === span) return; const t = document.createElement("template"); t.innerHTML = fieldHtml(f, v); o.replaceWith(t.content);
+    });
+    lastVals = v;
+  }
+  $("hrPaper").addEventListener("input", syncFromPaper);
   // clicking a value on the page opens its box in the form
   $("hrPaper").addEventListener("click", e => {
     const el = e.target.closest("[data-f]"); if (!el || !el.closest(".lt-body,.lt-frame-t")) return;
+    if (typable(el.dataset.f) && el.isContentEditable){ const row = [...$("hrFields").querySelectorAll(".s-row")].find(r => r.dataset.f === el.dataset.f); if (row){ row.classList.remove("hr-flash"); void row.offsetWidth; row.classList.add("hr-flash"); } return; }
     const row = [...$("hrFields").querySelectorAll(".s-row")].find(r => r.dataset.f === el.dataset.f); if (!row) return;
     const inp = row.querySelector("input,textarea,select"); if (!inp) return;
     row.scrollIntoView({ block: "center", behavior: "smooth" }); inp.focus({ preventScroll: true });

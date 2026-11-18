@@ -427,7 +427,8 @@ bdi{unicode-bidi:isolate}
 .lt-body p.lt-recip .lt-v,.lt-body p.lt-close .lt-v{font-weight:inherit}
 .lt-v{font-weight:600}
 .lt-v.lt-long{font-weight:inherit}
-#hrPaper .lt-body [data-f],#hrPaper .lt-frame-t [data-f]{cursor:pointer;border-radius:3px;transition:background-color .15s}
+#hrPaper .lt-body [contenteditable=false][data-f],#hrPaper .lt-frame-t [data-f]{cursor:pointer}
+#hrPaper .lt-body [data-f],#hrPaper .lt-frame-t [data-f]{border-radius:3px;transition:background-color .15s}
 #hrPaper .lt-body [data-f]:hover,#hrPaper .lt-frame-t [data-f]:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
 .s-row.hr-flash{animation:hrFlash 1.2s ease-out}
 @keyframes hrFlash{0%{background:color-mix(in srgb,var(--accent) 22%,transparent)}100%{background:transparent}}
