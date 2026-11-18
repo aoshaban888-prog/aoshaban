@@ -326,6 +326,25 @@
   document.querySelectorAll("[data-tkview]").forEach(b => b.addEventListener("click", () => setView(b.dataset.tkview)));
   $("tkQ").addEventListener("input", render);
   $("tkNew").addEventListener("click", () => TaskDetail.open(null));
+  // a backup of every task this person can see, exactly as stored, with comments and the activity log
+  $("tkExport").addEventListener("click", async () => {
+    if (!db || !loaded) return UI.toast("سجّل الدخول أولاً", "err");
+    const btn = $("tkExport"); btn.disabled = true;
+    try {
+      const all = new Map(); Object.values(sources).forEach(m => m.forEach((v, k) => all.set(k, v)));
+      const out = {};
+      for (const [tid, d] of all){
+        const extra = {};
+        for (const sub of ["comments", "activity"]){ try { const s = await db.collection("tasks").doc(tid).collection(sub).get(); extra[sub] = s.docs.map(x => ({ id: x.id, ...x.data() })); } catch { extra[sub] = []; } }
+        out[tid] = { ...d, ...extra };
+      }
+      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), by: me, count: all.size, projects, tasks: out }, null, 2)], { type: "application/json" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `tasks-backup-${today()}.json`; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      UI.toast(`نزلت نسخة من ${all.size} مهمة`);
+    } catch (e){ console.error(e); UI.toast("تعذّر التصدير", "err"); }
+    finally { btn.disabled = false; }
+  });
   document.addEventListener("keydown", e => {
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
     if (e.key === "n" && location.hash === "#/tasks" && !typing && !TaskDetail.isOpen() && !e.ctrlKey && !e.metaKey){ e.preventDefault(); TaskDetail.open(null); }
