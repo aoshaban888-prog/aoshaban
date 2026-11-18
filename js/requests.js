@@ -42,10 +42,40 @@
     window.dispatchEvent(new CustomEvent("app:requests", { detail: {
       inbox: requests.filter(amApprover),
       mine: requests.filter(r => r.submittedBy === me).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))),
-      label: r => r.status === "pending" && stageOf(r) ? `عند: ${stageOf(r).name}` : STATUS[r.status] || r.status,
+      label: r => r.status === "pending" && stageOf(r) ? `عند: ${stageOf(r).name} · ${ageText(since(r))}` : STATUS[r.status] || r.status,
+      late: isLate,
     } }));
   }
-  const amApprover = r => r.status === "pending" && !!stageOf(r) && (stageOf(r).approvers || []).some(a => a.email === me);
+  // each stage carries its approvers' emails, which the database rules check
+  const normStages = stages => (stages || []).map(s => ({ ...s, emails: (s.approvers || []).map(a => String(a.email || "").toLowerCase()).filter(Boolean) }));
+  const needsEmails = stages => (stages || []).some(s => !Array.isArray(s.emails));
+  const REASONS = ["نقص في البيانات أو المرفقات", "خطأ في الصياغة أو المحتوى", "بيانات غير صحيحة", "غير مستحق أو خارج الصلاحية", "أخرى"];
+  // how long the request has waited at its current step
+  const since = r => { const h = r.history || []; return h.length ? h[h.length - 1].at : r.updatedAt; };
+  function ageText(iso){
+    const ms = Date.now() - new Date(iso).getTime(); if (isNaN(ms)) return "";
+    const hrs = Math.floor(ms / 3600e3), days = Math.floor(ms / 86400e3);
+    if (hrs < 1) return "منذ أقل من ساعة"; if (hrs < 24) return hrs === 1 ? "منذ ساعة" : hrs === 2 ? "منذ ساعتين" : `منذ ${hrs} ساعات`;
+    return days === 1 ? "منذ يوم" : days === 2 ? "منذ يومين" : days <= 10 ? `منذ ${days} أيام` : `منذ ${days} يوماً`;
+  }
+  const isLate = r => r.status === "pending" && Date.now() - new Date(since(r)).getTime() >= (+opts.slaDays || 2) * 86400e3;
+  // admins bring older paths and requests up to date so the rules can check them
+  let fixing = false;
+  async function backfill(){
+    if (!db || !isAdmin() || fixing) return; fixing = true;
+    try {
+      if (workflows.some(w => needsEmails(w.stages))) await db.collection("settings").doc("workflows").set({ list: workflows.map(w => ({ ...w, stages: normStages(w.stages) })), updatedAt: new Date().toISOString() });
+      const old = requests.filter(r => needsEmails(r.stages) || !Array.isArray(r.currentApprovers));
+      for (const r of old){
+        const st = normStages(r.stages);
+        await db.collection("requests").doc(r.id).update({ stages: st, currentApprovers: r.status === "pending" && st[r.stageIndex || 0] ? st[r.stageIndex || 0].emails : [] });
+      }
+    } catch (e){ console.error(e); }
+    finally { fixing = false; }
+  }
+  // approvers never act on their own request (an admin still can)
+  const amApprover = r => r.status === "pending" && !!stageOf(r) && (Array.isArray(r.currentApprovers) ? r.currentApprovers.includes(me) : (stageOf(r).approvers || []).some(a => a.email === me))
+    && (r.submittedBy !== me || isAdmin());
 
   /* ---------- access: sections and admin pages follow the user's permissions ---------- */
   function applyAccess(){
@@ -78,13 +108,14 @@
     if (!L.templateId) return UI.alert("اختر نوع الخطاب أولاً");
     const w = workflowFor(L);
     if (!w || !(w.stages || []).length) return UI.alert("لم يُضبط مسار اعتماد لهذا النوع من الخطابات. يضبطه المدير من التمكين التقني ← إدارة الطلبات الإدارية.");
+    if (needsEmails(w.stages)) return UI.alert("مسار الاعتماد يحتاج تحديثاً. يكفي أن يفتح المدير الموقع مرة ليتحدث تلقائياً، ثم أعد المحاولة.");
     const path = w.stages.map(s => s.name).join(" ← ");
     if (!(await UI.confirm(`رفع «${L.title}» للاعتماد عبر مسار «${w.name}»: مقدّم الطلب ← ${path}`, { ok: "رفع الطلب" }))) return;
     const now = new Date().toISOString();
     try {
       await db.collection("requests").add({
         type: "letter", status: "pending", workflowId: w.id, workflowName: w.name,
-        stages: w.stages.map(s => ({ name: s.name, approvers: s.approvers || [] })), stageIndex: 0,
+        stages: JSON.parse(JSON.stringify(w.stages)), stageIndex: 0, wfIndex: workflows.indexOf(w), currentApprovers: w.stages[0].emails,
         submittedBy: me, submitterName: myName, submittedAt: now, updatedAt: now,
         title: L.title, assoc: L.assoc || "", employee: L.employee || "", letter: L,
         history: [{ at: now, by: me, name: myName, action: "submit" }],
@@ -167,11 +198,12 @@
       const li = document.createElement("li"); li.className = "rq-item" + (current && current.id === r.id ? " on" : "");
       li.tabIndex = 0;
       const st = r.status === "pending" && stageOf(r) ? `عند: ${stageOf(r).name}` : STATUS[r.status] || r.status;
+      if (isLate(r)) li.classList.add("late");
       li.innerHTML = `<div class="rq-top"><span class="rq-t"></span><span class="rq-chip ${r.status}"></span></div><div class="rq-sub"><span></span><span class="rq-when"></span></div>`;
       li.querySelector(".rq-t").textContent = r.title + (r.employee ? ` · ${r.employee}` : "");
       li.querySelector(".rq-chip").textContent = st;
       li.querySelector(".rq-sub span").textContent = `${r.submitterName || r.submittedBy}${r.assoc ? " · " + r.assoc : ""}${r.ref ? " · " + r.ref : ""}`;
-      li.querySelector(".rq-when").textContent = fmt(r.updatedAt);
+      li.querySelector(".rq-when").textContent = r.status === "pending" ? ageText(since(r)) : fmt(r.updatedAt);
       if (isAdmin()){
         const cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "rq-pick"; cb.setAttribute("aria-label", "تحديد الطلب"); cb.checked = rqPicked.has(r.id);
         cb.addEventListener("click", e => e.stopPropagation());
@@ -214,7 +246,7 @@
       li.innerHTML = `<span class="rq-hw"></span><span class="rq-ha"></span><span class="rq-hn"></span>`;
       li.querySelector(".rq-hw").textContent = fmt(x.at);
       li.querySelector(".rq-ha").textContent = `${x.name || x.by} ${ACTION[x.action] || x.action}${x.stage ? ` (${x.stage})` : ""}`;
-      li.querySelector(".rq-hn").textContent = x.note || "";
+      li.querySelector(".rq-hn").textContent = [x.reason, x.note].filter(Boolean).join(" · ");
       h.append(li);
     });
     // actions
@@ -226,6 +258,9 @@
       add("إرجاع للتعديل", "", () => act(r, "return"));
       add("رفض", "danger", () => act(r, "reject"));
       if (opts.approverEdit) add("تعديل الخطاب", "ghost", () => editAs(r, "approver"));
+    }
+    if (r.status === "pending" && r.submittedBy === me && !isAdmin() && Array.isArray(r.currentApprovers) && r.currentApprovers.includes(me)){
+      const n = document.createElement("p"); n.className = "muted-text"; n.textContent = "أنت من معتمدي هذه المرحلة، لكن لا يعتمد أحد طلبه بنفسه. يعتمده معتمد آخر أو المدير."; box.append(n);
     }
     if (r.submittedBy === me && r.status === "returned") add("تعديل وإعادة الرفع", "primary", () => editAs(r, "submitter"));
     if (r.submittedBy === me && (r.status === "pending" || r.status === "returned")) add("سحب الطلب", "ghost", () => act(r, "cancel"));
@@ -241,14 +276,17 @@
   }
 
   async function act(r, action){
-    const note = $("rqNote").value.trim();
-    if ((action === "return" || action === "reject") && opts.noteRequired && !note){ UI.toast("اكتب سبب الإرجاع أو الرفض في الملاحظة", "err"); $("rqNote").focus(); return; }
+    let note = $("rqNote").value.trim(), reason = "";
     const words = { approve: ["اعتماد الطلب؟", "اعتماد"], return: ["إرجاع الطلب لمقدّمه للتعديل؟", "إرجاع"], reject: ["رفض الطلب نهائياً؟", "رفض"], cancel: ["سحب طلبك؟", "سحب"] }[action];
     const last = (r.stageIndex || 0) === (r.stages || []).length - 1;
     if (action === "approve" && last) words[0] = "اعتماد نهائي؟ يأخذ الخطاب رقمه الصادر ويُضاف إلى السجل.";
-    if (!(await UI.confirm(words[0], { ok: words[1], danger: action === "reject" }))) return;
+    if (action === "return" || action === "reject"){
+      // the reason is always asked, so the causes of rework can be counted
+      const v = await UI.prompt(words[0], { title: action === "return" ? "إرجاع للتعديل" : "رفض الطلب", ok: words[1], danger: action === "reject", choices: REASONS, note, noteRequired: opts.noteRequired !== false, placeholder: "التفاصيل: وش المطلوب تعديله؟" });
+      if (!v) return; reason = v.choice; note = v.note;
+    } else if (!(await UI.confirm(words[0], { ok: words[1], danger: false }))) return;
     const now = new Date().toISOString(), stage = stageOf(r) ? stageOf(r).name : "";
-    const entry = { at: now, by: me, name: myName, action: action === "approve" && last ? "final" : action, stage, note };
+    const entry = { at: now, by: me, name: myName, action: action === "approve" && last ? "final" : action, stage, note, ...(reason ? { reason } : {}) };
     const ref = db.collection("requests").doc(r.id);
     try {
       if (action === "approve" && last){
@@ -261,14 +299,17 @@
           tx.set(c, { year, last: lastNo + 1 }); return lastNo + 1;
         });
         const refNo = `${String(no).padStart(3, "0")}/${year}`;
-        const letter = await db.collection("hrLetters").add({ ...L, no, year, ref: refNo, createdAt: now, createdBy: r.submittedBy, requestId: r.id, approvedBy: me, approvals: [...(r.history || []), entry] });
-        await ref.update({ status: "approved", ref: refNo, letterId: letter.id, updatedAt: now, history: [...(r.history || []), entry] });
+        // the letter and the closed request are written together
+        const letter = db.collection("hrLetters").doc(), b = db.batch();
+        b.set(letter, { ...L, no, year, ref: refNo, createdAt: now, createdBy: r.submittedBy, requestId: r.id, approvedBy: me, approvals: [...(r.history || []), entry] });
+        b.update(ref, { status: "approved", ref: refNo, letterId: letter.id, currentApprovers: [], updatedAt: now, history: [...(r.history || []), entry] });
+        await b.commit();
         UI.toast(`اعتُمد الطلب وصدر الخطاب برقم ${refNo}`);
       } else if (action === "approve"){
-        await ref.update({ stageIndex: (r.stageIndex || 0) + 1, updatedAt: now, history: [...(r.history || []), entry] });
+        await ref.update({ stageIndex: (r.stageIndex || 0) + 1, currentApprovers: r.stages[(r.stageIndex || 0) + 1].emails || [], updatedAt: now, history: [...(r.history || []), entry] });
         UI.toast("اعتُمد وانتقل الطلب للمرحلة التالية");
       } else {
-        await ref.update({ status: action === "return" ? "returned" : action === "reject" ? "rejected" : "cancelled", updatedAt: now, history: [...(r.history || []), entry] });
+        await ref.update({ status: action === "return" ? "returned" : action === "reject" ? "rejected" : "cancelled", currentApprovers: [], updatedAt: now, history: [...(r.history || []), entry] });
         UI.toast(action === "return" ? "أُعيد الطلب لمقدّمه" : action === "reject" ? "رُفض الطلب" : "سُحب الطلب");
       }
       $("rqNote").value = "";
@@ -285,7 +326,8 @@
         const now = new Date().toISOString();
         const entry = { at: now, by: me, name: myName, action: who === "submitter" ? "resubmit" : "edit", stage: who === "submitter" ? "" : (stageOf(r) || {}).name || "" };
         const patch = { letter: L, title: L.title, assoc: L.assoc || "", employee: L.employee || "", updatedAt: now, history: [...(r.history || []), entry] };
-        if (who === "submitter") Object.assign(patch, { status: "pending", stageIndex: 0 });
+        if (who === "submitter") Object.assign(patch, { status: "pending", stageIndex: 0, currentApprovers: (r.stages[0] || {}).emails || [] });
+        else patch.currentApprovers = r.currentApprovers || [];
         await db.collection("requests").doc(r.id).update(patch);
         UI.toast(who === "submitter" ? "أُعيد رفع الطلب" : "حُفظ تعديل الخطاب");
         HRLetters.clear();
@@ -315,7 +357,7 @@
       db2.addEventListener("click", async () => { if (await UI.confirm(`حذف مسار «${w.name}»؟ الطلبات الجارية تكمل على مسارها.`, { ok: "حذف", danger: true })) saveWorkflows(workflows.filter(x => x.id !== w.id), "حُذف المسار"); });
       ul.append(li);
     });
-    $("raOptEdit").checked = opts.approverEdit !== false; $("raOptNote").checked = opts.noteRequired !== false;
+    $("raOptEdit").checked = opts.approverEdit !== false; $("raOptNote").checked = opts.noteRequired !== false; $("raOptSla").value = +opts.slaDays || 2;
   }
   /* ---------- التمكين التقني ← صلاحيات المستخدمين ---------- */
   function renderPerms(){
@@ -363,7 +405,7 @@
     catch (e){ console.error(e); UI.toast("تعذّر حفظ الصلاحية (تحتاج دور مدير)", "err"); }
   }
   async function saveWorkflows(list, done){
-    try { await db.collection("settings").doc("workflows").set({ list, updatedAt: new Date().toISOString() }); if (done) UI.toast(done); }
+    try { await db.collection("settings").doc("workflows").set({ list: list.map(w => ({ ...w, stages: normStages(w.stages) })), updatedAt: new Date().toISOString() }); if (done) UI.toast(done); }
     catch (e){ console.error(e); UI.toast("تعذّر الحفظ", "err"); }
   }
   function openWf(w){
@@ -427,7 +469,7 @@
     $("raWfEditor").hidden = true; wDraft = null;
   });
   ["raOptEdit", "raOptNote"].forEach(id => $(id).addEventListener("change", async () => {
-    try { await db.collection("settings").doc("requests").set({ approverEdit: $("raOptEdit").checked, noteRequired: $("raOptNote").checked }); UI.toast("حُفظت الخيارات"); }
+    try { await db.collection("settings").doc("requests").set({ approverEdit: $("raOptEdit").checked, noteRequired: $("raOptNote").checked, slaDays: Math.max(1, Math.min(30, +$("raOptSla").value || 2)) }); UI.toast("حُفظت الخيارات"); }
     catch (e){ UI.toast("تعذّر الحفظ", "err"); }
   }));
 
@@ -437,10 +479,10 @@
     db = d.db; me = ((d.user && d.user.email) || "").toLowerCase(); myName = (d.user && d.user.displayName) || me.split("@")[0];
     try { const a = await db.collection("allowed").doc(me).get(); if (a.exists) my = { ...my, ...a.data() }; } catch (e){ console.error(e); }
     applyAccess();
-    db.collection("allowed").doc(me).onSnapshot(a => { if (a.exists){ my = { role: "member", canIssue: false, sections: null, ...a.data() }; applyAccess(); renderAdmin(); renderList(); renderPerms(); } }, () => {});
-    db.collection("settings").doc("workflows").onSnapshot(x => { workflows = (x.exists && x.data().list) || []; renderAdmin(); }, () => {});
+    db.collection("allowed").doc(me).onSnapshot(a => { if (a.exists){ my = { role: "member", canIssue: false, sections: null, ...a.data() }; applyAccess(); renderAdmin(); renderList(); renderPerms(); backfill(); } }, () => {});
+    db.collection("settings").doc("workflows").onSnapshot(x => { workflows = (x.exists && x.data().list) || []; renderAdmin(); backfill(); }, () => {});
     db.collection("settings").doc("requests").onSnapshot(x => { if (x.exists) opts = { ...opts, ...x.data() }; renderAdmin(); if (current) show(current.id, true); }, () => {});
-    db.collection("requests").onSnapshot(s => { requests = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); toHome(); }, e => console.error(e));
+    db.collection("requests").onSnapshot(s => { requests = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); toHome(); backfill(); }, e => console.error(e));
     db.collection("hrTemplates").onSnapshot(s => { templates = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.order || 0) - (b.order || 0)); renderAdmin(); }, () => {});
     if (isAdmin()) db.collection("allowed").onSnapshot(s => { users = s.docs.map(x => ({ id: x.id, ...x.data() })); renderAdmin(); renderPerms(); }, () => {});
     renderAdmin(); renderList(); renderPerms();

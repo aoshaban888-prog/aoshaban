@@ -96,23 +96,69 @@ service cloud.firestore {
     }
     match /hrMeta/{id} {
       allow read: if allowed();
-      allow write: if (id == "seal" && perm("seal")) || (id == "templates" && perm("templates")) || (id == "counter" && allowed());
+      allow write: if (id == "seal" && perm("seal")) || (id == "templates" && perm("templates")) || (id == "counter" && counterStep());
+    }
+
+    // the outgoing-number counter only moves forward one at a time (back to 1 when the Hijri year changes)
+    function counterStep() {
+      let n = request.resource.data;
+      return allowed() && n.keys().hasOnly(["year", "last"])
+        && (resource == null ? n.last == 1
+            : (n.year == resource.data.year ? n.last == resource.data.last + 1 : n.last == 1));
+    }
+    // the approver of a request's last stage, at the moment the letter is issued
+    function finalApprover(rid) {
+      let r = get(/databases/$(database)/documents/requests/$(rid)).data;
+      return r.status == "pending" && r.stageIndex == r.stages.size() - 1
+        && (isAdmin() || (myEmail() in r.get("currentApprovers", []) && r.submittedBy != myEmail()));
     }
 
     // issued letters: everyone sees their own, the whole log needs viewLog
     match /hrLetters/{id} {
       allow read: if perm("viewLog") || (allowed() && resource.data.createdBy == myEmail());
       allow create: if (perm("issue") && request.resource.data.createdBy == myEmail())
-                    || (allowed() && request.resource.data.get("requestId", null) != null);
-      allow update: if perm("editIssued");
-      allow delete: if perm("deleteLog");
+                    || (allowed() && request.resource.data.get("requestId", null) != null && finalApprover(request.resource.data.requestId));
+      // a letter is cancelled with a reason (its number stays in the log); only an admin removes one for good
+      allow update: if perm("editIssued")
+                    || (perm("deleteLog") && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status", "cancelReason", "cancelNote", "cancelledBy", "cancelledAt"]));
+      allow delete: if isAdmin();
     }
 
     // administrative requests
+    // the path is copied from settings/workflows when the request is made and can't be changed afterwards;
+    // currentApprovers always holds the emails of the stage the request waits at
+    function samePath() {
+      return request.resource.data.stages == resource.data.stages
+        && request.resource.data.submittedBy == resource.data.submittedBy
+        && request.resource.data.get("wfIndex", null) == resource.data.get("wfIndex", null);
+    }
+    function approversFollow() {
+      let n = request.resource.data;
+      return n.status == "pending" ? n.currentApprovers == n.stages[n.stageIndex].emails : n.currentApprovers.size() == 0;
+    }
+    // an approver of the current stage, never on their own request: next stage, edit, return, reject, or final approval
+    function asApprover() {
+      let o = resource.data; let n = request.resource.data;
+      return o.status == "pending" && myEmail() in o.get("currentApprovers", []) && o.submittedBy != myEmail()
+        && ((n.status == "pending" && (n.stageIndex == o.stageIndex || n.stageIndex == o.stageIndex + 1))
+            || (n.status in ["returned", "rejected"] && n.stageIndex == o.stageIndex)
+            || (n.status == "approved" && n.stageIndex == o.stageIndex && o.stageIndex == o.stages.size() - 1));
+    }
+    // the person who made it: withdraw it, or send it again from the first stage
+    function asSubmitter() {
+      let o = resource.data; let n = request.resource.data;
+      return o.submittedBy == myEmail() && o.status in ["pending", "returned"]
+        && ((n.status == "cancelled" && n.stageIndex == o.stageIndex) || (n.status == "pending" && n.stageIndex == 0))
+        && n.get("letterId", null) == o.get("letterId", null) && n.get("ref", null) == o.get("ref", null);
+    }
     match /requests/{id} {
       allow read: if allowed();
-      allow create: if perm("submit") && request.resource.data.submittedBy == myEmail();
-      allow update: if allowed();
+      allow create: if perm("submit") && request.resource.data.submittedBy == myEmail()
+                    && request.resource.data.status == "pending" && request.resource.data.stageIndex == 0
+                    && request.resource.data.stages == get(/databases/$(database)/documents/settings/workflows).data.list[request.resource.data.wfIndex].stages
+                    && request.resource.data.currentApprovers == request.resource.data.stages[0].emails
+                    && request.resource.data.get("letterId", null) == null && request.resource.data.get("ref", null) == null;
+      allow update: if isAdmin() || (allowed() && samePath() && approversFollow() && (asApprover() || asSubmitter()));
       allow delete: if isAdmin();
     }
   }

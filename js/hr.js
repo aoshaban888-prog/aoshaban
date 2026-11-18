@@ -988,6 +988,18 @@ ${HELLO}
     $("hrBulkN").textContent = `محدد ${picked.size}`;
     const all = $("hrSelAll"); all.checked = rows.length > 0 && vis === rows.length; all.indeterminate = vis > 0 && vis < rows.length;
   }
+  const CANCEL_REASONS = ["صدر بالخطأ", "خطأ في البيانات وأُعيد إصداره", "طُلب إلغاؤه", "أخرى"];
+  async function cancelLetters(ids){
+    if (!ids.length || !db) return;
+    const v = await UI.prompt(ids.length === 1 ? "إلغاء الخطاب؟ يبقى رقمه في السجل وعليه «ملغى»، ولا يُعاد استخدامه." : `إلغاء ${ids.length} خطابات؟ تبقى أرقامها في السجل وعليها «ملغى».`,
+      { title: "إلغاء خطاب", ok: "إلغاء الخطاب", danger: true, choices: CANCEL_REASONS, noteRequired: false, placeholder: "تفاصيل (اختياري)" });
+    if (!v) return;
+    const now = new Date().toISOString();
+    try {
+      for (let i = 0; i < ids.length; i += 400){ const b = db.batch(); ids.slice(i, i + 400).forEach(id => b.update(db.collection("hrLetters").doc(id), { status: "cancelled", cancelReason: v.choice, cancelNote: v.note, cancelledBy: me, cancelledAt: now })); await b.commit(); }
+      picked.clear(); UI.toast(ids.length === 1 ? "أُلغي الخطاب" : `أُلغي ${ids.length} خطابات`);
+    } catch (e){ console.error(e); UI.toast("تعذّر الإلغاء", "err"); }
+  }
   function renderLog(){
     const body = $("hrLogList"); if (!body) return;
     fillLogFilters();
@@ -997,24 +1009,33 @@ ${HELLO}
     $("hrLogEmpty").textContent = letters.length ? "لا توجد نتائج" : "لم يصدر أي خطاب بعد";
     rows.forEach(l => {
       const tr = document.createElement("tr"); if (picked.has(l.id)) tr.classList.add("sel");
-      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small hr-pv" type="button">معاينة</button> <button class="btn small hr-ed" type="button">تعديل</button> <button class="btn small" type="button">طباعة</button> <button class="btn small hr-pdf" type="button">PDF</button> <button class="btn small ghost hr-del" type="button">حذف</button></td>`;
+      tr.innerHTML = `<td><bdi class="mono"></bdi></td><td></td><td></td><td></td><td></td><td class="u-act"><input type="checkbox" class="hr-pick" aria-label="تحديد"> <button class="btn small hr-pv" type="button">معاينة</button> <button class="btn small hr-ed" type="button">تعديل</button> <button class="btn small" type="button">طباعة</button> <button class="btn small hr-pdf" type="button">PDF</button> <button class="btn small ghost hr-del" type="button">إلغاء</button></td>`;
       const td = tr.querySelectorAll("td");
       const cbx = tr.querySelector(".hr-pick");
       if (!P.deleteLog){ cbx.remove(); tr.querySelector(".hr-del").remove(); }
-      if (!P.editIssued) tr.querySelector(".hr-ed").remove();
+      const off = l.status === "cancelled";
+      if (!P.editIssued || off) tr.querySelector(".hr-ed").remove();
+      if (off){
+        tr.classList.add("hr-off"); const cx = tr.querySelector(".hr-del"); if (cx) cx.remove();
+        if (P.admin){ const del = document.createElement("button"); del.type = "button"; del.className = "btn small ghost danger-text"; del.textContent = "حذف نهائي";
+          del.addEventListener("click", async () => { if (await UI.confirm(`حذف الخطاب الملغى ${l.ref} نهائياً من السجل؟`, { ok: "حذف", danger: true })) db.collection("hrLetters").doc(l.id).delete().then(() => UI.toast("حُذف الخطاب")).catch(() => UI.toast("تعذّر الحذف", "err")); });
+          tr.querySelector(".u-act").append(del); }
+      }
       tr.querySelector(".hr-pv").addEventListener("click", () => { const head = heads.find(h => h.id === l.headId) || null; preview(l, head, partsOf(l, head), { title: `${l.ref} · ${l.title}` }); });
       const pdfBtn = tr.querySelector(".hr-pdf");
       if (!P.pdf) pdfBtn.remove(); else pdfBtn.addEventListener("click", () => { const head = heads.find(h => h.id === l.headId) || null; savePdf(l, head, partsOf(l, head)); });
       td[0].querySelector("bdi").textContent = l.ref;
+      if (off){ const c = document.createElement("span"); c.className = "hr-offchip"; c.textContent = "ملغى"; c.title = [l.cancelReason, l.cancelNote].filter(Boolean).join(" · "); td[0].append(" ", c); }
       td[1].textContent = `${hijri(parseDay(l.date))} هـ`;
       td[2].textContent = l.title; td[3].textContent = l.employee || "—"; td[4].textContent = l.assoc || "";
       const cb = tr.querySelector(".hr-pick"); if (cb) cb.checked = picked.has(l.id);
       if (cb) cb.addEventListener("change", () => { if (cb.checked) picked.add(l.id); else picked.delete(l.id); tr.classList.toggle("sel", cb.checked); syncBulk(rows); });
       const bl = [...tr.querySelectorAll("button")];
-      const eb = bl.find(b => b.textContent === "تعديل"), pb = bl.find(b => b.textContent === "طباعة"), db2 = bl.find(b => b.textContent === "حذف");
+      const eb = bl.find(b => b.textContent === "تعديل"), pb = bl.find(b => b.textContent === "طباعة"), db2 = bl.find(b => b.textContent === "إلغاء");
       if (eb && eb.textContent === "تعديل") eb.addEventListener("click", () => openLetter(l));
       pb.addEventListener("click", () => printLetter(l));
-      if (db2) db2.addEventListener("click", async () => { if (await UI.confirm(`حذف الخطاب ${l.ref} من السجل؟ لن يُعاد استخدام رقمه.`, { ok: "حذف", danger: true })) db.collection("hrLetters").doc(l.id).delete().then(() => UI.toast("حُذف الخطاب")).catch(() => UI.toast("تعذّر الحذف", "err")); });
+      if (off){ pb.hidden = true; const pf = tr.querySelector(".hr-pdf"); if (pf) pf.hidden = true; }
+      if (db2) db2.addEventListener("click", () => cancelLetters([l.id]));
       body.append(tr);
     });
     syncBulk(rows);
@@ -1024,14 +1045,7 @@ ${HELLO}
   $("hrFReset").addEventListener("click", () => { ["hrFRef", "hrFEmp", "hrFTitle", "hrFAssoc", "hrFDate", "hrLogQ"].forEach(id => { $(id).value = ""; }); renderLog(); });
   $("hrSelAll").addEventListener("change", e => { filteredLetters().forEach(l => { if (e.target.checked) picked.add(l.id); else picked.delete(l.id); }); renderLog(); });
   $("hrBulkClear").addEventListener("click", () => { picked.clear(); renderLog(); });
-  $("hrBulkDel").addEventListener("click", async () => {
-    const ids = [...picked]; if (!ids.length || !db) return;
-    if (!(await UI.confirm(`حذف ${ids.length} ${ids.length === 1 ? "خطاب" : ids.length === 2 ? "خطابين" : "خطابات"} من السجل؟ لن يُعاد استخدام أرقامها.`, { ok: "حذف المحدد", danger: true }))) return;
-    try {
-      for (let i = 0; i < ids.length; i += 400){ const batch = db.batch(); ids.slice(i, i + 400).forEach(id => batch.delete(db.collection("hrLetters").doc(id))); await batch.commit(); }
-      picked.clear(); UI.toast(`حُذف ${ids.length} من السجل`);
-    } catch (e){ console.error(e); UI.toast("تعذّر الحذف", "err"); }
-  });
+  $("hrBulkDel").addEventListener("click", () => cancelLetters([...picked].filter(id => (letters.find(l => l.id === id) || {}).status !== "cancelled")));
 
   /* ---------- templates ---------- */
   let editing = null;

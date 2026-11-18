@@ -59,7 +59,7 @@
       const li = document.createElement("li");
       li.innerHTML = `<a href="#/hr/requests"><span class="rh-t"></span><span class="rh-s"></span></a>`;
       li.querySelector(".rh-t").textContent = r.title || "طلب";
-      const s = li.querySelector(".rh-s"); s.textContent = tab === "inbox" ? `من ${r.submitterName || r.submittedBy}` : label(r); s.dataset.st = tab === "inbox" ? "wait" : r.status;
+      const s = li.querySelector(".rh-s"); s.textContent = tab === "inbox" ? `من ${r.submitterName || r.submittedBy}` : label(r); s.dataset.st = e.detail.late && e.detail.late(r) ? "late" : tab === "inbox" ? "wait" : r.status;
       li.querySelector("a").addEventListener("click", () => setTimeout(() => { const t = document.querySelector(`[data-rqtab="${tab}"]`); t && t.click(); }, 120));
       ul.append(li);
     });
@@ -140,7 +140,7 @@
     if (col) return;
     col = db.collection("tasks");
     $("tAdd").hidden = false; $("tSignin").hidden = true;
-    db.collection("hrLetters").onSnapshot(snap => { letters = snap.docs.map(d => d.data()); renderStats(); }, () => {});
+    db.collection("hrLetters").onSnapshot(snap => { letters = snap.docs.map(d => d.data()).filter(l => l.status !== "cancelled"); renderStats(); }, () => {});
     db.collection("associations").onSnapshot(snap => { assocs = snap.docs.map(d => d.data()); renderStats(); }, () => {});
     unsub = col.onSnapshot(snap => { tasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); gotTasks = true; renderTasks(); },
       e => { console.error(e); $("tEmpty").textContent = "تعذّر تحميل المهام"; $("tEmpty").hidden = false; });

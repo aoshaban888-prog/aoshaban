@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261118r"></script>
-<link rel="stylesheet" href="css/library.css?v=20261118r">
-<link rel="stylesheet" href="css/app.css?v=20261118r">
+<script src="js/boot.js?v=20261118s"></script>
+<link rel="stylesheet" href="css/library.css?v=20261118s">
+<link rel="stylesheet" href="css/app.css?v=20261118s">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -459,7 +459,7 @@
 
       <section class="card" id="hrLog" hidden aria-label="سجل الخطابات">
         <div class="card-h"><h2>الخطابات الصادرة</h2><input class="input hr-q" id="hrLogQ" type="search" placeholder="بحث" aria-label="بحث في السجل"></div>
-        <div class="hr-bulk" id="hrBulk" hidden><span id="hrBulkN"></span><button class="btn small danger" type="button" id="hrBulkDel">حذف المحدد</button><button class="btn small ghost" type="button" id="hrBulkClear">إلغاء التحديد</button></div>
+        <div class="hr-bulk" id="hrBulk" hidden><span id="hrBulkN"></span><button class="btn small danger" type="button" id="hrBulkDel">إلغاء المحدد</button><button class="btn small ghost" type="button" id="hrBulkClear">إلغاء التحديد</button></div>
         <div class="table-wrap"><table class="u-table hr-table"><thead>
           <tr><th>الرقم</th><th>التاريخ</th><th>الخطاب</th><th>الموظف</th><th>الجمعية</th><th class="hr-selcol"><label class="hr-selall"><input type="checkbox" id="hrSelAll" aria-label="تحديد الكل"> الكل</label></th></tr>
           <tr class="hr-filters">
@@ -607,7 +607,8 @@
         <section class="card" aria-labelledby="ra3">
           <div class="card-h"><h2 id="ra3">خيارات الاعتماد</h2></div>
           <label class="s-check"><input type="checkbox" id="raOptEdit"> المعتمد يقدر يعدّل الخطاب قبل اعتماده</label>
-          <label class="s-check"><input type="checkbox" id="raOptNote"> إلزام كتابة السبب عند الإرجاع أو الرفض</label>
+          <label class="s-check"><input type="checkbox" id="raOptNote"> إلزام كتابة التفاصيل مع سبب الإرجاع أو الرفض (اختيار السبب إلزامي دائماً)</label>
+          <label class="s-check ra-sla">يتلوّن الطلب كمتأخر إذا انتظر في مرحلة أكثر من <input class="input" type="number" id="raOptSla" min="1" max="30" step="1" value="2" aria-label="عدد الأيام"> أيام</label>
         </section>
       </div>
     </section>
@@ -989,20 +990,20 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261118r"></script>
-<script src="js/library.js?v=20261118r"></script>
+<script src="js/ui.js?v=20261118s"></script>
+<script src="js/library.js?v=20261118s"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/smart-task.js?v=20261118r"></script>
-<script src="js/reminders.js?v=20261118r"></script>
-<script src="js/home.js?v=20261118r"></script>
-<script src="js/tasks.js?v=20261118r"></script>
-<script src="js/slider.js?v=20261118r"></script>
-<script src="js/settings.js?v=20261118r"></script>
-<script src="js/fonts.js?v=20261118r"></script>
-<script src="js/hr.js?v=20261118r"></script>
-<script src="js/requests.js?v=20261118r"></script>
-<script src="js/table-tools.js?v=20261118r"></script>
-<script src="js/login.js?v=20261118r"></script>
-<script src="js/shell.js?v=20261118r"></script>
+<script src="js/smart-task.js?v=20261118s"></script>
+<script src="js/reminders.js?v=20261118s"></script>
+<script src="js/home.js?v=20261118s"></script>
+<script src="js/tasks.js?v=20261118s"></script>
+<script src="js/slider.js?v=20261118s"></script>
+<script src="js/settings.js?v=20261118s"></script>
+<script src="js/fonts.js?v=20261118s"></script>
+<script src="js/hr.js?v=20261118s"></script>
+<script src="js/requests.js?v=20261118s"></script>
+<script src="js/table-tools.js?v=20261118s"></script>
+<script src="js/login.js?v=20261118s"></script>
+<script src="js/shell.js?v=20261118s"></script>
 </body>
 </html>

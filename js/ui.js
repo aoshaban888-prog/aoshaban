@@ -1,10 +1,11 @@
 /* Shared interface pieces: confirm / alert dialogs in the site's own style, and short toasts.
    UI.confirm(text, { title, ok, danger }) → Promise<boolean>
    UI.alert(text, { title })              → Promise<void>
-   UI.toast(text, "ok" | "err")           → shows for a few seconds at the bottom */
+   UI.toast(text, "ok" | "err")           → shows for a few seconds at the bottom
+   UI.prompt(text, { title, ok, danger, choices, note, noteRequired, placeholder }) → Promise<{ choice, note } | null> */
 (() => {
   let open = null;
-  function dialog({ title, text, ok = "موافق", cancel = null, danger = false }){
+  function dialog({ title, text, ok = "موافق", cancel = null, danger = false, form = null }){
     return new Promise(resolve => {
       if (open) open.close(false);
       const back = document.createElement("div"); back.className = "ui-scrim";
@@ -14,6 +15,15 @@
       box.innerHTML = `<h2 id="${id}t"></h2><p id="${id}d"></p><div class="ui-actions"></div>`;
       box.querySelector("h2").textContent = title || (cancel ? "تأكيد" : "تنبيه");
       box.querySelector("p").textContent = text || "";
+      let sel = null, note = null, err = null;
+      if (form){
+        const f = document.createElement("div"); f.className = "ui-form";
+        if (form.choices){ sel = document.createElement("select"); sel.className = "select"; sel.setAttribute("aria-label", "السبب");
+          sel.append(new Option("اختر السبب", "")); form.choices.forEach(c => sel.append(new Option(c, c))); f.append(sel); }
+        note = document.createElement("textarea"); note.className = "input"; note.rows = 3; note.placeholder = form.placeholder || "ملاحظة"; note.value = form.note || ""; note.setAttribute("aria-label", "ملاحظة"); f.append(note);
+        err = document.createElement("p"); err.className = "ui-err"; err.hidden = true; f.append(err);
+        box.querySelector("p").after(f);
+      }
       const actions = box.querySelector(".ui-actions");
       const okBtn = document.createElement("button"); okBtn.type = "button"; okBtn.className = "btn " + (danger ? "danger" : "primary"); okBtn.textContent = ok;
       actions.append(okBtn);
@@ -29,17 +39,23 @@
       const onKey = e => {
         if (e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); close(false); }
         if (e.key === "Tab"){ // keep focus inside the dialog
-          const f = [...box.querySelectorAll("button")]; const i = f.indexOf(document.activeElement);
+          const f = [...box.querySelectorAll("button,select,textarea")]; const i = f.indexOf(document.activeElement);
           e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
         }
       };
-      okBtn.addEventListener("click", () => close(true));
+      okBtn.addEventListener("click", () => {
+        if (!form) return close(true);
+        const choice = sel ? sel.value : "", text = note.value.trim();
+        if (sel && !choice){ err.textContent = "اختر السبب"; err.hidden = false; sel.focus(); return; }
+        if (form.noteRequired && !text){ err.textContent = "اكتب التفاصيل"; err.hidden = false; note.focus(); return; }
+        close({ choice, note: text });
+      });
       if (cancelBtn) cancelBtn.addEventListener("click", () => close(false));
       back.addEventListener("click", () => close(false));
       document.addEventListener("keydown", onKey, true);
       document.body.append(back, box);
       open = { close };
-      (danger && cancelBtn ? cancelBtn : okBtn).focus();
+      (sel || note || (danger && cancelBtn ? cancelBtn : okBtn)).focus();
     });
   }
   let stack = null;
@@ -54,6 +70,7 @@
   window.UI = {
     confirm: (text, o = {}) => dialog({ title: o.title, text, ok: o.ok || "تأكيد", cancel: o.cancel || "إلغاء", danger: !!o.danger }),
     alert: (text, o = {}) => dialog({ title: o.title, text, ok: o.ok || "حسناً" }),
+    prompt: (text, o = {}) => dialog({ title: o.title, text, ok: o.ok || "تأكيد", cancel: "إلغاء", danger: !!o.danger, form: o }).then(v => v || null),
     toast,
   };
 })();

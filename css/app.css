@@ -835,3 +835,16 @@ html.gate-wait .gate-loader{display:grid;place-items:center;position:fixed;inset
 /* menus and dialogs stay solid so text over them reads */
 :root[data-theme="neon"] :is(.dialog,.mv-menu,.tb-pop,.tctx,.tbx-bar,.fp-menu,.fp-fly,.tblbar,.tmove){background:#25135c}
 @media (prefers-reduced-motion:reduce){.side,.nav a,.theme-btn{transition:none}}
+
+/* ---------- controls: waiting time, reasons, cancelled letters ---------- */
+.rq-item.late .rq-when{color:var(--danger);font-weight:600}
+.rq-item.late{box-shadow:inset 3px 0 0 var(--danger)}
+.rh-s[data-st="late"]{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+.ui-form{display:flex;flex-direction:column;gap:8px;margin:0 0 12px}
+.ui-form .select,.ui-form .input{width:100%}
+.ui-err{margin:0;font-size:13px;color:var(--danger)}
+.ra-sla{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ra-sla .input{width:64px;height:30px;padding:0 8px}
+.hr-off td{color:var(--muted)}
+.hr-off td:not(.u-act){text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
+.hr-offchip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger);text-decoration:none}
