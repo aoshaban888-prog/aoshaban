@@ -195,7 +195,7 @@
       li.className = "task" + (d !== null && d < 0 ? " late" : "") + (t.priority === "high" ? " high" : "");
       li.innerHTML = `<label class="tk"><input type="checkbox" aria-label="تمت"><span class="tt"></span></label><span class="td mono"></span>`;
       li.querySelector(".tt").textContent = t.title;
-      li.querySelector(".td").textContent = dueLabel(t.due);
+      li.querySelector(".td").textContent = dueLabel(t.due) + (t.due && t.time && window.SmartTask ? " · " + SmartTask.timeLabel(t.time) : "");
       li.querySelector("input").addEventListener("change", () => col.doc(t.id).update({ status: "done", doneAt: new Date().toISOString(), updatedAt: new Date().toISOString() }).catch(console.error));
       list.append(li);
     });
@@ -203,14 +203,26 @@
     $("tMore").hidden = open.length <= 8;
     $("tMore").textContent = `و${open.length - 8} مهام أخرى`;
   }
+  // the quick add understands plain words: "ذكرني الخميس 9 الصبح بإعداد محضر اجتماع"
+  let hintT = null;
+  $("tTitle").addEventListener("input", () => { clearTimeout(hintT); hintT = setTimeout(() => {
+    const v = $("tTitle").value.trim(), r = v && window.SmartTask ? SmartTask.local(v) : null, hint = $("tSmart");
+    const useful = r && (r.date || r.time); hint.hidden = !useful; if (!useful) return;
+    hint.innerHTML = `<span class="sh-k">فهمت:</span> <b></b> <span class="sh-w"></span>`;
+    hint.querySelector("b").textContent = r.title; hint.querySelector(".sh-w").textContent = SmartTask.describe(r) + (r.priority === "high" ? " · مهمة" : "");
+  }, 200); });
   $("tAdd").addEventListener("submit", async e => {
     e.preventDefault();
-    const title = $("tTitle").value.trim(); if (!title || !col) return;
+    const text = $("tTitle").value.trim(); if (!text || !col) return;
     const now = new Date().toISOString();
     const btn = $("tAdd").querySelector("button"); btn.disabled = true;
     try {
-      await col.add({ title, status: "todo", due: $("tDue").value || null, priority: "normal", notes: "", createdAt: now, updatedAt: now });
-      $("tTitle").value = ""; $("tDue").value = ""; $("tTitle").focus();
+      const r = window.SmartTask && !$("tDue").value ? await SmartTask.parse(text) : { title: text, date: null, time: null, priority: "normal" };
+      const due = $("tDue").value || r.date || null, time = due ? r.time || null : null;
+      if (time) Reminders.ask();
+      await col.add({ title: r.title || text, status: "todo", due, time, priority: r.priority || "normal", notes: "", remindedFor: null, createdAt: now, updatedAt: now });
+      if (due) UI.toast(`أُضيفت «${r.title || text}» · ${SmartTask.describe({ date: due, time })}` + (time ? "، وبيجيك تنبيه" : ""));
+      $("tTitle").value = ""; $("tDue").value = ""; $("tSmart").hidden = true; $("tTitle").focus();
     } catch (err){ console.error(err); UI.toast("تعذّر حفظ المهمة", "err"); }
     finally { btn.disabled = false; }
   });

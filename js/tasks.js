@@ -22,6 +22,22 @@
   const matches = t => !q() || [t.title, t.notes, t.link && t.link.label].some(x => (x || "").includes(q()));
   const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.createdAt).localeCompare(String(b.createdAt));
 
+
+  // while typing, show what was understood; the values are applied on save
+  function smartHint(input, hint, onApply){
+    let timer = null;
+    const run = () => {
+      const v = input.value.trim(); const r = v ? SmartTask.local(v) : null;
+      const useful = r && (r.date || r.time || r.title !== v);
+      hint.hidden = !useful; if (!useful) return;
+      hint.innerHTML = `<span class="sh-k">فهمت:</span> <b></b> <span class="sh-w"></span>` + (onApply ? ` <button type="button" class="linkbtn">تطبيق</button>` : "");
+      hint.querySelector("b").textContent = r.title; hint.querySelector(".sh-w").textContent = SmartTask.describe(r) + (r.priority === "high" ? " · مهمة" : "");
+      if (onApply) hint.querySelector("button").addEventListener("click", () => { onApply(r); hint.hidden = true; });
+    };
+    input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(run, 200); });
+    return () => { hint.hidden = true; };
+  }
+
   /* ---------- card ---------- */
   function card(t){
     const el = document.createElement("article");
@@ -33,7 +49,7 @@
     el.querySelector("h3").textContent = t.title;
     if (t.priority === "high"){ const p = el.querySelector(".tk-pri"); p.hidden = false; p.title = "أولوية عالية"; }
     if (t.notes){ const n = el.querySelector(".tk-notes"); n.hidden = false; n.textContent = t.notes; }
-    el.querySelector(".tk-due").textContent = t.status === "done" ? (t.doneAt ? "أُنجزت " + fmtShort(t.doneAt.slice(0, 10)) : "") : dueLabel(t.due);
+    el.querySelector(".tk-due").textContent = t.status === "done" ? (t.doneAt ? "أُنجزت " + fmtShort(t.doneAt.slice(0, 10)) : "") : dueLabel(t.due) + (t.due && t.time ? " · " + SmartTask.timeLabel(t.time) : "");
     if (t.link){ const b = el.querySelector(".tk-link"); b.hidden = false; b.textContent = t.link.label; b.title = t.link.type === "policy" ? "فتح اللائحة" : "فتح سجل الخطابات";
       b.addEventListener("click", e => { e.stopPropagation(); openLink(t.link); }); }
     el.addEventListener("click", () => openTask(t));
@@ -126,7 +142,7 @@
       if (t.priority === "high") li.querySelector(".tk-pri").hidden = false;
       if (t.link){ const b = li.querySelector(".tk-link"); b.hidden = false; b.textContent = t.link.label; b.addEventListener("click", () => openLink(t.link)); }
       li.querySelector(".tk-st").textContent = t.status === "doing" ? "قيد التنفيذ" : "";
-      li.querySelector(".tk-due").textContent = t.status === "done" ? "" : dueLabel(t.due);
+      li.querySelector(".tk-due").textContent = t.status === "done" ? "" : dueLabel(t.due) + (t.due && t.time ? " · " + SmartTask.timeLabel(t.time) : "");
       ul.append(li);
     });
     return sec;
@@ -150,7 +166,7 @@
     $("tkTitle").value = t ? t.title : ""; $("tkNotes").value = t ? t.notes || "" : "";
     $("tkStatus").value = t ? t.status || "todo" : status || "todo";
     $("tkPriority").value = t && t.priority === "high" ? "high" : "normal";
-    $("tkDue").value = t && t.due ? t.due : "";
+    $("tkDue").value = t && t.due ? t.due : ""; $("tkTime").value = t && t.time ? t.time : ""; syncWhen(); hideHint();
     fillLinks(t && t.link ? `${t.link.type}:${t.link.id}` : "");
     $("tkDelete").hidden = !t;
     $("tkDlg").hidden = false; $("tkScrim").hidden = false;
@@ -168,8 +184,18 @@
     }
     const now = new Date().toISOString();
     const status = $("tkStatus").value;
-    const data = { title, notes: $("tkNotes").value.trim(), status, priority: $("tkPriority").value, due: $("tkDue").value || null, link, updatedAt: now };
     const btn = $("tkSave"); btn.disabled = true;
+    // a new task written in plain words: take the date, time and wording from the text when no date was set
+    let parsed = null;
+    if (!editing && !$("tkDue").value && !$("tkTime").value){
+      parsed = await SmartTask.parse(title);
+      if (!(parsed.date || parsed.time)) parsed = null;
+    }
+    const time = parsed ? parsed.time : $("tkTime").value || null;
+    const due = parsed ? parsed.date : $("tkDue").value || (time ? today() : null);
+    const data = { title: parsed ? parsed.title : title, notes: $("tkNotes").value.trim(), status, priority: parsed && parsed.priority === "high" ? "high" : $("tkPriority").value, due, time: due ? time : null, link, updatedAt: now };
+    if (!editing || editing.due !== data.due || (editing.time || null) !== data.time) data.remindedFor = null;
+    if (data.time) Reminders.ask();
     try {
       if (editing){
         if (status === "done" && editing.status !== "done") data.doneAt = now;
@@ -179,7 +205,7 @@
       } else {
         const col = tasks.filter(x => (x.status || "todo") === status);
         await db.collection("tasks").add({ ...data, order: (col.length ? Math.max(...col.map(x => x.order ?? 0)) : 0) + 1000, createdAt: now, doneAt: status === "done" ? now : null });
-        UI.toast("أُضيفت المهمة");
+        UI.toast(data.time ? `أُضيفت «${data.title}» · ${SmartTask.describe({ date: data.due, time: data.time })}، وبيجيك تنبيه` : data.due ? `أُضيفت «${data.title}» · ${SmartTask.describe({ date: data.due })}` : "أُضيفت المهمة");
       }
       closeTask();
     } catch (err){ console.error(err); UI.toast("تعذّر حفظ المهمة", "err"); }
@@ -192,6 +218,14 @@
     try { await db.collection("tasks").doc(t.id).delete(); closeTask(); UI.toast("حُذفت المهمة"); }
     catch (e){ console.error(e); UI.toast("تعذّر الحذف", "err"); }
   }
+
+  function syncWhen(){ const has = !!$("tkDue").value && !!$("tkTime").value; $("tkIcs").hidden = !has; $("tkRmNote").hidden = !has; }
+  const hideHint = smartHint($("tkTitle"), $("tkSmart"), r => {
+    $("tkTitle").value = r.title; if (r.date) $("tkDue").value = r.date; if (r.time) $("tkTime").value = r.time;
+    if (r.priority === "high") $("tkPriority").value = "high"; syncWhen();
+  });
+  ["tkDue", "tkTime"].forEach(id => $(id).addEventListener("input", syncWhen));
+  $("tkIcs").addEventListener("click", () => Reminders.ics({ id: editing && editing.id, title: $("tkTitle").value.trim(), notes: $("tkNotes").value.trim(), due: $("tkDue").value, time: $("tkTime").value }));
 
   /* ---------- wiring ---------- */
   function setView(v){

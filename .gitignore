@@ -1,3 +1,4 @@
 # Commercial fonts (DIN Next LT Arabic, Thmanyah, ...) are licensed and must not be redistributed publicly.
 # Copy them into fonts/ locally before publishing the tool.
 fonts/
+node_modules/
