@@ -243,7 +243,10 @@ ${HELLO}
     const s = getSelection(), at = s.rangeCount ? s.anchorNode : null;
     paper.querySelectorAll("[data-f]").forEach(el => {
       if (at && el.contains(at)) return;
-      const html = fieldHtml(el.dataset.f, vals);
+      // formatting given to the value on the page (bold, size, colour…) stays when the value changes
+      const st = el.getAttribute("style");
+      let html = fieldHtml(el.dataset.f, vals);
+      if (st) html = html.replace(/^<span /, `<span style="${st.replace(/"/g, "&quot;")}" `);
       if (el.outerHTML !== html){ const t = document.createElement("template"); t.innerHTML = html; el.replaceWith(t.content); }
     });
     paper.querySelectorAll(`[data-f="${CLOSING}"]`).forEach(el => { const p = el.closest("p"); if (p && p.textContent.trim() === el.textContent.trim()) p.classList.add("lt-close"); });
@@ -562,7 +565,44 @@ ${HELLO}
     if (!restore()) return;
     document.execCommand("styleWithCSS", false, cmd !== "fontSize");
     document.execCommand(cmd, false, val ?? null);
+    styleFields(cmd, val);
     afterEdit();
+  }
+  // values that come from the fields are locked pieces the browser's commands skip, so the
+  // formatting is put on the piece itself (the whole value), and kept when the value changes
+  // Ctrl+B / I / U go through the same path, so they also reach the values from the fields
+  EDIT_ROOTS().forEach(r => r.addEventListener("keydown", e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const cmd = { b: "bold", i: "italic", u: "underline" }[e.key.toLowerCase()] || { KeyB: "bold", KeyI: "italic", KeyU: "underline" }[e.code];
+    if (!cmd) return;
+    const s = getSelection(); if (s.rangeCount) range = s.getRangeAt(0).cloneRange();
+    e.preventDefault(); exec(cmd);
+  }));
+  function fieldsInRange(){
+    if (!range) return [];
+    const inner = n => { const e = elOf(n); return e && e.closest(".lt-in"); };
+    const a = inner(range.startContainer); if (a && a === inner(range.endContainer) && !range.collapsed) return []; // part of a typed value: the browser handles it
+    return EDIT_ROOTS().flatMap(r => [...r.querySelectorAll("[data-f]")]).filter(el => !el.parentElement.closest("[data-f]") && range.intersectsNode(el));
+  }
+  function styleFields(cmd, val){
+    const els = fieldsInRange(); if (!els.length) return;
+    const cs = el => getComputedStyle(el.querySelector(".lt-v") || el);
+    const deco = (el, line) => { const set = new Set((el.style.textDecorationLine || "").split(" ").filter(x => x && x !== "none")); const on = cs(el).textDecorationLine.includes(line); on ? set.delete(line) : set.add(line); el.style.textDecorationLine = [...set].join(" ") || "none"; };
+    const allOn = test => els.every(el => test(cs(el)));
+    const bold = allOn(c => parseInt(c.fontWeight, 10) >= 600), ital = allOn(c => c.fontStyle === "italic");
+    els.forEach(el => {
+      const parts = [el, ...el.querySelectorAll(".lt-v")];
+      if (cmd === "bold") parts.forEach(x => { x.style.fontWeight = bold ? "400" : "700"; });
+      else if (cmd === "italic") el.style.fontStyle = ital ? "normal" : "italic";
+      else if (cmd === "underline") deco(el, "underline");
+      else if (cmd === "strikeThrough") deco(el, "line-through");
+      else if (cmd === "foreColor") el.style.color = val;
+      else if (cmd === "hiliteColor") el.style.backgroundColor = val;
+      else if (cmd === "fontName") el.style.fontFamily = `"${val}"`;
+      else if (cmd === "size") el.style.fontSize = val + "px";
+      else if (cmd === "removeFormat") parts.forEach(x => x.removeAttribute("style"));
+    });
+    if ($("hrPaper").contains(els[0]) && !manual) setManual(true);
   }
   function afterEdit(){
     const s = getSelection(); if (s.rangeCount && inPaper(s.anchorNode)) range = s.getRangeAt(0).cloneRange();
@@ -574,6 +614,7 @@ ${HELLO}
     document.execCommand("styleWithCSS", false, false);
     document.execCommand("fontSize", false, "7");
     EDIT_ROOTS().forEach(r => r.querySelectorAll('font[size="7"]').forEach(f => { const s = document.createElement("span"); s.style.fontSize = px + "px"; s.innerHTML = f.innerHTML; f.replaceWith(s); }));
+    styleFields("size", px);
     afterEdit();
   }
   // alignment set on the paragraphs themselves (the browser command does not override the page's own paragraph styles)
