@@ -322,13 +322,13 @@
     }
     if (r.submittedBy === me && r.status === "returned") add("تعديل وإعادة الرفع", "primary", () => editAs(r, "submitter"));
     if (r.submittedBy === me && (r.status === "pending" || r.status === "returned")) add("سحب الطلب", "ghost", () => act(r, "cancel"));
-    add("معاينة كاملة", "ghost", () => HRLetters.preview({ ...HRLetters.finalize(r.letter), ref: r.ref }, { title: r.title, print: r.status === "approved", pdf: r.status === "approved" }));
-    if (r.status === "approved") add("طباعة الخطاب", "primary", () => HRLetters.print({ ...HRLetters.finalize(r.letter), ref: r.ref }));
-    if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...HRLetters.finalize(r.letter), ref: r.ref }));
+    add("معاينة كاملة", "ghost", () => HRLetters.preview({ ...HRLetters.finalize(r.letter, r.status === "approved"), ref: r.ref }, { title: r.title, print: r.status === "approved", pdf: r.status === "approved" }));
+    if (r.status === "approved") add("طباعة الخطاب", "primary", () => HRLetters.print({ ...HRLetters.finalize(r.letter, r.status === "approved"), ref: r.ref }));
+    if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...HRLetters.finalize(r.letter, r.status === "approved"), ref: r.ref }));
     if (isAdmin()) add("حذف الطلب", "ghost danger-text", () => deleteRequests([r.id]));
     $("rqNoteWrap").hidden = !amApprover(r);
     // preview
-    const pv = HRLetters.paper({ ...HRLetters.finalize(r.letter), ref: r.ref });
+    const pv = HRLetters.paper({ ...HRLetters.finalize(r.letter, r.status === "approved"), ref: r.ref });
     const paper = $("rqPaper"); paper.setAttribute("style", pv.style); paper.innerHTML = pv.html;
     setTimeout(() => { HRLetters.fit(); HRLetters.place(paper); }, 30);
   }

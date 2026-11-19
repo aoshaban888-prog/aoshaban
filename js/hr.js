@@ -987,13 +987,14 @@ ${HELLO}
     open: (l, opts) => openLetter(l, { force: true, ...(opts || {}) }),
     paper(L){ const head = heads.find(h => h.id === L.headId) || null; return { style: paperStyle(head), html: paperInner(L, head, partsOf(L, head), false) }; },
     print: L => printLetter(L),
-    finalize(L0){
+    // approved=false (a request still under review): no signature or stamp yet
+    finalize(L0, approved = true){
       const L = JSON.parse(JSON.stringify(L0 || {}));
       const sh = signShared || {};
       if (!(L.signName || "").trim() && !(L.signRole || "").trim() && (sh.signName || sh.signRole)){ L.signName = sh.signName || ""; L.signRole = sh.signRole || ""; }
       if (!L.headId && sh.defaultHead && heads.some(h => h.id === sh.defaultHead)) L.headId = sh.defaultHead;
-      L.showSig = true; L.showStamp = true;
-      if (L.parts){ L.parts.showSig = true; L.parts.showStamp = true; L.parts.sealPos = null; L.parts.sign = genSign(L, L); }
+      L.showSig = approved; L.showStamp = approved;
+      if (L.parts){ L.parts.showSig = approved; L.parts.showStamp = approved; L.parts.sealPos = null; L.parts.sign = genSign(L, L); }
       return L;
     },
     preview: (L, opts) => { const head = heads.find(h => h.id === L.headId) || null; preview(L, head, partsOf(L, head), opts); },
