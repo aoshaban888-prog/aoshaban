@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261122d"></script>
-<link rel="stylesheet" href="css/library.css?v=20261122d">
-<link rel="stylesheet" href="css/app.css?v=20261122d">
+<script src="js/boot.js?v=20261122e"></script>
+<link rel="stylesheet" href="css/library.css?v=20261122e">
+<link rel="stylesheet" href="css/app.css?v=20261122e">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -77,31 +77,32 @@
       </div>
     </nav>
     <div class="side-foot">
-      <div class="account" id="account" hidden>
-        <div class="acct-menu" id="acctMenu" role="menu" hidden>
-          <bdi class="acct-mail" id="acctMail"></bdi>
-          <a class="acct-item" role="menuitem" href="#/admin">التمكين التقني</a>
-          <button class="acct-item" role="menuitem" type="button" id="acctPass">تغيير كلمة المرور</button>
-          <button class="acct-item" role="menuitem" type="button" id="acctOut">تسجيل الخروج</button>
-        </div>
-        <button class="acct-btn" id="acctBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="acctMenu">
-          <span class="acct-pic" id="acctPic" aria-hidden="true"></span><span class="acct-name" id="acctName"></span><svg class="acct-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
-        </button>
-      </div>
       <div class="store-note" id="storeNote"><span class="dot"></span><span>جارٍ الاتصال بالمكتبة…</span></div>
-      <div class="side-row"><span class="muted">المظهر</span>
-        <div class="theme-pick" role="radiogroup" aria-label="المظهر">
-          <button type="button" role="radio" data-theme-set="light">فاتح</button>
-          <button type="button" role="radio" data-theme-set="dark">داكن</button>
-          <button type="button" role="radio" data-theme-set="neon">نيون</button>
-        </div>
-      </div>
     </div>
   </aside>
   <div class="scrim"></div>
 
   <div class="main-col">
-    <div class="topbar"><button class="menu-btn" type="button" aria-label="القائمة" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><span class="t"></span></div>
+    <div class="topbar"><button class="menu-btn" type="button" aria-label="القائمة" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><span class="t"></span>
+      <div class="top-tools">
+        <div class="bell" id="bell" hidden>
+          <button class="top-ic" id="bellBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="bellMenu" aria-label="التنبيهات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bell-dot" id="bellDot" hidden></span></button>
+          <div class="bell-menu" id="bellMenu" hidden></div>
+        </div>
+        <button class="top-ic" id="themeBtn" type="button" aria-label="المظهر"></button>
+        <div class="account" id="account" hidden>
+          <button class="acct-btn" id="acctBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="acctMenu">
+            <span class="acct-txt"><b class="acct-name" id="acctName"></b><small class="acct-role" id="acctRole"></small></span><span class="acct-pic" id="acctPic" aria-hidden="true"></span>
+          </button>
+          <div class="acct-menu" id="acctMenu" role="menu" hidden>
+            <bdi class="acct-mail" id="acctMail"></bdi>
+            <a class="acct-item" role="menuitem" href="#/admin">التمكين التقني</a>
+            <button class="acct-item" role="menuitem" type="button" id="acctPass">تغيير كلمة المرور</button>
+            <button class="acct-item" role="menuitem" type="button" id="acctOut">تسجيل الخروج</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <main class="main">
     <section class="view home" data-view="home" hidden>
       <header class="home-h">
@@ -1022,23 +1023,23 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261122d"></script>
-<script src="js/library.js?v=20261122d"></script>
+<script src="js/ui.js?v=20261122e"></script>
+<script src="js/library.js?v=20261122e"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/task-core.js?v=20261122d"></script>
-<script src="js/smart-task.js?v=20261122d"></script>
-<script src="js/reminders.js?v=20261122d"></script>
-<script src="js/home.js?v=20261122d"></script>
-<script src="js/tasks.js?v=20261122d"></script>
-<script src="js/task-detail.js?v=20261122d"></script>
-<script src="js/slider.js?v=20261122d"></script>
-<script src="js/settings.js?v=20261122d"></script>
-<script src="js/fonts.js?v=20261122d"></script>
-<script src="js/hr.js?v=20261122d"></script>
-<script src="js/initiatives.js?v=20261122d"></script>
-<script src="js/requests.js?v=20261122d"></script>
-<script src="js/table-tools.js?v=20261122d"></script>
-<script src="js/login.js?v=20261122d"></script>
-<script src="js/shell.js?v=20261122d"></script>
+<script src="js/task-core.js?v=20261122e"></script>
+<script src="js/smart-task.js?v=20261122e"></script>
+<script src="js/reminders.js?v=20261122e"></script>
+<script src="js/home.js?v=20261122e"></script>
+<script src="js/tasks.js?v=20261122e"></script>
+<script src="js/task-detail.js?v=20261122e"></script>
+<script src="js/slider.js?v=20261122e"></script>
+<script src="js/settings.js?v=20261122e"></script>
+<script src="js/fonts.js?v=20261122e"></script>
+<script src="js/hr.js?v=20261122e"></script>
+<script src="js/initiatives.js?v=20261122e"></script>
+<script src="js/requests.js?v=20261122e"></script>
+<script src="js/table-tools.js?v=20261122e"></script>
+<script src="js/login.js?v=20261122e"></script>
+<script src="js/shell.js?v=20261122e"></script>
 </body>
 </html>

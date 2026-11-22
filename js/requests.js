@@ -464,11 +464,13 @@
     users.slice().sort((a, b) => (b.role === "admin") - (a.role === "admin") || (a.name || a.id).localeCompare(b.name || b.id)).forEach(u => {
       const adm = u.role === "admin", P = permsOf(u), secs = u.sections || SECTIONS.map(x => x[0]);
       const card = document.createElement("article"); card.className = "card pm-card" + (adm ? " admin" : "");
-      card.innerHTML = `<header class="pm-h"><div class="pm-who"><span class="pm-name"></span><bdi class="pm-mail"></bdi></div><span class="pm-role"></span><select class="select pm-preset" aria-label="قالب صلاحيات"></select></header>
+      card.innerHTML = `<header class="pm-h"><div class="pm-who"><span class="pm-name"></span><bdi class="pm-mail"></bdi></div><span class="pm-role"></span><input class="input pm-job" type="text" maxlength="60" placeholder="المسمى الوظيفي" aria-label="المسمى الوظيفي"><select class="select pm-preset" aria-label="قالب صلاحيات"></select></header>
         <div class="pm-groups"><fieldset><legend>الأقسام</legend><div class="pm-sec"></div></fieldset><fieldset><legend>الخطابات</legend><div class="pm-let"></div></fieldset><fieldset><legend>إعدادات الخطابات</legend><div class="pm-set"></div></fieldset></div>`;
       card.querySelector(".pm-name").textContent = u.name || u.id.split("@")[0];
       card.querySelector(".pm-mail").textContent = u.id;
       card.querySelector(".pm-role").textContent = adm ? "مدير · كل الصلاحيات" : "مستخدم";
+      const job = card.querySelector(".pm-job"); job.value = u.jobTitle || "";
+      job.addEventListener("change", () => setPerm(u.id, { jobTitle: job.value.trim() }));
       const sel = card.querySelector(".pm-preset");
       sel.append(new Option("قالب جاهز…", ""));
       PRESETS.forEach(([k, label]) => sel.append(new Option(label, k)));
@@ -575,7 +577,7 @@
     db = d.db; me = ((d.user && d.user.email) || "").toLowerCase(); myName = (d.user && d.user.displayName) || me.split("@")[0];
     try { const a = await db.collection("allowed").doc(me).get(); if (a.exists) my = { ...my, ...a.data() }; } catch (e){ console.error(e); }
     applyAccess();
-    db.collection("allowed").doc(me).onSnapshot(a => { if (a.exists){ my = { role: "member", canIssue: false, sections: null, ...a.data() }; applyAccess(); renderAdmin(); renderList(); renderPerms(); backfill(); } }, () => {});
+    db.collection("allowed").doc(me).onSnapshot(a => { if (a.exists){ my = { role: "member", canIssue: false, sections: null, ...a.data() }; window.dispatchEvent(new CustomEvent("app:me", { detail: my })); applyAccess(); renderAdmin(); renderList(); renderPerms(); backfill(); } }, () => {});
     db.collection("settings").doc("workflows").onSnapshot(x => { workflows = (x.exists && x.data().list) || []; renderAdmin(); renderDeleg(); backfill(); }, () => {});
     db.collection("settings").doc("requests").onSnapshot(x => { if (x.exists) opts = { ...opts, ...x.data() }; renderAdmin(); if (current) show(current.id, true); }, () => {});
     db.collection("delegations").onSnapshot(s => { delegs = {}; s.docs.forEach(d => { delegs[d.id] = d.data(); }); renderDeleg(); renderList(); toHome(); }, () => {});
