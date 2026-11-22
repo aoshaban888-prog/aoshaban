@@ -42,7 +42,19 @@
     document.querySelector(".topbar .t").textContent = ROUTES[r];
     document.title = ROUTES[r] + " · " + ((window.siteSettings && window.siteSettings.siteName) || "مكتب الحوكمة");
     app.classList.remove("nav-open");
-    if (r !== current){ current = r; window.scrollTo(0, 0); window.dispatchEvent(new CustomEvent("app:view", { detail: r })); }
+    if (r !== current){ const first = current === null; current = r; window.scrollTo(0, 0); if (!first) loading(); window.dispatchEvent(new CustomEvent("app:view", { detail: r })); }
+  }
+  /* «جاري التحميل»: the logo inside two turning rings, shown briefly over the page when a section opens */
+  const loader = document.createElement("div"); loader.className = "pg-load"; loader.hidden = true; loader.setAttribute("role", "status");
+  loader.innerHTML = `<div class="pg-load-in"><div class="pg-ring"><svg class="pg-arcs" viewBox="0 0 120 120" aria-hidden="true"><circle class="pg-a1" cx="60" cy="60" r="54"/><circle class="pg-a2" cx="60" cy="60" r="46"/></svg><span class="pg-logo"></span></div><b>جاري التحميل…</b><small>يرجى الانتظار لحظات</small></div>`;
+  document.querySelector(".main-col").append(loader);
+  let loadT = 0;
+  function loading(){
+    const st = window.siteSettings || {}, dark = (root.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) !== "light";
+    const src = (dark && st.logoDark) || st.logo || "", box = loader.querySelector(".pg-logo");
+    box.innerHTML = src ? `<img src="${src.replace(/"/g, "&quot;")}" alt="">` : `<span class="pg-init">${((st.siteName || "م").trim()[0] || "م")}</span>`;
+    clearTimeout(loadT); loader.hidden = false; loader.classList.remove("out"); void loader.offsetWidth; loader.classList.add("on");
+    loadT = setTimeout(() => { loader.classList.add("out"); loadT = setTimeout(() => { loader.hidden = true; loader.classList.remove("on", "out"); }, 220); }, 700);
   }
   window.addEventListener("hashchange", route);
   document.querySelector(".menu-btn").addEventListener("click", () => app.classList.add("nav-open"));
