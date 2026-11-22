@@ -366,7 +366,13 @@
     document.addEventListener("keydown", key, true);
     document.body.append(back); back.querySelector(".ig-note-ok").focus();
   }
-  window.addEventListener("app:view", e => { if (e.detail === "projects/initiatives") notice(); else { const n = document.querySelector(".ig-note-back"); if (n) n.remove(); } });
+  // after the «جاري التحميل» screen has gone (it shows for about 0.9 s)
+  let noteT = 0;
+  window.addEventListener("app:view", e => {
+    clearTimeout(noteT);
+    if (e.detail === "projects/initiatives") noteT = setTimeout(() => { if (location.hash.replace(/^#\/?/, "") === "projects/initiatives") notice(); }, 950);
+    else { const n = document.querySelector(".ig-note-back"); if (n) n.remove(); }
+  });
   if (location.hash.replace(/^#\/?/, "") === "projects/initiatives") setTimeout(notice, 300);
   window.addEventListener("app:db", e => connect(e.detail));
   if (window.appDb) connect({ db: window.appDb, user: window.appUser });
