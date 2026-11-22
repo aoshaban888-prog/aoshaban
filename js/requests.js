@@ -9,7 +9,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const SECTIONS = [["tasks", "المهام"], ["governance", "الحوكمة"], ["hr", "الموارد البشرية"]];
+  const SECTIONS = [["tasks", "المهام"], ["governance", "الحوكمة"], ["hr", "الموارد البشرية"], ["projects", "إدارة المشاريع"]];
   // permissions inside the letters pages; members start with «submit» only
   const PERMS = [
     ["submit", "رفع الخطاب للاعتماد"], ["issue", "حفظ وطباعة (إصدار الخطاب برقم)"], ["printDraft", "طباعة بدون حفظ"], ["editText", "تعديل نص الخطاب وتنسيقه"],
@@ -105,7 +105,7 @@
     if (!r) return;
     const top = r.split("/")[0];
     const sec = isAdmin() || !my.sections ? null : new Set(my.sections);
-    const blocked = (top === "admin" && !isAdmin()) || (sec && ["tasks", "governance", "hr"].includes(top) && !sec.has(top));
+    const blocked = (top === "admin" && !isAdmin()) || (sec && ["tasks", "governance", "hr", "projects"].includes(top) && !sec.has(top));
     if (blocked && db){ UI.toast("لا تملك صلاحية فتح هذا القسم", "err"); location.hash = "#/home"; }
   }
   window.addEventListener("app:view", e => { guard(e.detail); if (e.detail === "hr/requests") renderList(); });

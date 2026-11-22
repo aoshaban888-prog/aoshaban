@@ -28,7 +28,7 @@ service cloud.firestore {
     }
     // sections a member can open (all three when not set)
     function section(s) {
-      return isAdmin() || (allowed() && s in profile().get("sections", ["tasks", "governance", "hr"]));
+      return isAdmin() || (allowed() && s in profile().get("sections", ["tasks", "governance", "hr", "projects"]));
     }
 
     // people: everyone may read their own entry; admins manage the list but cannot remove or demote themselves
@@ -114,6 +114,14 @@ service cloud.firestore {
       allow read: if section("tasks");
       allow create: if section("tasks") && request.resource.data.owner == myEmail() && request.resource.data.name is string && request.resource.data.name.size() <= 80;
       allow update, delete: if isAdmin() || resource.data.owner == myEmail();
+    }
+
+    // initiative documents: everyone in the section reads them; the owner (or an admin) edits and deletes
+    match /initiatives/{id} {
+      allow read: if section("projects");
+      allow create: if section("projects") && request.resource.data.owner == myEmail() && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200;
+      allow update: if section("projects") && (isAdmin() || resource.data.owner == myEmail()) && request.resource.data.owner == resource.data.owner && request.resource.data.title is string && request.resource.data.title.size() > 0;
+      allow delete: if section("projects") && (isAdmin() || resource.data.owner == myEmail());
     }
 
     // governance library (policies and associations are also read by the letters and the home page)

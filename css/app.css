@@ -1100,3 +1100,106 @@ body.rq-open{overflow:hidden}
   .rq-c-act{grid-column:1 / -1;text-align:start}
   .rq-detail{padding:20px 16px 32px}
 }
+
+/* ---------- إدارة المشاريع › وثائق المبادرات ---------- */
+.ini-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.ini-card{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer;transition:border-color 140ms var(--ease),box-shadow 140ms var(--ease)}
+.ini-card:hover,.ini-card:focus-visible{border-color:color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.ini-card h3{margin:0;font-size:16px;font-weight:600;line-height:1.5}
+.ini-card p{margin:0;font-size:13px;color:var(--muted)}
+.ini-ch{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ini-st{font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;background:var(--line-soft);color:var(--ink-2)}
+.ini-st.review{background:#fef3c7;color:#92400e}.ini-st.approved{background:#dcfce7;color:#166534}.ini-st.closed{background:#e5e7eb;color:#374151}
+.ini-code{font-size:12px;color:var(--muted);font-family:var(--font-mono)}
+.ini-cp{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.ini-cp .pbar{flex:1}
+.ini-cf{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted)}
+.ini-acts{display:flex;gap:12px}
+.ini-bar{display:flex;align-items:center;flex-wrap:wrap;gap:12px 16px;margin-bottom:16px}
+.ini-bt{flex:1;min-width:200px}
+.ini-bt h1{margin:0;font-size:22px;font-weight:600;line-height:1.4}
+.ini-bt span{font-size:12px}
+.ini-meter{display:flex;align-items:center;gap:8px;width:160px}.ini-meter .pbar{flex:1}.ini-meter b{font-size:13px;font-weight:500;font-variant-numeric:tabular-nums}
+.ini-bar .btn svg{vertical-align:-3px;margin-inline-end:4px}
+.ini-tabs{display:none;margin-bottom:12px}
+.ini-work{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.ini-form{display:flex;flex-direction:column;gap:8px}
+.ini-part{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.ini-part summary{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;cursor:pointer;list-style:none}
+.ini-part summary::-webkit-details-marker{display:none}
+.ini-part summary b{flex:1;font-weight:600;font-size:15px}
+.ini-pn{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--line-soft);color:var(--ink-2);font-size:12px;font-weight:600;flex:none}
+.ini-part.done .ini-pn{background:var(--ok);color:#fff}
+.ini-ok::after{content:"";display:block;width:8px;height:8px;border-inline-end:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform 160ms var(--ease)}
+.ini-part[open] .ini-ok::after{transform:rotate(-135deg)}
+.ini-part fieldset{border:0;margin:0;padding:4px 14px 16px;min-width:0}
+.ini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.ini-f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ini-f.wide{grid-column:1 / -1}
+.ini-f > span,.ini-lh{font-size:13px;color:var(--ink-2)}
+.ini-form .input,.ini-form .select{width:100%;min-width:0;height:38px;padding:0 10px;font-size:14px;line-height:normal}
+.ini-form textarea.input{height:auto;min-height:76px;padding:8px 10px;line-height:1.7;resize:vertical}
+.ini-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.ini-li{display:flex;align-items:center;gap:8px}
+.ini-n{width:20px;flex:none;text-align:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ini-rm{width:32px;height:32px;flex:none;display:grid;place-items:center;border:0;border-radius:8px;background:none;color:var(--muted);cursor:pointer}
+.ini-rm svg{width:16px;height:16px}.ini-rm:hover{background:var(--danger-soft,#fee2e2);color:var(--danger)}
+.ini-add{align-self:flex-start;margin-top:4px;padding:6px 10px;border:1px dashed var(--line);border-radius:8px;background:none;font:inherit;font-size:13px;color:var(--accent);cursor:pointer}
+.ini-add:hover{border-color:var(--accent)}
+.ini-tbl{display:flex;flex-direction:column;gap:6px}
+.ini-tr{display:grid;grid-template-columns:var(--cols);gap:6px;align-items:center}
+.ini-th span{font-size:12px;color:var(--muted)}
+.ini-tr label{min-width:0}
+.ini-cl{display:none}
+.ini-total{margin:8px 0 0;font-size:13px;color:var(--ink-2)}
+.ini-pv{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;padding:16px;border-radius:14px;background:var(--raised)}
+/* the document itself: always paper, in both themes */
+.ini-doc{background:#fff;color:#1c1b18;padding:40px 44px;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,.08);font-size:14px;line-height:1.85;max-width:210mm;margin:0 auto}
+.ini-hd{display:flex;align-items:center;gap:14px;padding-bottom:14px;border-bottom:2px solid #1c1b18}
+.ini-hd img{height:52px;width:auto;max-width:160px;object-fit:contain}
+.ini-hd b{display:block;font-size:15px}.ini-hd span{font-size:12px;color:#6f6b63}
+.ini-t{margin:22px 0 14px;font-size:24px;font-weight:700;line-height:1.5;color:#1c1b18}
+.ini-meta{display:grid;grid-template-columns:1fr 1fr;margin:0 0 8px;border:1px solid #d6d3cc;border-radius:6px;overflow:hidden}
+.ini-meta div{display:grid;grid-template-columns:130px 1fr;border-bottom:1px solid #e7e4de}
+.ini-meta div:nth-child(odd){border-inline-end:1px solid #e7e4de}
+.ini-meta dt{padding:6px 10px;background:#f5f3ef;font-size:12px;color:#55524b}
+.ini-meta dd{margin:0;padding:6px 10px;font-size:13px}
+.ini-s{margin-top:20px;break-inside:avoid-page}
+.ini-s h2{display:flex;align-items:center;gap:10px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid #d6d3cc;font-size:16px;font-weight:700;color:#1c1b18;break-after:avoid}
+.ini-s h2 span{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;background:#1c1b18;color:#fff;font-size:12px}
+.ini-s h3{margin:10px 0 4px;font-size:14px;font-weight:600;color:#33312c}
+.ini-s p{margin:0 0 6px}
+.ini-s ul,.ini-s ol{margin:0 0 6px;padding-inline-start:22px}
+.ini-s table{width:100%;border-collapse:collapse;font-size:12.5px}
+.ini-s th,.ini-s td{border:1px solid #d6d3cc;padding:6px 8px;text-align:start;vertical-align:top}
+.ini-s th{background:#f5f3ef;font-weight:600;color:#33312c}
+.ini-s td.n,.ini-s th.n{width:28px;text-align:center;color:#6f6b63}
+.ini-s tr{break-inside:avoid}
+.ini-s tfoot td{font-weight:700;background:#faf9f7}
+.ini-signs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:8px}
+.ini-signs div{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid #d6d3cc;border-radius:6px}
+.ini-signs b{font-size:13px}.ini-signs span{font-size:13px;min-height:20px}
+.ini-signs i{font-style:normal;font-size:12px;color:#6f6b63;border-top:1px dotted #b9b5ad;padding-top:14px;margin-top:6px}
+#iniPrint{display:none}
+@media (max-width:1100px){
+  .ini-tabs{display:inline-flex}
+  .ini-work{grid-template-columns:minmax(0,1fr)}
+  .ini-editor[data-pane="form"] .ini-pv,.ini-editor[data-pane="doc"] .ini-form{display:none}
+  .ini-pv{position:static;max-height:none;padding:8px}
+}
+@media (max-width:640px){
+  .ini-grid{grid-template-columns:minmax(0,1fr)}
+  .ini-th{display:none}
+  .ini-tr{grid-template-columns:minmax(0,1fr) 32px;padding:8px;border:1px solid var(--line-soft);border-radius:10px}
+  .ini-tr label{grid-column:1}.ini-tr .ini-rm{grid-column:2;grid-row:1}
+  .ini-cl{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
+  .ini-doc{padding:24px 18px}
+  .ini-meta{grid-template-columns:1fr}.ini-meta div:nth-child(odd){border-inline-end:0}.ini-meta div{grid-template-columns:110px 1fr}
+  .ini-meter{width:100%}
+}
+@page ini{size:A4;margin:16mm 14mm}
+@media print{
+  body.printing-ini > *:not(#iniPrint){display:none!important}
+  html:has(body.printing-ini),body.printing-ini{background:#fff!important}
+  body.printing-ini #iniPrint{display:block}
+  #iniPrint .ini-doc{page:ini;box-shadow:none;padding:0;max-width:none;border-radius:0}
+}

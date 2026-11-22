@@ -6,6 +6,7 @@
     "governance/library": "اللوائح والسياسات",
     "hr/letters": "الخطابات",
     "hr/requests": "الطلبات",
+    "projects/initiatives": "منشئ وثائق المبادرات",
     "admin": "التمكين التقني",
     "admin/requests": "إدارة الطلبات الإدارية",
     "admin/permissions": "صلاحيات المستخدمين",
