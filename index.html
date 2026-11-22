@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261122e"></script>
-<link rel="stylesheet" href="css/library.css?v=20261122e">
-<link rel="stylesheet" href="css/app.css?v=20261122e">
+<script src="js/boot.js?v=20261122f"></script>
+<link rel="stylesheet" href="css/library.css?v=20261122f">
+<link rel="stylesheet" href="css/app.css?v=20261122f">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -593,33 +593,89 @@
     </section>
     <section class="view" data-view="projects/initiatives" hidden>
       <div id="iniHome">
+      <div id="iniForms">
         <header class="page-h">
-          <div><p class="crumb">إدارة المشاريع</p><h1>منشئ وثائق المبادرات</h1><p class="rq-subh">اكتب وثيقة المبادرة قسماً قسماً، وشاهدها كما ستُطبع.</p></div>
-          <div class="actions"><button class="btn primary" type="button" id="iniNew">وثيقة جديدة</button></div>
+          <div><p class="crumb">إدارة المشاريع</p><h1>منشئ وثائق المبادرات</h1><p class="rq-subh">صياغة وثيقة مبادرة احترافية بالذكاء الاصطناعي، مبنيّة على بيانات الجمعية.</p></div>
+          <div class="actions"><button class="btn small" type="button" id="igSetBtn" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg> إعدادات الأداة</button></div>
         </header>
-        <div class="rq-filters">
-          <div class="rq-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="input" id="iniQ" type="search" placeholder="ابحث باسم المبادرة أو الرمز أو المدير أو الجهة" aria-label="بحث في الوثائق"></div>
-          <select class="select" id="iniFStatus" aria-label="الحالة"><option value="">كل الحالات</option><option value="draft">مسودة</option><option value="review">قيد المراجعة</option><option value="approved">معتمدة</option><option value="closed">مغلقة</option></select>
-          <span class="rq-fn" id="iniCount"></span>
+        <section class="ig-card ig-set" id="igSet" hidden aria-label="إعدادات الأداة">
+          <h2>إعدادات الأداة</h2>
+          <p class="muted-text">البرومت اللي تُكتب به الوثائق. الخانات بين قوسين مزدوجين مثل {{programIdea}} تتعبّأ من النموذج.</p>
+          <label class="ig-f"><span>برومت إنشاء الوثيقة</span><textarea class="input" id="igSetCreate" rows="12" placeholder=""></textarea></label>
+          <label class="ig-f"><span>برومت تحليل الوثيقة</span><textarea class="input" id="igSetAnalyze" rows="10" placeholder=""></textarea></label>
+          <div class="hr-actions"><button class="btn primary" type="button" id="igSetSave">حفظ</button><button class="btn" type="button" id="igSetReset">استرجاع البرومت الأصلي</button><button class="btn ghost" type="button" id="igSetClose">إغلاق</button></div>
+        </section>
+        <div class="ig-card">
+          <div class="ig-tabs" role="tablist" aria-label="منشئ الوثائق">
+            <button type="button" role="tab" data-igtab="create" aria-selected="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>إنشاء جديد</button>
+            <button type="button" role="tab" data-igtab="analyze" aria-selected="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>تحليل نص وثيقة</button>
+            <button type="button" role="tab" data-igtab="log" aria-selected="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="15" cy="14" r="3"/><path d="M15 12.6V14l1 .8"/></svg>سجلّي</button>
+          </div>
+          <form id="igCreate" class="ig-form" novalidate>
+            <fieldset class="ig-group"><legend>الجمعية</legend>
+              <label class="ig-f"><span>اسم الجمعية</span><input class="input" id="inAssoc" list="inAssocList" placeholder="اختر أو اكتب اسم الجمعية" autocomplete="off" required><datalist id="inAssocList"></datalist></label>
+              <div class="ig-row"><label class="ig-f"><span>مجال العمل <i>(اختياري)</i></span><input class="input" id="inField" type="text" placeholder="مثال: تنمية الشباب"></label><label class="ig-f"><span>المنطقة / المدينة <i>(اختياري)</i></span><input class="input" id="inCity" type="text" placeholder="مثال: جدة"></label></div>
+              <label class="ig-f"><span>رؤية الجمعية <i>(اختياري)</i></span><textarea class="input" id="inVision" rows="2" placeholder=""></textarea></label>
+              <label class="ig-f"><span>رسالة الجمعية <i>(اختياري)</i></span><textarea class="input" id="inMission" rows="2" placeholder=""></textarea></label>
+              <label class="ig-f"><span>الأهداف الاستراتيجية <i>(اختياري)</i></span><textarea class="input" id="inGoals" rows="3" placeholder="هدف في كل سطر"></textarea></label>
+              <p class="ig-hint">تتعبّأ تلقائياً من آخر وثيقة لنفس الجمعية.</p>
+            </fieldset>
+            <label class="ig-f"><span>اسم المبادرة / البرنامج <i>(اختياري)</i></span><input class="input" id="inName" type="text" placeholder="مثال: برنامج عُدّة"></label>
+            <p class="ig-hint">اتركه فارغاً ليبتكر الذكاء الاصطناعي اسماً إبداعياً بنفسه</p>
+            <label class="ig-f"><span>فكرة المبادرة / البرنامج</span><textarea class="input" id="inIdea" rows="4" placeholder="وصف تفصيلي لفكرة البرنامج: ماذا يقدّم، لمن، وكيف…" required></textarea></label>
+            <div class="ig-row three"><label class="ig-f"><span>عدد المستفيدين <i>(اختياري)</i></span><input class="input" id="inBenef" type="text" placeholder="مثال: 500"></label><label class="ig-f"><span>مدة البرنامج <i>(اختياري)</i></span><input class="input" id="inDur" type="text" placeholder="مثال: 6 أشهر"></label><label class="ig-f"><span>الفئة المستهدفة <i>(اختياري)</i></span><input class="input" id="inTarget" type="text" placeholder="مثال: الشباب 18–30"></label></div>
+            <div class="ig-row"><label class="ig-f"><span>تاريخ البداية <i>(اختياري)</i></span><input class="input" id="inStart" type="date" placeholder=""></label><label class="ig-f"><span>تاريخ النهاية <i>(اختياري)</i></span><input class="input" id="inEnd" type="date" placeholder=""></label></div>
+            <details class="ig-acc"><summary>تفضيلات المحتوى</summary><div class="ig-acc-b">
+              <div class="ig-row">
+                <label class="ig-f"><span>طول الوثيقة</span><select class="select" id="inLen"><option value="short">مختصرة</option><option value="medium" selected>متوسطة</option><option value="long">مفصّلة</option></select></label>
+                <label class="ig-f"><span>أسلوب الكتابة</span><select class="select" id="inTone"><option value="balanced" selected>متوازن</option><option value="donor">مقنع للداعمين</option><option value="formal">رسمي إداري</option></select></label>
+              </div>
+              <p class="ig-sub">محاور لا تبغاها في الوثيقة</p><div class="ig-checks" id="inAxes"></div>
+            </div></details>
+            <details class="ig-acc" open><summary>الميزانية</summary><div class="ig-acc-b">
+              <label class="s-check ig-check"><input type="checkbox" id="inBudgetOn" checked> <span><b>تضمين محور الميزانية التقديرية</b><small>إذا لم يُفعّل، تُحذف الميزانية بالكامل</small></span></label>
+              <div class="ig-inner" id="inBudgetBox">
+                <label class="ig-f"><span>إجمالي الميزانية <i>(اختياري)</i></span><input class="input" id="inBudget" type="text" placeholder="مثال: 400,000"></label>
+                <p class="ig-hint">بالريال السعودي</p>
+                <label class="s-check"><input type="checkbox" id="inReserve"> <span>إضافة بند «مبلغ احتياطي»</span></label>
+              </div>
+            </div></details>
+            <details class="ig-acc"><summary>توجيهات خاصة</summary><div class="ig-acc-b">
+              <label class="ig-f"><span>توجيهات إضافية للكاتب <i>(اختياري)</i></span><textarea class="input" id="inDirect" rows="3" placeholder="مثال: ركّز على الشراكة مع الجامعات، واجعل الورش حضورية"></textarea></label>
+            </div></details>
+            <button class="btn primary ig-go" type="submit"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg> إنشاء الوثيقة</button>
+          </form>
+          <form id="igAnalyze" class="ig-form" novalidate hidden>
+            <label class="ig-f"><span>نصّ الوثيقة</span><textarea class="input" id="anText" rows="12" placeholder="الصق هنا نصّ الوثيقة الحالية…"></textarea></label>
+            <p class="ig-hint">الصق النص المراد تحليله ومقارنته بالهيكل المعياري (من 200 إلى 30,000 حرف) — <span id="anCount">0</span> حرف الآن.</p>
+            <button class="btn primary ig-go" type="submit" id="anGo" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> تحليل النص</button>
+          </form>
+          <div id="igLog" hidden>
+            <div class="ig-log" id="logList"></div>
+            <p class="ig-empty" id="logEmpty" hidden>لم تحفظ أي وثيقة بعد. الوثائق تنحفظ هنا تلقائياً بعد إنشائها.</p>
+          </div>
         </div>
-        <div class="ini-cards" id="iniCards"></div>
-        <p class="muted-text rq-empty" id="iniEmpty" hidden></p>
       </div>
-      <p class="muted-text" id="iniSignin">سجّل الدخول لعرض وثائق المبادرات</p>
-      <div class="ini-editor" id="iniEditor" data-pane="form" hidden>
-        <header class="ini-bar">
-          <button class="btn small ghost" type="button" id="iniBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>الوثائق</button>
-          <div class="ini-bt"><h1 id="iniName">مبادرة جديدة</h1><span id="iniSaved" class="muted-text"></span></div>
-          <div class="ini-meter" title="اكتمال الوثيقة"><span class="pbar good"><i id="iniBar"></i></span><b id="iniPct">0%</b></div>
-          <div class="actions"><button class="btn small" type="button" id="iniWord">تنزيل Word</button><button class="btn small" type="button" id="iniPrintBtn">طباعة / PDF</button><button class="btn small primary" type="button" id="iniSave">حفظ</button></div>
+      <div class="ig-result" id="iniResult" hidden>
+        <header class="ig-rbar">
+          <button class="btn small ghost" type="button" id="resBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>رجوع</button>
+          <div class="ig-rt"><h1 id="resName"></h1><span class="muted-text" id="resSaved"></span><span class="ig-run" id="resRun" hidden></span></div>
+          <div class="actions">
+            <button class="btn small danger" type="button" id="resStop" hidden>إيقاف</button>
+            <button class="btn small" type="button" id="resAgain">إعادة الكتابة</button>
+            <button class="btn small" type="button" id="resEdit" aria-pressed="false">تعديل النص</button>
+            <button class="btn small" type="button" id="resWord">تنزيل Word</button>
+            <button class="btn small" type="button" id="resPrint">طباعة / PDF</button>
+            <button class="btn small primary" type="button" id="resSave">حفظ في سجلّي</button>
+          </div>
         </header>
-        <p class="muted-text" id="iniRO" hidden>هذه الوثيقة لغيرك، تقدر تطّلع عليها وتطبعها وتنسخها، والتعديل لصاحبها.</p>
-        <div class="ini-tabs seg-tabs" id="iniTabs" role="tablist"><button type="button" role="tab" data-initab="form" aria-selected="true">الأقسام</button><button type="button" role="tab" data-initab="doc" aria-selected="false">المعاينة</button></div>
-        <div class="ini-work">
-          <div class="ini-form" id="iniForm"></div>
-          <div class="ini-pv"><article class="ini-doc" id="iniDoc" aria-label="معاينة الوثيقة"></article></div>
+        <div class="ig-rwork">
+          <div class="ig-editor" id="resEditor" hidden><textarea class="input" id="resText" spellcheck="false" aria-label="نص الوثيقة (Markdown)"></textarea><p class="ig-hint"># عنوان رئيسي، ## محور، **غامق**، والجداول بـ | عمود | عمود |</p></div>
+          <div class="ig-pv"><article class="ig-doc" id="resDoc" aria-live="polite"></article></div>
         </div>
       </div>
+      </div>
+      <p class="muted-text" id="iniSignin">سجّل الدخول لاستخدام منشئ الوثائق</p>
     </section>
     <section class="view" data-view="admin/permissions" hidden>
       <header class="page-h"><div><p class="crumb">التمكين التقني</p><h1>صلاحيات المستخدمين</h1></div></header>
@@ -1019,27 +1075,28 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.2/dist/docx-preview.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 <!-- Firebase (Firestore + Google sign-in). If these fail to load (e.g. inside a Claude artifact), the page falls back to Claude's store or the browser. -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261122e"></script>
-<script src="js/library.js?v=20261122e"></script>
+<script src="js/ui.js?v=20261122f"></script>
+<script src="js/library.js?v=20261122f"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/task-core.js?v=20261122e"></script>
-<script src="js/smart-task.js?v=20261122e"></script>
-<script src="js/reminders.js?v=20261122e"></script>
-<script src="js/home.js?v=20261122e"></script>
-<script src="js/tasks.js?v=20261122e"></script>
-<script src="js/task-detail.js?v=20261122e"></script>
-<script src="js/slider.js?v=20261122e"></script>
-<script src="js/settings.js?v=20261122e"></script>
-<script src="js/fonts.js?v=20261122e"></script>
-<script src="js/hr.js?v=20261122e"></script>
-<script src="js/initiatives.js?v=20261122e"></script>
-<script src="js/requests.js?v=20261122e"></script>
-<script src="js/table-tools.js?v=20261122e"></script>
-<script src="js/login.js?v=20261122e"></script>
-<script src="js/shell.js?v=20261122e"></script>
+<script src="js/task-core.js?v=20261122f"></script>
+<script src="js/smart-task.js?v=20261122f"></script>
+<script src="js/reminders.js?v=20261122f"></script>
+<script src="js/home.js?v=20261122f"></script>
+<script src="js/tasks.js?v=20261122f"></script>
+<script src="js/task-detail.js?v=20261122f"></script>
+<script src="js/slider.js?v=20261122f"></script>
+<script src="js/settings.js?v=20261122f"></script>
+<script src="js/fonts.js?v=20261122f"></script>
+<script src="js/hr.js?v=20261122f"></script>
+<script src="js/initiatives.js?v=20261122f"></script>
+<script src="js/requests.js?v=20261122f"></script>
+<script src="js/table-tools.js?v=20261122f"></script>
+<script src="js/login.js?v=20261122f"></script>
+<script src="js/shell.js?v=20261122f"></script>
 </body>
 </html>
