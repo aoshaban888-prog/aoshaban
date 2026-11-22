@@ -1218,3 +1218,18 @@ body.rq-open{overflow:hidden}
 .topbar .acct-menu{bottom:auto;top:calc(100% + 8px);inset-inline:auto 0;width:240px}
 @media (max-width:640px){.acct-txt{display:none}.topbar .acct-btn{padding:0}.top-tools{gap:6px}.top-ic{width:36px;height:36px}}
 .pm-job{height:34px;width:180px;padding:0 10px;font-size:13px;line-height:normal}
+
+/* the notice when the initiatives page opens */
+.ig-note-back{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.4)}
+.ig-note{width:min(520px,100%);background:var(--surface);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.ig-note header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line-soft)}
+.ig-note h2{flex:1;margin:0;font-size:17px;font-weight:600}
+.ig-note-x{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:8px;background:none;color:var(--muted);cursor:pointer}
+.ig-note-x:hover{background:var(--line-soft);color:var(--ink)}.ig-note-x svg{width:18px;height:18px}
+.ig-note ul{list-style:none;margin:0;padding:18px 20px 6px;display:flex;flex-direction:column;gap:16px}
+.ig-note li{display:flex;align-items:flex-start;gap:12px}
+.ig-note li p{margin:4px 0 0;font-size:14px;line-height:1.85;color:var(--ink-2)}
+.ig-note-ic{width:36px;height:36px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--accent-soft);color:var(--accent)}
+.ig-note header .ig-note-ic{border-radius:10px}
+.ig-note-ic svg{width:18px;height:18px}
+.ig-note-ok{display:flex;justify-content:center;width:calc(100% - 40px);height:44px;margin:12px 20px 20px;font-size:15px}

@@ -343,6 +343,32 @@
     ];
     render();
   }
+  /* ---------- the notice shown when the page opens (once per browser session) ---------- */
+  function notice(){
+    try { if (sessionStorage.getItem("ig-notice")) return; } catch {}
+    if (document.querySelector(".ig-note")) return;
+    const team = (window.siteSettings && window.siteSettings.siteName) || "الفريق";
+    const I = d => `<span class="ig-note-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg></span>`;
+    const back = document.createElement("div"); back.className = "ig-note-back";
+    back.innerHTML = `<div class="ig-note" role="dialog" aria-modal="true" aria-labelledby="igNoteH">
+      <header>${I('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/>')}<h2 id="igNoteH">قبل أن تبدأ</h2><button type="button" class="ig-note-x" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+      <ul>
+        <li>${I('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.8.7 3 2.4 3 5.2"/>')}<p>استعمال هذه الأداة مقتصر على أعضاء فريق ${esc(team)} فقط.</p></li>
+        <li>${I('<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>')}<p>ما تنتجه الأداة مسودة أولى بمساعدة الذكاء الاصطناعي، ولا تغني عن مراجعة النص وتدقيقه والتأكد من صحة كل معلومة فيه قبل اعتماده أو إرساله.</p></li>
+        <li>${I('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m5.6 5.6 3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>')}<p>إن واجهت ما يحتاج تعديلاً أو تصحيحاً أو إضافة في الأداة، تواصل مع مدير النظام.</p></li>
+      </ul>
+      <button type="button" class="btn primary ig-note-ok">فهمت، متابعة</button>
+    </div>`;
+    const close = () => { try { sessionStorage.setItem("ig-notice", "1"); } catch {} back.remove(); document.removeEventListener("keydown", key, true); };
+    const key = e => { if (e.key === "Escape"){ e.stopPropagation(); close(); } };
+    back.querySelector(".ig-note-ok").addEventListener("click", close);
+    back.querySelector(".ig-note-x").addEventListener("click", close);
+    back.addEventListener("click", e => { if (e.target === back) close(); });
+    document.addEventListener("keydown", key, true);
+    document.body.append(back); back.querySelector(".ig-note-ok").focus();
+  }
+  window.addEventListener("app:view", e => { if (e.detail === "projects/initiatives") notice(); });
+  if (location.hash.replace(/^#\/?/, "") === "projects/initiatives") setTimeout(notice, 300);
   window.addEventListener("app:db", e => connect(e.detail));
   if (window.appDb) connect({ db: window.appDb, user: window.appUser });
   syncBudget(); render();
