@@ -36,6 +36,7 @@
   let tab = "inbox", current = null;
   const isAdmin = () => my.role === "admin";
   const fmt = iso => { if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return ""; return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(d); };
+  const fmtDay = iso => { if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return ""; return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", year: "numeric" }).format(d); };
   const stageOf = r => (r.stages || [])[r.stageIndex || 0];
   // the home page shows what waits for me and where my own requests are
   function toHome(){
@@ -192,7 +193,10 @@
   }
   document.querySelectorAll("[data-rqtab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.rqtab)));
   const rqPicked = new Set();
-  function inTab(){ return tab === "inbox" ? requests.filter(amApprover) : tab === "mine" ? requests.filter(r => r.submittedBy === me) : isAdmin() ? requests : []; }
+  // requests I acted on as an approver (for myself or on someone's behalf)
+  const didApprove = r => (r.history || []).some(x => x.by === me && (x.action === "approve" || x.action === "final"));
+  const listOf = t => t === "inbox" ? requests.filter(amApprover) : t === "mine" ? requests.filter(r => r.submittedBy === me) : t === "done" ? requests.filter(didApprove) : isAdmin() ? requests : [];
+  function inTab(){ return listOf(tab); }
   function fillFilters(){
     const fill = (id, pairs) => { const sel = $(id), keep = sel.value, first = sel.options[0].cloneNode(true); sel.innerHTML = ""; sel.append(first);
       pairs.forEach(([v, t]) => sel.append(new Option(t, v))); sel.value = [...sel.options].some(o => o.value === keep) ? keep : ""; };
@@ -216,7 +220,7 @@
   }
   function syncRqBulk(list){
     [...rqPicked].forEach(id => { if (!requests.some(r => r.id === id)) rqPicked.delete(id); });
-    $("rqBulk").hidden = !isAdmin();
+    $("rqBulk").hidden = !isAdmin() || !rqPicked.size; $("rqBulkN").textContent = `${rqPicked.size} محدد`;
     const vis = list.filter(r => rqPicked.has(r.id)).length;
     $("rqSelAll").checked = list.length > 0 && vis === list.length; $("rqSelAll").indeterminate = vis > 0 && vis < list.length;
     $("rqBulkDel").disabled = rqPicked.size === 0; $("rqBulkDel").textContent = rqPicked.size ? `حذف المحدد (${rqPicked.size})` : "حذف المحدد";
@@ -229,7 +233,7 @@
     try {
       for (let i = 0; i < ids.length; i += 400){ const b = db.batch(); ids.slice(i, i + 400).forEach(id => b.delete(db.collection("requests").doc(id))); await b.commit(); }
       ids.forEach(id => rqPicked.delete(id));
-      if (current && ids.includes(current.id)){ current = null; $("rqDetail").hidden = true; }
+      if (current && ids.includes(current.id)) closeDetail();
       UI.toast(ids.length === 1 ? "حُذف الطلب" : `حُذف ${ids.length} طلبات`);
     } catch (e){ console.error(e); UI.toast("تعذّر الحذف", "err"); }
   }
@@ -240,7 +244,7 @@
   $("rqBulkDel").addEventListener("click", () => deleteRequests([...rqPicked]));
   function badge(){
     const n = requests.filter(amApprover).length;
-    $("rqInboxN").textContent = n ? String(n) : ""; $("rqBadge").textContent = n ? String(n) : ""; $("rqBadge").hidden = !n;
+    $("rqInboxN").textContent = String(n); $("rqMineN").textContent = String(listOf("mine").length); $("rqDoneN").textContent = String(listOf("done").length); $("rqAllN").textContent = String(requests.length); $("rqBadge").textContent = n ? String(n) : ""; $("rqBadge").hidden = !n;
   }
   function renderList(){
     badge();
@@ -249,36 +253,66 @@
     fillFilters();
     const list = visible(); ul.innerHTML = "";
     const all = inTab().length;
-    $("rqCount").textContent = list.length === all ? `${all} طلب` : `${list.length} من ${all}`;
+    $("rqCount").textContent = `${list.length} من ${all}`;
+    const SUB = { inbox: "بانتظار اعتمادك", mine: "من طلباتك", done: "اعتمدتها", all: "من كل الطلبات" };
+    $("rqSubH").textContent = `${all} ${SUB[tab] || ""}`;
+    $("rqFReset").hidden = !["rqQ", "rqFStatus", "rqFTitle", "rqFBy", "rqFDate"].some(id => $(id).value);
     $("rqEmpty").hidden = list.length > 0;
-    $("rqEmpty").textContent = tab === "inbox" ? "لا توجد طلبات بانتظار اعتمادك" : tab === "mine" ? "لم ترفع أي طلب بعد" : "لا توجد طلبات";
+    $("rqEmpty").textContent = all && !list.length ? "لا توجد طلبات تطابق البحث" : tab === "inbox" ? "لا توجد طلبات بانتظار اعتمادك" : tab === "mine" ? "لم ترفع أي طلب بعد" : tab === "done" ? "لم تعتمد أي طلب بعد" : "لا توجد طلبات";
+    const tbl = document.querySelector(".rq-tbl"); tbl.hidden = !list.length; tbl.classList.toggle("picking", isAdmin());
     list.forEach(r => {
-      const li = document.createElement("li"); li.className = "rq-item" + (current && current.id === r.id ? " on" : "");
-      li.tabIndex = 0;
-      const st = r.status === "pending" && stageOf(r) ? `عند: ${stageOf(r).name}` : STATUS[r.status] || r.status;
-      if (isLate(r)) li.classList.add("late");
-      li.innerHTML = `<div class="rq-top"><span class="rq-t"></span><span class="rq-chip ${r.status}"></span></div><div class="rq-sub"><span></span><span class="rq-when"></span></div>`;
-      li.querySelector(".rq-t").textContent = r.title + (r.employee ? ` · ${r.employee}` : "");
-      li.querySelector(".rq-chip").textContent = st;
-      li.querySelector(".rq-sub span").textContent = `${r.submitterName || r.submittedBy}${r.assoc ? " · " + r.assoc : ""}${r.ref ? " · " + r.ref : ""}`;
-      li.querySelector(".rq-when").textContent = r.status === "pending" ? ageText(since(r)) : fmt(r.updatedAt);
+      const tr = document.createElement("tr"); tr.className = "rq-row" + (current && current.id === r.id ? " on" : "") + (isLate(r) ? " late" : "");
+      tr.tabIndex = 0; tr.dataset.id = r.id;
+      const stage = stageOf(r), n = (r.stages || []).length;
+      const atName = r.status === "pending" && stage ? stage.name : r.status === "returned" ? "مقدّم الطلب" : "";
+      const atWho = r.status === "pending" && stage ? (stage.approvers || []).map(a => a.name || a.email).join("، ") : r.status === "returned" ? (r.submitterName || r.submittedBy) : "";
+      tr.innerHTML = `<td class="rq-c-pick"></td><td class="rq-c-title"><b></b><small></small></td><td class="rq-c-st"><span class="rq-chip ${r.status}"></span></td><td class="rq-c-assoc"></td>
+        <td class="rq-c-by"><span class="rq-by"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span></span></span></td>
+        <td class="rq-c-at"><span class="rq-at"></span><button type="button" class="rq-chain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v3a4 4 0 0 0 4 4h5.5"/></svg>سلسلة الاعتماد</button></td>
+        <td class="rq-c-when"></td><td class="rq-c-act"></td>`;
+      tr.querySelector(".rq-c-title b").textContent = r.title || "طلب";
+      tr.querySelector(".rq-c-title small").textContent = [r.employee, r.ref].filter(Boolean).join(" · ");
+      tr.querySelector(".rq-chip").textContent = STATUS[r.status] || r.status;
+      tr.querySelector(".rq-c-assoc").textContent = r.assoc || "—";
+      tr.querySelector(".rq-by span").textContent = r.submittedBy === me ? "أنت" : (r.submitterName || r.submittedBy);
+      const at = tr.querySelector(".rq-at");
+      if (atName){ at.innerHTML = "<b></b><small></small>"; at.querySelector("b").textContent = atName + (r.status === "pending" && n > 1 ? ` (${(r.stageIndex || 0) + 1} من ${n})` : ""); at.querySelector("small").textContent = atWho; }
+      else at.textContent = "—";
+      tr.querySelector(".rq-chain").addEventListener("click", e => { e.stopPropagation(); show(r.id, false, "steps"); });
+      const when = tr.querySelector(".rq-c-when");
+      when.textContent = r.status === "pending" ? ageText(since(r)) : fmtDay(r.updatedAt || r.submittedAt);
+      when.title = fmt(r.updatedAt || r.submittedAt);
+      const acts = tr.querySelector(".rq-c-act");
+      const btn = (label, cls, fn, icon) => { const b = document.createElement("button"); b.type = "button"; b.className = "rq-act " + cls; b.title = label; b.setAttribute("aria-label", label); b.innerHTML = icon; b.addEventListener("click", e => { e.stopPropagation(); fn(); }); acts.append(b); };
+      if (amApprover(r)) btn((r.stageIndex || 0) === n - 1 ? "اعتماد نهائي وإصدار" : "اعتماد", "ok", () => act(r, "approve"), '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>');
+      btn("عرض التفاصيل", "", () => show(r.id), '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>');
       if (isAdmin()){
         const cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "rq-pick"; cb.setAttribute("aria-label", "تحديد الطلب"); cb.checked = rqPicked.has(r.id);
         cb.addEventListener("click", e => e.stopPropagation());
-        cb.addEventListener("change", () => { cb.checked ? rqPicked.add(r.id) : rqPicked.delete(r.id); li.classList.toggle("picked", cb.checked); syncRqBulk(list); });
-        li.querySelector(".rq-top").prepend(cb); li.classList.toggle("picked", cb.checked);
+        cb.addEventListener("change", () => { cb.checked ? rqPicked.add(r.id) : rqPicked.delete(r.id); tr.classList.toggle("picked", cb.checked); syncRqBulk(list); });
+        tr.querySelector(".rq-c-pick").append(cb); tr.classList.toggle("picked", cb.checked);
       }
-      li.addEventListener("click", () => show(r.id));
-      li.addEventListener("keydown", e => { if (e.key === "Enter") show(r.id); });
-      ul.append(li);
+      tr.addEventListener("click", () => show(r.id));
+      tr.addEventListener("keydown", e => { if (e.key === "Enter" && e.target === tr) show(r.id); });
+      ul.append(tr);
     });
     syncRqBulk(list);
-    if (current){ const fresh = requests.find(r => r.id === current.id); if (fresh) show(fresh.id, true); else { current = null; $("rqDetail").hidden = true; } }
+    if (current){ const fresh = requests.find(r => r.id === current.id); if (fresh) show(fresh.id, true); else closeDetail(); }
   }
-  function show(id, quiet){
+  // the details open in a side panel over the table
+  function closeDetail(){
+    current = null; $("rqDetail").hidden = true; $("rqScrim").hidden = true; document.body.classList.remove("rq-open");
+    document.querySelectorAll(".rq-row.on").forEach(tr => tr.classList.remove("on"));
+  }
+  $("rqClose").addEventListener("click", closeDetail);
+  $("rqScrim").addEventListener("click", closeDetail);
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && current && !document.querySelector(".ui-dialog:not([hidden])")) closeDetail(); });
+  window.addEventListener("hashchange", () => { if (current) closeDetail(); });
+  function show(id, quiet, focus){
     const r = requests.find(x => x.id === id); if (!r) return;
-    current = r; $("rqDetail").hidden = false;
-    if (!quiet) document.querySelectorAll(".rq-item").forEach(li => li.classList.remove("on"));
+    current = r; $("rqDetail").hidden = false; $("rqScrim").hidden = false; document.body.classList.add("rq-open");
+    document.querySelectorAll(".rq-row").forEach(tr => tr.classList.toggle("on", tr.dataset.id === id));
+    if (!quiet){ $("rqDetail").scrollTop = 0; if (focus === "steps") setTimeout(() => $("rqSteps").scrollIntoView({ block: "start", behavior: "smooth" }), 60); else $("rqClose").focus({ preventScroll: true }); }
     $("rqTitle").textContent = r.title;
     const chip = $("rqStatus"); chip.className = "rq-chip " + r.status; chip.textContent = STATUS[r.status] || r.status;
     $("rqMeta").innerHTML = "";

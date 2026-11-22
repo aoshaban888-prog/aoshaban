@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261122b"></script>
-<link rel="stylesheet" href="css/library.css?v=20261122b">
-<link rel="stylesheet" href="css/app.css?v=20261122b">
+<script src="js/boot.js?v=20261122c"></script>
+<link rel="stylesheet" href="css/library.css?v=20261122c">
+<link rel="stylesheet" href="css/app.css?v=20261122c">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -534,13 +534,15 @@
     </section>
     <section class="view" data-view="hr/requests" hidden>
       <header class="page-h">
-        <div><p class="crumb">الموارد البشرية</p><h1>الطلبات</h1></div>
-        <div class="actions"><button class="btn small" type="button" id="rqDelegBtn" hidden>التفويض</button><div class="seg-tabs" role="tablist" aria-label="الطلبات">
-          <button type="button" role="tab" data-rqtab="inbox" aria-selected="true">بانتظار اعتمادي <span class="rq-count" id="rqInboxN"></span></button>
-          <button type="button" role="tab" data-rqtab="mine" aria-selected="false">طلباتي</button>
-          <button type="button" role="tab" data-rqtab="all" aria-selected="false" id="rqAllTab" hidden>كل الطلبات</button>
-        </div></div>
+        <div><p class="crumb">الموارد البشرية</p><h1>الطلبات</h1><p class="rq-subh" id="rqSubH"></p></div>
+        <div class="actions"><button class="btn small" type="button" id="rqDelegBtn" hidden>التفويض</button></div>
       </header>
+      <div class="rq-tabs" role="tablist" aria-label="الطلبات">
+        <button type="button" role="tab" data-rqtab="inbox" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>بانتظار اعتمادي <span class="rq-count" id="rqInboxN"></span></button>
+        <button type="button" role="tab" data-rqtab="mine" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>طلباتي <span class="rq-count" id="rqMineN"></span></button>
+        <button type="button" role="tab" data-rqtab="done" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>اعتمدتها <span class="rq-count" id="rqDoneN"></span></button>
+        <button type="button" role="tab" data-rqtab="all" aria-selected="false" id="rqAllTab" hidden>كل الطلبات <span class="rq-count" id="rqAllN"></span></button>
+      </div>
       <section class="card rq-deleg" id="rqDeleg" hidden aria-labelledby="rqDelegH">
         <div class="card-h"><h2 id="rqDelegH">التفويض</h2></div>
         <p class="muted-text" id="rqDelegNow"></p>
@@ -554,23 +556,23 @@
       </section>
       <p class="muted-text" id="rqSignin">سجّل الدخول لعرض الطلبات</p>
       <div class="rq-layout" id="rqLayout" hidden>
-        <section class="card rq-list-card" aria-label="قائمة الطلبات">
-          <div class="rq-filters">
-            <input class="input" id="rqQ" type="search" placeholder="بحث: الخطاب، الموظف، الجمعية، الرقم" aria-label="بحث في الطلبات">
-            <div class="rq-frow">
-              <select class="select" id="rqFStatus" aria-label="الحالة"><option value="">كل الحالات</option><option value="pending">قيد الاعتماد</option><option value="approved">معتمد</option><option value="returned">أُعيد للتعديل</option><option value="rejected">مرفوض</option><option value="cancelled">مسحوب</option></select>
-              <select class="select" id="rqFTitle" aria-label="نوع الخطاب"><option value="">كل الخطابات</option></select>
-            </div>
-            <div class="rq-frow">
-              <select class="select" id="rqFBy" aria-label="مقدّم الطلب"><option value="">كل المقدّمين</option></select>
-              <select class="select" id="rqFDate" aria-label="التاريخ"><option value="">كل التواريخ</option><option value="today">اليوم</option><option value="week">آخر 7 أيام</option><option value="month">هذا الشهر</option></select>
-            </div>
-            <div class="rq-fbar"><span class="rq-fn" id="rqCount"></span><button class="linkbtn" type="button" id="rqFReset">مسح الفلاتر</button></div>
-            <div class="rq-bulk" id="rqBulk" hidden><label class="s-check"><input type="checkbox" id="rqSelAll"> تحديد الكل</label><button class="btn small danger" type="button" id="rqBulkDel" disabled>حذف المحدد</button></div>
-          </div>
-          <ul class="rq-list" id="rqList"></ul><p class="muted-text" id="rqEmpty" hidden></p>
-        </section>
-        <section class="card rq-detail" id="rqDetail" hidden aria-label="تفاصيل الطلب">
+        <div class="rq-filters">
+          <div class="rq-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="input" id="rqQ" type="search" placeholder="ابحث بالعنوان أو اسم الموظف أو الجمعية أو مقدّم الطلب أو الرقم" aria-label="بحث في الطلبات"></div>
+          <select class="select" id="rqFStatus" aria-label="الحالة"><option value="">كل الحالات</option><option value="pending">قيد الاعتماد</option><option value="approved">معتمد</option><option value="returned">أُعيد للتعديل</option><option value="rejected">مرفوض</option><option value="cancelled">مسحوب</option></select>
+          <select class="select" id="rqFTitle" aria-label="نوع الخطاب"><option value="">كل الخطابات</option></select>
+          <select class="select" id="rqFBy" aria-label="مقدّم الطلب"><option value="">كل الأشخاص</option></select>
+          <select class="select" id="rqFDate" aria-label="التاريخ"><option value="">كل التواريخ</option><option value="today">اليوم</option><option value="week">آخر 7 أيام</option><option value="month">هذا الشهر</option></select>
+          <span class="rq-fn" id="rqCount"></span><button class="linkbtn" type="button" id="rqFReset" hidden>مسح الفلاتر</button>
+        </div>
+        <div class="rq-bulk" id="rqBulk" hidden><span class="rq-bulk-n" id="rqBulkN"></span><button class="btn small danger" type="button" id="rqBulkDel" disabled>حذف المحدد</button></div>
+        <table class="rq-tbl">
+          <thead><tr><th class="rq-c-pick" scope="col"><input type="checkbox" class="rq-pick" id="rqSelAll" aria-label="تحديد الكل"></th><th scope="col">العنوان</th><th scope="col">الحالة</th><th class="rq-c-assoc" scope="col">الجمعية</th><th class="rq-c-by" scope="col">رفعه</th><th class="rq-c-at" scope="col">عند الآن</th><th class="rq-c-when" scope="col">التاريخ</th><th class="rq-c-act" scope="col">إجراءات</th></tr></thead>
+          <tbody id="rqList"></tbody>
+        </table>
+        <p class="muted-text rq-empty" id="rqEmpty" hidden></p>
+        <div class="rq-scrim" id="rqScrim" hidden></div>
+        <section class="rq-detail" id="rqDetail" hidden aria-label="تفاصيل الطلب" role="dialog">
+          <button class="icon-btn rq-close" type="button" id="rqClose" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
           <div class="rq-head"><h2 id="rqTitle"></h2><span class="rq-chip" id="rqStatus"></span></div>
           <dl class="rq-meta" id="rqMeta"></dl>
           <h3 class="rq-h3">مسار الاعتماد</h3>
@@ -985,22 +987,22 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261122b"></script>
-<script src="js/library.js?v=20261122b"></script>
+<script src="js/ui.js?v=20261122c"></script>
+<script src="js/library.js?v=20261122c"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/task-core.js?v=20261122b"></script>
-<script src="js/smart-task.js?v=20261122b"></script>
-<script src="js/reminders.js?v=20261122b"></script>
-<script src="js/home.js?v=20261122b"></script>
-<script src="js/tasks.js?v=20261122b"></script>
-<script src="js/task-detail.js?v=20261122b"></script>
-<script src="js/slider.js?v=20261122b"></script>
-<script src="js/settings.js?v=20261122b"></script>
-<script src="js/fonts.js?v=20261122b"></script>
-<script src="js/hr.js?v=20261122b"></script>
-<script src="js/requests.js?v=20261122b"></script>
-<script src="js/table-tools.js?v=20261122b"></script>
-<script src="js/login.js?v=20261122b"></script>
-<script src="js/shell.js?v=20261122b"></script>
+<script src="js/task-core.js?v=20261122c"></script>
+<script src="js/smart-task.js?v=20261122c"></script>
+<script src="js/reminders.js?v=20261122c"></script>
+<script src="js/home.js?v=20261122c"></script>
+<script src="js/tasks.js?v=20261122c"></script>
+<script src="js/task-detail.js?v=20261122c"></script>
+<script src="js/slider.js?v=20261122c"></script>
+<script src="js/settings.js?v=20261122c"></script>
+<script src="js/fonts.js?v=20261122c"></script>
+<script src="js/hr.js?v=20261122c"></script>
+<script src="js/requests.js?v=20261122c"></script>
+<script src="js/table-tools.js?v=20261122c"></script>
+<script src="js/login.js?v=20261122c"></script>
+<script src="js/shell.js?v=20261122c"></script>
 </body>
 </html>
