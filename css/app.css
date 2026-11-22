@@ -886,8 +886,24 @@ html.gate-wait .gate-loader{display:grid;place-items:center;position:fixed;inset
 .tk-who{font-size:12px;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
 .tk-meta:has(.tk-due:empty):has(.tk-link[hidden]){display:flex}
 .tk-pdot{width:8px;height:8px;border-radius:50%;background:var(--pc);flex:none}
-.tk-rp{width:80px;flex:none}
-@media (max-width:640px){.tk-rp{display:none}}
+.tk-rp{width:112px;flex:none;display:flex;align-items:center;gap:8px;min-height:32px;padding:0 6px;border:1px solid transparent;border-radius:8px;background:none;font:inherit;cursor:pointer;color:var(--muted)}
+.tk-rp .pbar{flex:1}
+.tk-rp b{font-size:12px;font-weight:500;min-width:32px;text-align:start;font-variant-numeric:tabular-nums}
+.tk-rp:hover:not(:disabled),.tk-rp:focus-visible{border-color:var(--line);background:var(--surface)}
+.tk-rp:disabled,.tk-st:disabled{cursor:default}
+button.tk-st{border:1px solid transparent;border-radius:8px;background:none;font:inherit;font-size:13px;padding:4px 8px;cursor:pointer}
+button.tk-st:hover:not(:disabled),button.tk-st:focus-visible{border-color:var(--line);background:var(--surface)}
+@media (max-width:640px){.tk-rp{width:auto}.tk-rp .pbar{display:none}}
+.tk-steps{position:fixed;z-index:60;width:240px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.14)}
+.tk-steps-h{margin:4px 8px 6px;font-size:12px;color:var(--muted)}
+.tk-steps button{display:flex;align-items:center;gap:10px;width:100%;min-height:38px;padding:0 8px;border:0;border-radius:8px;background:none;font:inherit;font-size:14px;color:var(--ink);text-align:start;cursor:pointer}
+.tk-steps button:hover,.tk-steps button:focus-visible{background:var(--line-soft);outline:none}
+.tk-steps button[aria-checked="true"]{background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent)}
+.tk-steps button .pbar{width:44px;flex:none}
+.tk-steps button b{width:36px;font-size:12px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.tk-steps .tk-steps-auto{font-size:13px;color:var(--muted);border-top:1px solid var(--line-soft);border-radius:0 0 8px 8px;margin-top:4px}
+.tk-steps-more{display:flex;gap:4px;border-top:1px solid var(--line-soft);margin-top:4px;padding-top:4px}
+.tk-steps-more button{justify-content:center;font-size:13px;color:var(--muted)}
 .tk-blank{display:flex;flex-direction:column;align-items:center;gap:4px;padding:40px 16px;color:var(--muted);text-align:center}
 .tk-blank b{color:var(--ink);font-weight:500;font-size:16px}
 

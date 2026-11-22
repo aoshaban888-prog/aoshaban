@@ -292,18 +292,62 @@
       const p = pct(t), st = C.dueState(t);
       const li = document.createElement("li"); li.className = "tk-row" + (C.CLOSED.has(t.status) ? " done" : "");
       li.style.setProperty("--pc", C.PR[t.priority].color);
-      li.innerHTML = `<input type="checkbox" aria-label="مكتملة"><span class="tk-pdot" title="${C.PR[t.priority].label}"></span><button class="tk-title" type="button"></button><button class="tk-link" type="button" hidden></button><span class="tk-rp">${bar(p, C.progressTone(p, st))}</span><span class="tk-st"></span><span class="tk-due"></span>`;
+      li.innerHTML = `<input type="checkbox" aria-label="مكتملة"><span class="tk-pdot" title="${C.PR[t.priority].label}"></span><button class="tk-title" type="button"></button><button class="tk-link" type="button" hidden></button><button class="tk-rp" type="button" title="تغيير مرحلة التقدم">${bar(p, C.progressTone(p, st))}<b>${p}%</b></button><button class="tk-st" type="button" title="تغيير الحالة"></button><span class="tk-due"></span>`;
       const cb = li.querySelector("input"); cb.checked = t.status === "done"; cb.disabled = !db || !canEdit(t);
       cb.addEventListener("change", () => update(t.id, { status: cb.checked ? "done" : "todo" }).then(ok => { if (!ok) cb.checked = !cb.checked; }));
       li.querySelector(".tk-title").textContent = t.title;
       li.querySelector(".tk-title").addEventListener("click", () => TaskDetail.open(t.id));
       if (t.link){ const b = li.querySelector(".tk-link"); b.hidden = false; b.textContent = t.link.label; b.addEventListener("click", () => openLink(t.link)); }
       const s = li.querySelector(".tk-st"); s.textContent = C.ST[t.status].label; s.style.color = C.ST[t.status].color;
+      const rp = li.querySelector(".tk-rp"), editable = !!db && canEdit(t);
+      rp.disabled = s.disabled = !editable;
+      rp.addEventListener("click", () => stepMenu(rp, t)); s.addEventListener("click", () => stepMenu(s, t));
       li.querySelector(".tk-due").textContent = t.status === "done" ? "" : dueLabel(t.due) + (t.due && t.time && window.SmartTask ? " · " + SmartTask.timeLabel(t.time) : "");
       ul.append(li);
     });
     return sec;
   }
+
+  /* ---------- quick progress: one tap sets the stage, its percent and the matching status ---------- */
+  const STEPS = [
+    { p: 0, label: "لم تبدأ", status: "todo" },
+    { p: 25, label: "بدأت", status: "doing" },
+    { p: 50, label: "في المنتصف", status: "doing" },
+    { p: 75, label: "قاربت على الانتهاء", status: "doing" },
+    { p: 90, label: "قيد المراجعة", status: "review" },
+    { p: 100, label: "مكتملة", status: "done" },
+  ];
+  let menuEl = null;
+  function closeMenu(){ if (menuEl){ menuEl.remove(); menuEl = null; document.removeEventListener("pointerdown", outside, true); document.removeEventListener("keydown", escKey, true); } }
+  const outside = e => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); };
+  const escKey = e => { if (e.key === "Escape") closeMenu(); };
+  function stepMenu(anchorEl, t){
+    if (menuEl){ const same = menuEl.dataset.id === t.id; closeMenu(); if (same) return; }
+    const cur = pct(t), auto = t.progressMode !== "manual", hasParts = t.checklist.length || childrenOf(t.id).length;
+    const m = document.createElement("div"); m.className = "tk-steps"; m.dataset.id = t.id; m.setAttribute("role", "menu");
+    m.innerHTML = `<p class="tk-steps-h">مرحلة التقدم</p>` + STEPS.map(x => `<button type="button" role="menuitemradio" data-p="${x.p}" aria-checked="${t.status === x.status && (x.status === "done" || cur === x.p) ? "true" : "false"}"><span class="pbar ${x.p >= 100 ? "done" : x.p >= 50 ? "good" : "mid"}"><i style="width:${x.p}%"></i></span><b>${x.p}%</b><span>${x.label}</span></button>`).join("") +
+      (hasParts ? `<button type="button" class="tk-steps-auto" data-auto="1" aria-checked="${auto}">تلقائي من قائمة التحقق والمهام الفرعية</button>` : "") +
+      `<div class="tk-steps-more"><button type="button" data-st="deferred">مؤجلة</button><button type="button" data-st="cancelled">ملغاة</button></div>`;
+    m.addEventListener("click", async e => {
+      const b = e.target.closest("button"); if (!b) return; closeMenu();
+      if (b.dataset.auto){ await update(t.id, { progressMode: "auto" }); return; }
+      if (b.dataset.st){ await update(t.id, { status: b.dataset.st }); return; }
+      const x = STEPS.find(y => y.p === +b.dataset.p);
+      const patch = { status: x.status };
+      if (x.p > 0 && x.p < 100 && x.status !== "review") Object.assign(patch, { progressMode: "manual", progressManual: x.p });
+      else if (x.status === "review") Object.assign(patch, { progressMode: "manual", progressManual: 90 });
+      else Object.assign(patch, { progressMode: hasParts ? t.progressMode : "manual", progressManual: x.p });
+      await update(t.id, patch);
+    });
+    document.body.append(m); menuEl = m;
+    const r = anchorEl.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
+    let left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+    let top = r.bottom + 6; if (top + h > innerHeight - 8) top = r.top - h - 6 >= 8 ? r.top - h - 6 : Math.max(8, innerHeight - h - 8);
+    m.style.left = left + "px"; m.style.top = top + "px";
+    (m.querySelector('[aria-checked="true"]') || m.querySelector("button")).focus();
+    setTimeout(() => { document.addEventListener("pointerdown", outside, true); document.addEventListener("keydown", escKey, true); });
+  }
+  window.addEventListener("hashchange", closeMenu);
 
   /* ---------- wiring ---------- */
   function setView(v){
