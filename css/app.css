@@ -1254,3 +1254,18 @@ body.rq-open{overflow:hidden}
 @keyframes pgbreathe{50%{transform:scale(.94)}}
 @media (prefers-reduced-motion:reduce){.pg-a1,.pg-a2,.pg-logo{animation-duration:3s}}
 @media print{.pg-load{display:none!important}}
+
+/* uploading the document to analyse */
+.ig-drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:22px 16px;border:1.5px dashed var(--line);border-radius:12px;background:var(--bg);color:var(--muted);text-align:center;cursor:pointer;transition:border-color 140ms var(--ease),background-color 140ms var(--ease)}
+.ig-drop:hover,.ig-drop.over{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.ig-drop b{font-size:14px;font-weight:600;color:var(--ink)}
+.ig-drop small{font-size:12px}
+.ig-file{display:flex;align-items:center;gap:10px;margin-top:8px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:10px;background:var(--accent-soft);color:var(--accent)}
+.ig-file div{flex:1;min-width:0;display:flex;flex-direction:column}
+.ig-file b{font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ig-file small{font-size:12px;color:var(--ink-2)}
+.ig-file-x{width:30px;height:30px;flex:none;display:grid;place-items:center;border:0;border-radius:8px;background:none;color:var(--ink-2);cursor:pointer}
+.ig-file-x:hover{background:var(--surface);color:var(--danger)}
+.ig-or{display:flex;align-items:center;gap:10px;margin:0;font-size:13px;color:var(--muted)}
+.ig-or::before,.ig-or::after{content:"";flex:1;border-top:1px solid var(--line-soft)}
+.ig-drop[hidden]{display:none}

@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261122j"></script>
-<link rel="stylesheet" href="css/library.css?v=20261122j">
-<link rel="stylesheet" href="css/app.css?v=20261122j">
+<script src="js/boot.js?v=20261122k"></script>
+<link rel="stylesheet" href="css/library.css?v=20261122k">
+<link rel="stylesheet" href="css/app.css?v=20261122k">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -646,8 +646,15 @@
             <button class="btn primary ig-go" type="submit"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg> إنشاء الوثيقة</button>
           </form>
           <form id="igAnalyze" class="ig-form" novalidate hidden>
-            <label class="ig-f"><span>نصّ الوثيقة</span><textarea class="input" id="anText" rows="12" placeholder="الصق هنا نصّ الوثيقة الحالية…"></textarea></label>
-            <p class="ig-hint">الصق النص المراد تحليله ومقارنته بالهيكل المعياري (من 200 إلى 30,000 حرف) — <span id="anCount">0</span> حرف الآن.</p>
+            <div class="ig-f"><span>ملف الوثيقة <i>(PDF أو Word أو نص)</i></span>
+              <label class="ig-drop" id="anDrop"><input type="file" id="anPick" accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden>
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+                <b>اسحب الملف هنا أو اضغط للاختيار</b><small>PDF حتى 3 ميجابايت، أو Word (docx)، أو ملف نصي</small></label>
+              <div class="ig-file" id="anFile" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><div><b id="anFileName"></b><small id="anFileNote"></small></div><button type="button" class="ig-file-x" id="anFileX" aria-label="إزالة الملف"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+            </div>
+            <p class="ig-or"><span>أو</span></p>
+            <label class="ig-f"><span>نصّ الوثيقة</span><textarea class="input" id="anText" rows="10" placeholder="الصق هنا نصّ الوثيقة الحالية…"></textarea></label>
+            <p class="ig-hint">ارفع ملفاً أو الصق النص المراد تحليله ومقارنته بالهيكل المعياري (النص من 200 إلى 30,000 حرف) — <span id="anCount">0</span> حرف الآن.</p>
             <button class="btn primary ig-go" type="submit" id="anGo" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> تحليل النص</button>
           </form>
           <div id="igLog" hidden>
@@ -1080,23 +1087,23 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261122j"></script>
-<script src="js/library.js?v=20261122j"></script>
+<script src="js/ui.js?v=20261122k"></script>
+<script src="js/library.js?v=20261122k"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/task-core.js?v=20261122j"></script>
-<script src="js/smart-task.js?v=20261122j"></script>
-<script src="js/reminders.js?v=20261122j"></script>
-<script src="js/home.js?v=20261122j"></script>
-<script src="js/tasks.js?v=20261122j"></script>
-<script src="js/task-detail.js?v=20261122j"></script>
-<script src="js/slider.js?v=20261122j"></script>
-<script src="js/settings.js?v=20261122j"></script>
-<script src="js/fonts.js?v=20261122j"></script>
-<script src="js/hr.js?v=20261122j"></script>
-<script src="js/initiatives.js?v=20261122j"></script>
-<script src="js/requests.js?v=20261122j"></script>
-<script src="js/table-tools.js?v=20261122j"></script>
-<script src="js/login.js?v=20261122j"></script>
-<script src="js/shell.js?v=20261122j"></script>
+<script src="js/task-core.js?v=20261122k"></script>
+<script src="js/smart-task.js?v=20261122k"></script>
+<script src="js/reminders.js?v=20261122k"></script>
+<script src="js/home.js?v=20261122k"></script>
+<script src="js/tasks.js?v=20261122k"></script>
+<script src="js/task-detail.js?v=20261122k"></script>
+<script src="js/slider.js?v=20261122k"></script>
+<script src="js/settings.js?v=20261122k"></script>
+<script src="js/fonts.js?v=20261122k"></script>
+<script src="js/hr.js?v=20261122k"></script>
+<script src="js/initiatives.js?v=20261122k"></script>
+<script src="js/requests.js?v=20261122k"></script>
+<script src="js/table-tools.js?v=20261122k"></script>
+<script src="js/login.js?v=20261122k"></script>
+<script src="js/shell.js?v=20261122k"></script>
 </body>
 </html>

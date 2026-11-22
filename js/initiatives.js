@@ -150,7 +150,7 @@
     };
     return (tool.createPrompt || CREATE_PROMPT).replace(/\{\{(\w+)\}\}/g, (m, k) => fill[k] ?? "").replace(/\n{3,}/g, "\n\n");
   }
-  const analyzePrompt = () => (tool.analyzePrompt || ANALYZE_PROMPT).replace("{{documentText}}", v("anText"));
+  const analyzePrompt = () => (tool.analyzePrompt || ANALYZE_PROMPT).replace("{{documentText}}", pdf && !v("anText") ? "الوثيقة مرفقة أعلاه كملف PDF بعنوان «" + pdf.name + "»." : (pdf ? "الوثيقة مرفقة أعلاه كملف PDF، وهذه ملاحظات أو نص إضافي منها:\n" : "") + v("anText"));
   const formInput = () => Object.fromEntries(["inAssoc", "inVision", "inMission", "inGoals", "inField", "inCity", "inName", "inIdea", "inBenef", "inDur", "inTarget", "inStart", "inEnd", "inLen", "inTone", "inBudget", "inDirect"].map(id => [id, $(id).value]).concat([["inBudgetOn", $("inBudgetOn").checked], ["inReserve", $("inReserve").checked], ["axes", [...document.querySelectorAll("#inAxes input:checked")].map(c => c.value)]]));
   function fillForm(inp){
     if (!inp) return;
@@ -167,7 +167,44 @@
   });
   function syncBudget(){ $("inBudgetBox").hidden = !$("inBudgetOn").checked; }
   $("inBudgetOn").addEventListener("change", syncBudget);
-  $("anText").addEventListener("input", () => { const n = $("anText").value.length; $("anCount").textContent = n.toLocaleString("en"); $("anGo").disabled = n < 200 || n > 30000; });
+  function syncAn(){ const n = $("anText").value.length; $("anCount").textContent = n.toLocaleString("en"); $("anGo").disabled = pdf ? n > 30000 : n < 200 || n > 30000; }
+  $("anText").addEventListener("input", syncAn);
+
+  /* ---------- uploading the document: a PDF goes to Claude as the file itself; Word and text become text in the box ---------- */
+  const PDF_MAX = 3 * 1024 * 1024;
+  let pdf = null; // { name, data (base64) }
+  const xmlText = xml => { const d = new DOMParser().parseFromString(xml, "application/xml"); return [...d.getElementsByTagName("w:p")].map(p => [...p.getElementsByTagName("w:t")].map(t => t.textContent).join("")).join("\n"); };
+  async function readFile(f){
+    const name = f.name || "ملف", ext = (name.split(".").pop() || "").toLowerCase();
+    try {
+      if (ext === "pdf" || f.type === "application/pdf"){
+        if (f.size > PDF_MAX){ UI.alert("حجم ملف PDF أكبر من 3 ميجابايت. صغّر الملف أو انسخ نصه والصقه هنا."); return; }
+        const buf = new Uint8Array(await f.arrayBuffer()); let bin = ""; for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
+        pdf = { name, data: btoa(bin) };
+      } else if (ext === "docx"){
+        if (!window.JSZip){ UI.alert("تعذّر قراءة ملف Word الآن، جرّب مرة ثانية."); return; }
+        const zip = await JSZip.loadAsync(await f.arrayBuffer()), x = zip.file("word/document.xml");
+        if (!x){ UI.alert("الملف لا يبدو ملف Word صالحاً."); return; }
+        $("anText").value = xmlText(await x.async("string")).replace(/\n{3,}/g, "\n\n").trim(); pdf = null;
+      } else if (["txt", "md", "markdown"].includes(ext) || f.type.startsWith("text/")){
+        $("anText").value = (await f.text()).trim(); pdf = null;
+      } else { UI.alert("الصيغ المدعومة: PDF أو Word (docx) أو ملف نصي."); return; }
+      showFile(name, ext === "pdf" || f.type === "application/pdf");
+    } catch (e){ console.error(e); UI.alert("تعذّر قراءة الملف."); }
+    syncAn();
+  }
+  function showFile(name, isPdf){
+    $("anFile").hidden = false; $("anDrop").hidden = true; $("anFileName").textContent = name;
+    $("anFileNote").textContent = isPdf ? "يُرسل الملف كما هو للتحليل. تقدر تضيف ملاحظات في الخانة تحت (اختياري)." : "استُخرج نص الملف في الخانة تحت، راجعه قبل التحليل.";
+    $("anText").placeholder = isPdf ? "ملاحظات أو تعليمات إضافية عن الوثيقة (اختياري)…" : "الصق هنا نصّ الوثيقة الحالية…";
+  }
+  function clearFile(){ pdf = null; $("anFile").hidden = true; $("anDrop").hidden = false; $("anPick").value = ""; $("anText").placeholder = "الصق هنا نصّ الوثيقة الحالية…"; syncAn(); }
+  $("anPick").addEventListener("change", e => { const f = e.target.files[0]; if (f) readFile(f); });
+  $("anFileX").addEventListener("click", clearFile);
+  const dz = $("anDrop");
+  ["dragenter", "dragover"].forEach(t => dz.addEventListener(t, e => { e.preventDefault(); dz.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(t => dz.addEventListener(t, e => { e.preventDefault(); dz.classList.remove("over"); }));
+  dz.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
 
   /* ---------- generating ---------- */
   async function generate(mode){
@@ -176,14 +213,14 @@
     if (mode === "create" && !v("inIdea")){ UI.toast("اكتب فكرة المبادرة", "err"); $("inIdea").focus(); return; }
     if (mode === "create" && !v("inAssoc")){ UI.toast("اكتب اسم الجمعية", "err"); $("inAssoc").focus(); return; }
     const prompt = mode === "create" ? createPrompt() : analyzePrompt();
-    cur = { kind: mode === "create" ? "doc" : "analysis", markdown: "", input: mode === "create" ? formInput() : { anText: v("anText").slice(0, 30000) }, assocName: mode === "create" ? v("inAssoc") : "", title: "" };
+    cur = { kind: mode === "create" ? "doc" : "analysis", markdown: "", input: mode === "create" ? formInput() : { anText: v("anText").slice(0, 30000), pdfName: pdf ? pdf.name : "" }, assocName: mode === "create" ? v("inAssoc") : "", title: "" };
     curId = null; showResult(); setRun(true, "جارٍ الكتابة…");
     const ctl = new AbortController(); running = ctl; const t0 = Date.now();
     const tick = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); $("resRun").textContent = `جارٍ الكتابة… ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} · ${cur.markdown.length.toLocaleString("en")} حرف`; }, 1000);
     let err = "";
     try {
       const token = window.appUser && window.appUser.getIdToken ? await window.appUser.getIdToken() : "";
-      const r = await fetch("/api/initiative", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + token }, body: JSON.stringify({ mode, prompt }), signal: ctl.signal });
+      const r = await fetch("/api/initiative", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + token }, body: JSON.stringify({ mode, prompt, ...(mode === "analyze" && pdf ? { pdf: pdf.data } : {}) }), signal: ctl.signal });
       if (!r.ok){ let j = {}; try { j = await r.json(); } catch {} err = j.error || (r.status === 404 ? "not_configured" : "server"); }
       else {
         const rd = r.body.getReader(), dec = new TextDecoder(); let last = 0;
@@ -192,7 +229,7 @@
       }
     } catch (e){ err = ctl.signal.aborted ? "stopped" : "network"; }
     clearInterval(tick); running = null;
-    cur.title = cur.kind === "doc" ? (v("inName") || titleOf(cur.markdown) || "وثيقة مبادرة") : `تحليل: ${titleOf(v("anText")) || v("anText").slice(0, 60)}`;
+    cur.title = cur.kind === "doc" ? (v("inName") || titleOf(cur.markdown) || "وثيقة مبادرة") : `تحليل: ${pdf && !v("anText") ? pdf.name.replace(/\.pdf$/i, "") : titleOf(v("anText")) || v("anText").slice(0, 60)}`;
     paint(); setRun(false);
     $("resName").textContent = cur.title;
     if (err === "stopped") UI.toast("أوقفت الكتابة");
@@ -211,7 +248,7 @@
     $("iniForms").hidden = true; $("iniResult").hidden = false;
     $("resName").textContent = cur.title || (cur.kind === "doc" ? "وثيقة جديدة" : "تحليل الوثيقة");
     $("resEditor").hidden = true; $("resEdit").setAttribute("aria-pressed", "false");
-    $("resAgain").hidden = !cur.input || cur.legacy; $("resSaved").textContent = curId ? "محفوظة في سجلّي" : "";
+    $("resAgain").hidden = !cur.input || cur.legacy || (!!cur.input.pdfName && (!pdf || pdf.name !== cur.input.pdfName)); $("resSaved").textContent = curId ? "محفوظة في سجلّي" : "";
     $("resSave").hidden = !canEdit(cur);
     paint(); window.scrollTo(0, 0);
   }
@@ -227,7 +264,7 @@
   $("resAgain").addEventListener("click", async () => {
     if (!(await UI.confirm("إعادة الكتابة من جديد بنفس المدخلات؟ تُنشأ وثيقة جديدة وتبقى هذه في سجلّي.", { ok: "إعادة الكتابة" }))) return;
     const inp = cur.input, kind = cur.kind; closeResult();
-    if (kind === "doc"){ setTab("create"); fillForm(inp); generate("create"); } else { setTab("analyze"); $("anText").value = inp.anText || ""; generate("analyze"); }
+    if (kind === "doc"){ setTab("create"); fillForm(inp); generate("create"); } else { setTab("analyze"); $("anText").value = inp.anText || ""; syncAn(); generate("analyze"); }
   });
 
   /* ---------- saving (سجلّي) ---------- */

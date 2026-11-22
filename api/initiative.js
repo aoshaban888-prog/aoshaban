@@ -9,6 +9,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 const PROJECT = "aoshaban-87979";
 const JWKS = createRemoteJWKSet(new URL("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"));
 const MAX_PROMPT = 60000;
+const MAX_PDF = 4300000; // base64 characters, about 3 MB of PDF (Vercel takes up to 4.5 MB per request)
 
 async function caller(req){
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || ""); if (!m) return null;
@@ -30,6 +31,11 @@ export default async function handler(req, res){
   const prompt = String(body.prompt || "").trim();
   if (!prompt || !["create", "analyze"].includes(body.mode)) return res.status(400).json({ error: "bad_request" });
   if (prompt.length > MAX_PROMPT) return res.status(413).json({ error: "too_long" });
+  // the analysis may carry the document as a PDF file, placed before the instructions
+  const pdf = body.mode === "analyze" && typeof body.pdf === "string" && body.pdf ? body.pdf.replace(/\s+/g, "") : "";
+  if (pdf.length > MAX_PDF) return res.status(413).json({ error: "too_long" });
+  if (pdf && !/^[A-Za-z0-9+/]+=*$/.test(pdf)) return res.status(400).json({ error: "bad_request" });
+  const content = pdf ? [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: pdf } }, { type: "text", text: prompt }] : prompt;
 
   const client = new Anthropic();
   let started = false;
@@ -42,7 +48,7 @@ export default async function handler(req, res){
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
       output_config: { effort: "medium" },
-      messages: [{ role: "user", content: prompt }],
+      messages: [{ role: "user", content }],
     }, { signal: stop.signal });
     for await (const ev of stream){
       if (ev.type === "content_block_delta" && ev.delta.type === "text_delta"){
