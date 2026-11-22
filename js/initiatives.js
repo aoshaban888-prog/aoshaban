@@ -343,9 +343,8 @@
     ];
     render();
   }
-  /* ---------- the notice shown when the page opens (once per browser session) ---------- */
+  /* ---------- the notice shown every time the page opens ---------- */
   function notice(){
-    try { if (sessionStorage.getItem("ig-notice")) return; } catch {}
     if (document.querySelector(".ig-note")) return;
     const team = (window.siteSettings && window.siteSettings.siteName) || "الفريق";
     const I = d => `<span class="ig-note-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg></span>`;
@@ -359,7 +358,7 @@
       </ul>
       <button type="button" class="btn primary ig-note-ok">فهمت، متابعة</button>
     </div>`;
-    const close = () => { try { sessionStorage.setItem("ig-notice", "1"); } catch {} back.remove(); document.removeEventListener("keydown", key, true); };
+    const close = () => { back.remove(); document.removeEventListener("keydown", key, true); };
     const key = e => { if (e.key === "Escape"){ e.stopPropagation(); close(); } };
     back.querySelector(".ig-note-ok").addEventListener("click", close);
     back.querySelector(".ig-note-x").addEventListener("click", close);
@@ -367,7 +366,7 @@
     document.addEventListener("keydown", key, true);
     document.body.append(back); back.querySelector(".ig-note-ok").focus();
   }
-  window.addEventListener("app:view", e => { if (e.detail === "projects/initiatives") notice(); });
+  window.addEventListener("app:view", e => { if (e.detail === "projects/initiatives") notice(); else { const n = document.querySelector(".ig-note-back"); if (n) n.remove(); } });
   if (location.hash.replace(/^#\/?/, "") === "projects/initiatives") setTimeout(notice, 300);
   window.addEventListener("app:db", e => connect(e.detail));
   if (window.appDb) connect({ db: window.appDb, user: window.appUser });
