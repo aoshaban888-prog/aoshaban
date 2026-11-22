@@ -3,7 +3,7 @@
    (settings/site); the last one seen is cached in localStorage so it also applies before sign-in. */
 (() => {
   const DEFAULTS = {
-    siteName: "مكتب الحوكمة", showName: true, logo: "", logoDark: "", logoSize: 32,
+    siteName: "مكتب الحوكمة", showName: true, logo: "", logoDark: "", logoSize: 56,
     a1: "#7c3aed", a2: "#c026d3",
     font: "IBM Plex Sans Arabic", fontSize: 15, radius: "medium",
     theme: "system", startPage: "home", sliderSeconds: 6,

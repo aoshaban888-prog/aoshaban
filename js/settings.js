@@ -19,12 +19,14 @@
     const t = document.documentElement.getAttribute("data-theme");
     return t ? t !== "light" : matchMedia("(prefers-color-scheme: dark)").matches;
   }
+  // the old default (32) shows at the new one; the slider steps by 8 from 20, so 32 can't be picked by hand
+  const logoPx = s => s.logoSize === 32 ? 56 : s.logoSize;
   function renderBrand(s){
     const img = document.querySelector(".brand .logo-img"), name = document.querySelector(".brand .brand-name");
     if (!img || !name) return;
     const src = (isDarkish() && s.logoDark) || s.logo || "";
     img.hidden = !src; if (src) img.src = src;
-    img.style.height = s.logoSize + "px";
+    img.style.height = logoPx(s) + "px";
     name.textContent = s.siteName;
     name.hidden = !!src && !s.showName;
     document.querySelectorAll(".prayer-card").forEach(c => { c.hidden = !s.home.prayer; });
@@ -39,7 +41,7 @@
     const s = draft;
     if (document.activeElement !== $("sName")) $("sName").value = s.siteName;
     $("sShowName").checked = s.showName;
-    $("sLogoSize").value = s.logoSize; $("sLogoSizeV").textContent = s.logoSize + "px";
+    $("sLogoSize").value = logoPx(s); $("sLogoSizeV").textContent = logoPx(s) + "px";
     showLogo("sLogoPrev", s.logo); showLogo("sLogoDarkPrev", s.logoDark);
     $("sA1").value = s.a1; $("sA2").value = s.a2;
     $("sA1v").textContent = s.a1; $("sA2v").textContent = s.a2;
