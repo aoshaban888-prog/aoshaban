@@ -166,7 +166,7 @@
   $("fmBody").addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return; const d = b.dataset;
     const split = s => { const parts = s.split("."); return { sp: parts.slice(0, 4).join("."), si: +parts[1], qi: +parts[3], rest: parts.slice(4) }; };
-    if (d.addopt){ const q = qOf(d.addopt); q.options.push(`الخيار ${q.options.length + 1}`); }
+    if (d.addopt){ const q = qOf(d.addopt); q.options.push(`الخيار ${q.options.length + 1}`); focusOpt(d.addopt, q.options.length - 1); }
     else if (d.delopt){ const { sp, rest } = split(d.delopt); const q = qOf(sp); if (q.options.length > 1) q.options.splice(+rest[0], 1); }
     else if (d.other){ const q = qOf(d.other); q.other = !q.other; }
     else if (d.addq !== undefined){ cur.sections[+d.addq].questions.push(newQ()); }
@@ -183,6 +183,24 @@
     else return;
     renderBuilder(); changed();
   });
+  /* options behave like Google Forms: Enter goes to the next option (a new one after the last),
+     Backspace in an empty option removes it, and a default «الخيار n» is selected on focus so typing replaces it */
+  const optPath = el => { const m = /^(sections\.\d+\.questions\.\d+)\.options\.(\d+)$/.exec(el.dataset.p || ""); return m ? { qp: m[1], i: +m[2] } : null; };
+  const focusOpt = (qp, i) => setTimeout(() => { const el = $("fmBody").querySelector(`[data-p="${qp}.options.${i}"]`); if (el){ el.focus(); el.select(); } }, 0);
+  $("fmBody").addEventListener("keydown", e => {
+    const o = optPath(e.target); if (!o || e.isComposing) return;
+    const q = qOf(o.qp);
+    if (e.key === "Enter"){
+      e.preventDefault();
+      if (o.i === q.options.length - 1){ q.options.push(`الخيار ${q.options.length + 1}`); renderBuilder(); changed(); }
+      focusOpt(o.qp, o.i + 1);
+    } else if (e.key === "Backspace" && !e.target.value && q.options.length > 1){
+      e.preventDefault(); q.options.splice(o.i, 1); renderBuilder(); changed(); focusOpt(o.qp, Math.max(0, o.i - 1));
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp"){
+      const j = o.i + (e.key === "ArrowDown" ? 1 : -1); if (j >= 0 && j < q.options.length){ e.preventDefault(); focusOpt(o.qp, j); }
+    }
+  });
+  $("fmBody").addEventListener("focusin", e => { if (optPath(e.target) && /^الخيار \d+$/.test(e.target.value)) e.target.select(); });
   function changed(){ dirty = true; $("fmState").textContent = "جارٍ الحفظ…"; clearTimeout(saveT); saveT = setTimeout(save, 900); }
   async function save(){
     if (!cur || !curId || !canEdit(cur) || saving) return;
