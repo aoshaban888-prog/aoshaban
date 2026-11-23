@@ -9,7 +9,16 @@
   const CHOICE = new Set(["radio", "check", "select"]);
   let form = null, db = null, page = 0, answers = {}, uploading = 0;
 
-  function message(title, text, icon = "!"){ root.innerHTML = `<section class="fp-card fp-msg"><span class="fp-mi">${icon}</span><h1>${esc(title)}</h1><p>${esc(text)}</p></section>`; }
+  function message(title, text, icon = "!"){ root.innerHTML = `<section class="fp-card fp-msg"><span class="fp-mi${icon === "✓" ? " ok" : ""}">${icon}</span><h1>${esc(title)}</h1><p>${esc(text)}</p></section>${foot()}`; }
+  const foot = () => form && form.brand && form.brand.siteName ? `<p class="fp-foot"><b>${esc(form.brand.siteName)}</b> · لا تشارك كلمات المرور أو المعلومات الحساسة عبر هذا النموذج.</p>` : "";
+  // the site's identity copied into the form: logo and name on top, its colours and font everywhere
+  function applyBrand(){
+    const b = form.brand || {}, st = document.documentElement.style;
+    if (b.a1) st.setProperty("--a1", b.a1); if (b.a2) st.setProperty("--a2", b.a2);
+    if (b.font){ const l = document.createElement("link"); l.rel = "stylesheet"; l.href = `https://fonts.googleapis.com/css2?family=${b.font.replace(/ /g, "+")}:wght@400;500;600;700&display=swap`; document.head.append(l); st.setProperty("--font", `"${b.font}",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif`); }
+    if (b.logo || b.siteName){ const top = document.createElement("header"); top.className = "fp-top"; top.innerHTML = `${b.logo ? `<img src="${esc(b.logo)}" alt="">` : ""}<b>${esc(b.siteName || "")}</b>`; root.before(top); }
+    if (b.logo){ const ic = document.createElement("link"); ic.rel = "icon"; ic.href = b.logo; document.head.append(ic); }
+  }
   if (!id){ message("رابط غير صحيح", "تأكد من رابط الاستبيان."); return; }
   if (!window.firebase){ message("تعذّر التحميل", "تحقق من اتصالك بالإنترنت ثم أعد المحاولة."); return; }
   firebase.initializeApp(CONFIG); db = firebase.firestore();
@@ -26,7 +35,7 @@
       form = d.data();
     } catch { message("الاستبيان غير متاح", "هذا الاستبيان لا يستقبل ردوداً حالياً."); return; }
     document.title = form.title || "استبيان";
-    document.documentElement.style.setProperty("--fc", form.color || "#7c3aed");
+    applyBrand();
     const s = form.settings || {};
     const closed = !form.active || (s.closeAt && new Date(s.closeAt + "T23:59:59") < new Date());
     if (closed && !preview){ message(form.title || "استبيان", "هذا الاستبيان مغلق ولا يستقبل ردوداً حالياً.", "⏸"); return; }
@@ -42,12 +51,13 @@
       const t = q.type === "radio" ? "radio" : "checkbox", arr = Array.isArray(v) ? v : [v];
       const isOther = x => x != null && x !== "" && !q.options.includes(x);
       const otherVal = (q.type === "radio" ? (isOther(v) ? v : "") : (arr.find(isOther) || ""));
-      return `<div class="fp-opts">${q.options.map(o => `<label class="fp-opt"><input type="${t}" name="${name}" value="${esc(o)}"${arr.includes(o) ? " checked" : ""}><span>${esc(o)}</span></label>`).join("")}
-        ${q.other ? `<label class="fp-opt fp-oth"><input type="${t}" name="${name}" value="__other"${otherVal ? " checked" : ""}><span>أخرى:</span><input class="fp-in" data-other="${q.id}" value="${esc(otherVal)}"></label>` : ""}</div>`;
+      const mk = `<span class="fp-mk${t === "checkbox" ? " sq" : ""}"></span>`;
+      return `<div class="fp-opts">${q.options.map(o => `<label class="fp-opt"><input type="${t}" name="${name}" value="${esc(o)}"${arr.includes(o) ? " checked" : ""}>${mk}<span>${esc(o)}</span></label>`).join("")}
+        ${q.other ? `<label class="fp-opt fp-oth"><input type="${t}" name="${name}" value="__other"${otherVal ? " checked" : ""}>${mk}<span>أخرى:</span><input class="fp-in" data-other="${q.id}" value="${esc(otherVal)}" placeholder="اكتب إجابتك"></label>` : ""}</div>`;
     }
     if (q.type === "select") return `<select class="fp-in fp-sel" name="${name}"><option value="">اختر</option>${q.options.map(o => `<option${o === v ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
-    if (q.type === "scale"){ let s = ""; for (let i = +q.min; i <= +q.max; i++) s += `<label class="fp-sc"><span>${i}</span><input type="radio" name="${name}" value="${i}"${String(v) === String(i) ? " checked" : ""}></label>`;
-      return `<div class="fp-scale">${q.minLabel ? `<em>${esc(q.minLabel)}</em>` : ""}<div class="fp-scs">${s}</div>${q.maxLabel ? `<em>${esc(q.maxLabel)}</em>` : ""}</div>`; }
+    if (q.type === "scale"){ let s = ""; for (let i = +q.min; i <= +q.max; i++) s += `<label class="fp-sc"><input type="radio" name="${name}" value="${i}"${String(v) === String(i) ? " checked" : ""}><span>${i}</span></label>`;
+      return `<div class="fp-scale"><div class="fp-scs">${s}</div>${q.minLabel || q.maxLabel ? `<div class="fp-sl"><span>${esc(q.minLabel)}</span><span>${esc(q.maxLabel)}</span></div>` : ""}</div>`; }
     if (q.type === "rating"){ let s = ""; for (let i = 1; i <= (+q.stars || 5); i++) s += `<button type="button" class="fp-star${+v >= i ? " on" : ""}" data-star="${q.id}" data-v="${i}" aria-label="${i} من ${q.stars}">★</button>`; return `<div class="fp-stars">${s}</div>`; }
     if (q.type === "long") return `<textarea class="fp-in" name="${name}" rows="4" placeholder="إجابتك">${esc(v || "")}</textarea>`;
     if (q.type === "file"){
@@ -59,15 +69,19 @@
   }
   function render(){
     const secs = form.sections, s = secs[page], last = page === secs.length - 1, showP = (form.settings || {}).showProgress !== false && secs.length > 1;
-    root.innerHTML = `${page === 0 ? `<header class="fp-card fp-head"><h1>${esc(form.title)}</h1>${form.description ? `<p>${esc(form.description).replace(/\n/g, "<br>")}</p>` : ""}<small class="fp-reqn">* سؤال إجباري</small></header>` : `<header class="fp-card fp-head small"><h1>${esc(form.title)}</h1></header>`}
+    const nq = secs.reduce((n, x) => n + x.questions.filter(q => q.type !== "text").length, 0), mins = Math.max(1, Math.round(nq * 0.4));
+    let num = secs.slice(0, page).reduce((n, x) => n + x.questions.filter(q => q.type !== "text").length, 0);
+    const plural = (n, one, two, few, many) => n === 1 ? one : n === 2 ? two : n <= 10 ? few : many;
+    root.innerHTML = `${page === 0 ? `<header class="fp-card fp-hero"><h1>${esc(form.title)}</h1>${form.description ? `<p>${esc(form.description).replace(/\n/g, "<br>")}</p>` : ""}
+        <div class="fp-chips"><span>${nq} ${plural(nq, "سؤال", "سؤالان", "أسئلة", "سؤالاً")}</span><span>نحو ${mins} ${plural(mins, "دقيقة", "دقيقتين", "دقائق", "دقيقة")}</span>${secs.length > 1 ? `<span>${secs.length} أقسام</span>` : ""}<span>الحقول المعلَّمة بـ * إجبارية</span></div></header>` : `<header class="fp-card fp-hero small"><h1>${esc(form.title)}</h1></header>`}
       ${preview ? '<p class="fp-pv">وضع المعاينة: الإجابات لا تُرسل.</p>' : ""}
-      ${showP ? `<div class="fp-prog"><i style="width:${Math.round((page + 1) / secs.length * 100)}%"></i><span>${page + 1} من ${secs.length}</span></div>` : ""}
+      ${showP ? `<div class="fp-steps"><div class="bar"><i style="width:${Math.round((page + 1) / secs.length * 100)}%"></i></div><span>القسم ${page + 1} من ${secs.length}</span></div>` : ""}
       <form id="fpForm" novalidate>
       ${s.title || s.desc ? `<section class="fp-card fp-sec"><h2>${esc(s.title)}</h2>${s.desc ? `<p>${esc(s.desc)}</p>` : ""}</section>` : ""}
       ${s.questions.map(q => q.type === "text" ? `<section class="fp-card fp-tb"><h2>${esc(q.title)}</h2>${q.desc ? `<p>${esc(q.desc)}</p>` : ""}</section>` :
-        `<section class="fp-card fp-q" data-qid="${q.id}"><h3>${esc(q.title || "سؤال")}${q.required ? ' <b class="fp-r">*</b>' : ""}</h3>${q.desc ? `<p class="fp-d">${esc(q.desc)}</p>` : ""}${field(q)}<p class="fp-err" hidden></p></section>`).join("")}
+        `<section class="fp-card fp-q" data-qid="${q.id}"><div class="fp-qh"><span class="fp-n">${++num}</span><div><h3>${esc(q.title || "سؤال")}${q.required ? ' <b class="fp-r">*</b>' : ""}</h3>${q.desc ? `<p class="fp-d">${esc(q.desc)}</p>` : ""}</div></div><div class="fp-body">${field(q)}</div><p class="fp-err" hidden></p></section>`).join("")}
       <div class="fp-nav">${page > 0 ? '<button type="button" class="fp-btn2" id="fpPrev">السابق</button>' : "<span></span>"}<button type="submit" class="fp-btn">${last ? "إرسال" : "التالي"}</button></div>
-      </form><p class="fp-foot">لا تشارك كلمات المرور أو المعلومات الحساسة عبر هذا النموذج.</p>`;
+      </form>${foot() || '<p class="fp-foot">لا تشارك كلمات المرور أو المعلومات الحساسة عبر هذا النموذج.</p>'}`;
     window.scrollTo(0, 0);
     const f = document.getElementById("fpForm");
     f.addEventListener("submit", e => { e.preventDefault(); collect(); if (!check()) return; if (last) send(); else { page++; render(); } });

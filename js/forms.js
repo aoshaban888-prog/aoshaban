@@ -74,7 +74,7 @@
   }
   async function create(){
     if (!db) return;
-    const now = new Date().toISOString(), data = { ...blank(), owner: me, ownerName: myName, createdAt: now, updatedAt: now, upload: cloudCfg() };
+    const now = new Date().toISOString(), data = { ...blank(), owner: me, ownerName: myName, createdAt: now, updatedAt: now, upload: cloudCfg(), brand: brand() };
     try { const ref = await db.collection("forms").add(data); forms.push({ id: ref.id, ...data }); counts[ref.id] = 0; open(ref.id, "q"); setTimeout(() => { const t = $("fmBody").querySelector('[data-p="title"]'); if (t){ t.focus(); t.select(); } }, 60); }
     catch (e){ console.error(e); UI.toast("تعذّر الإنشاء", "err"); }
   }
@@ -92,6 +92,8 @@
     } catch (e){ console.error(e); UI.toast("تعذّر الحذف", "err"); }
   }
   const cloudCfg = () => window.Cloud && Cloud.config ? Cloud.config() : null;
+  // the site's identity (name, logo, colours, font) is copied into the form, since the public page cannot read the settings
+  const brand = () => { const st = window.siteSettings || {}; return { siteName: st.siteName || "", logo: st.logo || "", a1: st.a1 || "#7c3aed", a2: st.a2 || "#c026d3", font: st.font || "IBM Plex Sans Arabic" }; };
 
   /* ---------- the editor ---------- */
   function open(id, t = "q"){
@@ -146,7 +148,7 @@
   function renderBuilder(){
     const ro = !canEdit(cur); let n = 0;
     $("fmBody").innerHTML = `<fieldset class="fm-build" ${ro ? "disabled" : ""}>
-      <div class="fm-head" style="--fc:${esc(cur.color)}"><input class="fm-ft" data-p="title" value="${esc(cur.title)}" placeholder="عنوان الاستبيان"><textarea class="fm-fd" data-p="description" rows="2" placeholder="النص الترحيبي (المقدمة)">${esc(cur.description)}</textarea></div>
+      <div class="fm-head"><input class="fm-ft" data-p="title" value="${esc(cur.title)}" placeholder="عنوان الاستبيان"><textarea class="fm-fd" data-p="description" rows="2" placeholder="النص الترحيبي (المقدمة)">${esc(cur.description)}</textarea></div>
       ${cur.sections.map((s, si) => `${si > 0 || cur.sections.length > 1 ? `<div class="fm-sec"><div class="fm-sech"><span>القسم ${si + 1} من ${cur.sections.length}</span>${cur.sections.length > 1 ? `<button type="button" class="linkbtn danger-text" data-delsec="${si}">حذف القسم</button>` : ""}</div>
           <input class="fm-qt" data-p="sections.${si}.title" value="${esc(s.title)}" placeholder="عنوان القسم"><input class="fm-line fm-qd" data-p="sections.${si}.desc" value="${esc(s.desc)}" placeholder="وصف القسم (اختياري)"></div>` : ""}
         ${s.questions.map((q, qi) => qHtml(q, si, qi, q.type === "text" ? 0 : ++n)).join("")}
@@ -205,7 +207,7 @@
   async function save(){
     if (!cur || !curId || !canEdit(cur) || saving) return;
     saving = true; clearTimeout(saveT);
-    const data = JSON.parse(JSON.stringify({ ...cur, title: (cur.title || "").trim() || "استبيان بدون عنوان", updatedAt: new Date().toISOString(), upload: cloudCfg() || cur.upload || null }));
+    const data = JSON.parse(JSON.stringify({ ...cur, title: (cur.title || "").trim() || "استبيان بدون عنوان", updatedAt: new Date().toISOString(), upload: cloudCfg() || cur.upload || null, brand: brand() }));
     try { await db.collection("forms").doc(curId).set(data); dirty = false; $("fmState").textContent = "حُفظ"; }
     catch (e){ console.error(e); $("fmState").textContent = "تعذّر الحفظ"; }
     finally { saving = false; if (dirty) saveT = setTimeout(save, 900); }
@@ -223,7 +225,7 @@
         <label class="s-check"><input type="checkbox" data-s="showProgress"${s.showProgress ? " checked" : ""}> <span>إظهار شريط التقدم بين الأقسام</span></label>
         <label class="ig-f"><span>إغلاق تلقائي في تاريخ <i>(اختياري)</i></span><input class="input" type="date" data-s="closeAt" value="${esc(s.closeAt)}"></label>
         <label class="ig-f"><span>رسالة الشكر بعد الإرسال</span><textarea class="input" rows="2" data-s="confirm">${esc(s.confirm)}</textarea></label></div>
-      <div class="fm-card-s"><h3>اللون</h3><div class="fm-colors">${COLORS.map(c => `<button type="button" class="fm-col" data-color="${c}" style="background:${c}" aria-pressed="${c === cur.color}" aria-label="${c}"></button>`).join("")}</div></div>
+      <div class="fm-card-s"><h3>المظهر</h3><p class="muted-text">يظهر الاستبيان بهوية الموقع: الشعار والاسم والألوان والخط من التمكين التقني › الإعدادات العامة.</p></div>
     </fieldset>`;
     $("fmCopy2").addEventListener("click", () => copyLink({ ...cur, id: curId }));
   }
@@ -271,7 +273,7 @@
   function summary(q){
     const vals = responses.map(r => (r.answers || {})[q.id]).filter(v => v != null && v !== "" && !(Array.isArray(v) && !v.length));
     const head = `<b class="fm-rq">${esc(q.title || "سؤال بدون عنوان")}</b><span class="muted-text fm-rc">${vals.length} إجابة</span>`;
-    const bars = (rows, total) => `<div class="fm-bars">${rows.map(([label, n]) => { const p = total ? Math.round(n / total * 100) : 0; return `<div class="fm-bar"><span class="fm-bl">${esc(label)}</span><span class="fm-bt"><i style="width:${p}%;background:${esc(cur.color)}"></i></span><span class="fm-bn">${n} (${p}%)</span></div>`; }).join("")}</div>`;
+    const bars = (rows, total) => `<div class="fm-bars">${rows.map(([label, n]) => { const p = total ? Math.round(n / total * 100) : 0; return `<div class="fm-bar"><span class="fm-bl">${esc(label)}</span><span class="fm-bt"><i style="width:${p}%"></i></span><span class="fm-bn">${n} (${p}%)</span></div>`; }).join("")}</div>`;
     if (CHOICE.has(q.type)){
       const c = new Map(q.options.map(o => [o, 0])); let other = 0;
       vals.forEach(v => (Array.isArray(v) ? v : [v]).forEach(x => { if (c.has(x)) c.set(x, c.get(x) + 1); else other++; }));
