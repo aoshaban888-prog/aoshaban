@@ -4,6 +4,7 @@
     "home": "الرئيسية",
     "tasks": "المهام",
     "governance/library": "اللوائح والسياسات",
+    "governance/associations": "الجمعيات",
     "hr/letters": "الخطابات",
     "hr/requests": "الطلبات",
     "projects/initiatives": "منشئ وثائق المبادرات",

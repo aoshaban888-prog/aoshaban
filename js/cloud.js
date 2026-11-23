@@ -10,11 +10,11 @@
   const $ = id => document.getElementById(id);
   const MAX = 10 * 1024 * 1024; // the free plan's limit for images and documents
   let cfg = { cloudName: "", preset: "", folder: "" }, db = null, me = "", admin = false, unsub = null, unsubUp = null, uploads = [];
-  const AREAS = { tasks: "المهام", initiatives: "وثائق المبادرات", branding: "الشعار", slider: "السلايدر", letterheads: "الكليشات", policies: "اللوائح والسياسات", backups: "النسخ الاحتياطية", test: "تجربة", other: "أخرى" };
+  const AREAS = { associations: "الجمعيات", tasks: "المهام", initiatives: "وثائق المبادرات", branding: "الشعار", slider: "السلايدر", letterheads: "الكليشات", policies: "اللوائح والسياسات", backups: "النسخ الاحتياطية", test: "تجربة", other: "أخرى" };
   // which area a file input belongs to; inputs not listed here are copied as «other»
   const INPUT_AREA = { bkFile: "backups", lhFile: "letterheads", hdBg: "letterheads", hdFrame: "letterheads", sLogoFile: "branding", sLogoDarkFile: "branding", slImg: "slider", pfFiles: "policies" };
   // handled by their own pages (tdFile, anPick) or kept inside the site on purpose (signature, stamp, licensed fonts)
-  const SKIP = new Set(["tdFile", "anPick", "hrSigFile", "hrStampFile", "fFiles"]);
+  const SKIP = new Set(["tdFile", "anPick", "hrSigFile", "hrStampFile", "fFiles", "asLogoFile", "asLhFile", "asAttFile"]);
 
   const ready = () => !!(cfg.cloudName && cfg.preset);
   function upload(file, { folder = "", onProgress } = {}){

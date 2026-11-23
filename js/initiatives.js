@@ -161,6 +161,8 @@
   // the association's details come back from its latest document
   $("inAssoc").addEventListener("change", () => {
     const name = v("inAssoc"); if (!name) return;
+    const a = window.Assocs && Assocs.byName(name);
+    if (a){ [["inVision", "vision"], ["inMission", "mission"], ["inGoals", "goals"], ["inField", "field"], ["inCity", "city"]].forEach(([id, k]) => { if (!v(id) && a[k]) $(id).value = a[k]; }); }
     const last = items.filter(d => d.input && (d.input.inAssoc || "").trim() === name).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))[0];
     if (!last) return;
     ["inVision", "inMission", "inGoals", "inField", "inCity"].forEach(id => { if (!v(id)) $(id).value = last.input[id] || ""; });

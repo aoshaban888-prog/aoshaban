@@ -3106,7 +3106,7 @@ async function saveAssoc(){
       lhChunks = 0; lhName = "";
     }
     const body = { name, lhName, lhChunks, lhMargins: state.lhMargins || null, settings: settingsSnapshot(), approvals: state.approvals, updatedAt: new Date().toISOString() };
-    await store.set("associations", id, body);
+    if (state.mode === "db") await store.col("associations").doc(id).set(body, { merge: true }); else await store.set("associations", id, body);
     state.assocId = id;
     try { localStorage.setItem("assoc-policies-assoc", id); localStorage.removeItem(AP_DRAFT); } catch {}
     if (state.mode !== "db"){ const i = state.assocs.findIndex(a => a.id === id); const row = { id, ...body }; if (i >= 0) state.assocs[i] = row; else state.assocs.push(row); }

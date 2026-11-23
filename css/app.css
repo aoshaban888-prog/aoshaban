@@ -1286,3 +1286,44 @@ body.rq-open{overflow:hidden}
 .cd-area{flex:none;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
 .cd-meta{flex:none;font-size:12px}
 @media (max-width:640px){.cd-meta{display:none}}
+
+/* ---------- الحوكمة › الجمعيات ---------- */
+.as-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.as-card{display:flex;flex-direction:column;gap:10px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:border-color 140ms var(--ease),box-shadow 140ms var(--ease)}
+.as-card:hover,.as-card:focus-visible{border-color:color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.as-ch{display:flex;align-items:center;gap:12px}
+.as-ch h3{margin:0;font-size:16px;font-weight:600;line-height:1.5}
+.as-ch p{margin:0;font-size:13px;color:var(--muted)}
+.as-logo{width:52px;height:52px;flex:none;display:grid;place-items:center;border-radius:12px;background:var(--bg);border:1px solid var(--line-soft);overflow:hidden}
+.as-logo img{max-width:88%;max-height:88%;object-fit:contain}
+.as-logo b{font-size:22px;color:var(--accent)}
+.as-logo.big{width:96px;height:96px}.as-logo small{font-size:12px;color:var(--muted)}
+.as-dl{margin:0;display:flex;flex-direction:column;gap:4px}
+.as-dl div{display:flex;gap:8px;font-size:13px}.as-dl dt{color:var(--muted);min-width:96px}.as-dl dd{margin:0;color:var(--ink-2)}
+.as-cf{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted)}.as-cf .pbar{flex:1}
+.as-hint{margin:-4px 0 12px}
+.as-form{display:flex;flex-direction:column;gap:10px;max-width:980px}
+.as-form fieldset{border:0;margin:0;min-width:0}
+.as-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.as-wide{grid-column:1 / -1}
+.as-form .input,.as-form .select{width:100%;min-width:0;height:40px;padding:0 12px;font-size:14px;line-height:normal}
+.as-form textarea.input{height:auto;min-height:0;padding:8px 12px;line-height:1.8;resize:vertical}
+.req{color:var(--danger)}
+.as-ul{display:block;margin-bottom:8px;font-size:14px;font-weight:600}
+.as-tbl{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.as-tr{display:grid;grid-template-columns:var(--cols);gap:6px;align-items:center}
+.as-th span{font-size:12px;color:var(--muted)}
+.as-cl{display:none}
+.as-rm{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:8px;background:none;color:var(--muted);cursor:pointer}
+.as-rm:hover{background:var(--danger-soft,#fee2e2);color:var(--danger)}
+.as-files{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.as-up{padding:14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--bg);display:flex;flex-direction:column;gap:10px}
+.as-ub{display:flex;align-items:center;gap:12px}
+.as-file{color:var(--ink);font-weight:500;overflow-wrap:anywhere}
+.as-att{margin-top:16px}
+.as-att ul{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:4px}
+.as-att li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border:1px solid var(--line-soft);border-radius:8px}
+.as-att li a{color:var(--ink);overflow-wrap:anywhere}
+@media (max-width:900px){.as-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.as-grid,.as-files{grid-template-columns:minmax(0,1fr)}.as-th{display:none}.as-tr{grid-template-columns:minmax(0,1fr) 32px;padding:8px;border:1px solid var(--line-soft);border-radius:10px}.as-tr label{grid-column:1}.as-tr .as-rm{grid-column:2;grid-row:1}.as-cl{display:block;font-size:12px;color:var(--muted)}}
+.as-tbl .ini-add{align-self:flex-start;width:auto;margin-top:4px;padding:6px 10px;border:1px dashed var(--line);border-radius:8px;background:none;font:inherit;font-size:13px;color:var(--accent);cursor:pointer}
