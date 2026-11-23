@@ -192,20 +192,26 @@
         if (!window.JSZip){ UI.alert("تعذّر قراءة ملف Word الآن، جرّب مرة ثانية."); return; }
         const zip = await JSZip.loadAsync(await f.arrayBuffer()), x = zip.file("word/document.xml");
         if (!x){ UI.alert("الملف لا يبدو ملف Word صالحاً."); return; }
-        $("anText").value = xmlText(await x.async("string")).replace(/\n{3,}/g, "\n\n").trim(); pdf = null;
+        $("anText").value = xmlText(await x.async("string")).replace(/\n{3,}/g, "\n\n").trim(); pdf = null; keepSrc(f);
       } else if (["txt", "md", "markdown"].includes(ext) || f.type.startsWith("text/")){
-        $("anText").value = (await f.text()).trim(); pdf = null;
+        $("anText").value = (await f.text()).trim(); pdf = null; keepSrc(f);
       } else { UI.alert("الصيغ المدعومة: PDF أو Word (docx) أو ملف نصي."); return; }
       showFile(name, ext === "pdf" || f.type === "application/pdf");
     } catch (e){ console.error(e); UI.alert("تعذّر قراءة الملف."); }
     syncAn();
+  }
+  // with Cloudinary set, a Word or text file is also kept there so the analysis can link to it
+  let src = null;
+  function keepSrc(f){
+    src = null; if (!(window.Cloud && Cloud.ready())) return;
+    Cloud.upload(f, { folder: "initiatives" }).then(up => { src = { name: f.name, url: up.url }; }).catch(e => console.error(e));
   }
   function showFile(name, isPdf){
     $("anFile").hidden = false; $("anDrop").hidden = true; $("anFileName").textContent = name;
     $("anFileNote").textContent = isPdf ? "يُرسل الملف كما هو للتحليل. تقدر تضيف ملاحظات في الخانة تحت (اختياري)." : "استُخرج نص الملف في الخانة تحت، راجعه قبل التحليل.";
     $("anText").placeholder = isPdf ? "ملاحظات أو تعليمات إضافية عن الوثيقة (اختياري)…" : "الصق هنا نصّ الوثيقة الحالية…";
   }
-  function clearFile(){ pdf = null; $("anFile").hidden = true; $("anDrop").hidden = false; $("anPick").value = ""; $("anText").placeholder = "الصق هنا نصّ الوثيقة الحالية…"; syncAn(); }
+  function clearFile(){ pdf = null; src = null; $("anFile").hidden = true; $("anDrop").hidden = false; $("anPick").value = ""; $("anText").placeholder = "الصق هنا نصّ الوثيقة الحالية…"; syncAn(); }
   $("anPick").addEventListener("change", e => { const f = e.target.files[0]; if (f) readFile(f); });
   $("anFileX").addEventListener("click", clearFile);
   const dz = $("anDrop");
@@ -220,7 +226,7 @@
     if (mode === "create" && !v("inIdea")){ UI.toast("اكتب فكرة المبادرة", "err"); $("inIdea").focus(); return; }
     if (mode === "create" && !v("inAssoc")){ UI.toast("اكتب اسم الجمعية", "err"); $("inAssoc").focus(); return; }
     const prompt = mode === "create" ? createPrompt() : analyzePrompt();
-    cur = { kind: mode === "create" ? "doc" : "analysis", markdown: "", input: mode === "create" ? formInput() : { anText: v("anText").slice(0, 30000), pdfName: pdf ? pdf.name : "", pdfUrl: pdf && pdf.url ? pdf.url : "" }, assocName: mode === "create" ? v("inAssoc") : "", title: "" };
+    cur = { kind: mode === "create" ? "doc" : "analysis", markdown: "", input: mode === "create" ? formInput() : { anText: v("anText").slice(0, 30000), pdfName: pdf ? pdf.name : "", pdfUrl: pdf && pdf.url ? pdf.url : "", fileUrl: !pdf && src ? src.url : "", fileName: !pdf && src ? src.name : "" }, assocName: mode === "create" ? v("inAssoc") : "", title: "" };
     curId = null; showResult(); setRun(true, "جارٍ الكتابة…");
     const ctl = new AbortController(); running = ctl; const t0 = Date.now();
     const tick = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); $("resRun").textContent = `جارٍ الكتابة… ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} · ${cur.markdown.length.toLocaleString("en")} حرف`; }, 1000);
@@ -256,7 +262,8 @@
     $("resName").textContent = cur.title || (cur.kind === "doc" ? "وثيقة جديدة" : "تحليل الوثيقة");
     $("resEditor").hidden = true; $("resEdit").setAttribute("aria-pressed", "false");
     $("resAgain").hidden = !cur.input || cur.legacy || (!!cur.input.pdfName && !cur.input.pdfUrl && (!pdf || pdf.name !== cur.input.pdfName));
-    $("resFile").hidden = !(cur.input && cur.input.pdfUrl); if (cur.input && cur.input.pdfUrl) $("resFile").href = cur.input.pdfUrl; $("resSaved").textContent = curId ? "محفوظة في سجلّي" : "";
+    const orig = cur.input && (cur.input.pdfUrl || cur.input.fileUrl);
+    $("resFile").hidden = !orig; if (orig) $("resFile").href = orig; $("resSaved").textContent = curId ? "محفوظة في سجلّي" : "";
     $("resSave").hidden = !canEdit(cur);
     paint(); window.scrollTo(0, 0);
   }

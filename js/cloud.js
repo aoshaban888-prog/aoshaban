@@ -2,11 +2,19 @@
    The account name, preset and folder live in Firestore settings/cloudinary (admins set them under التمكين التقني › الربط).
    window.Cloud.ready()                                   → true once an account is set
    window.Cloud.upload(file, { folder, onProgress })      → Promise<{ url, publicId, name, size, type, format }>
-   Unsigned uploads cannot delete: removing an attachment only removes its link in the site. */
+   Unsigned uploads cannot delete: removing an attachment only removes its link in the site.
+   Every upload is listed in Firestore "uploads" (name, link, area, who, when), shown under التمكين التقني › الربط.
+   Files picked anywhere else in the site (logos, slider images, letterheads, policy files, backups) are also copied there,
+   except the signature and stamp images and font files, which stay inside the site. */
 (() => {
   const $ = id => document.getElementById(id);
   const MAX = 10 * 1024 * 1024; // the free plan's limit for images and documents
-  let cfg = { cloudName: "", preset: "", folder: "" }, db = null, admin = false, unsub = null;
+  let cfg = { cloudName: "", preset: "", folder: "" }, db = null, me = "", admin = false, unsub = null, unsubUp = null, uploads = [];
+  const AREAS = { tasks: "المهام", initiatives: "وثائق المبادرات", branding: "الشعار", slider: "السلايدر", letterheads: "الكليشات", policies: "اللوائح والسياسات", backups: "النسخ الاحتياطية", test: "تجربة", other: "أخرى" };
+  // which area a file input belongs to; inputs not listed here are copied as «other»
+  const INPUT_AREA = { bkFile: "backups", lhFile: "letterheads", hdBg: "letterheads", hdFrame: "letterheads", sLogoFile: "branding", sLogoDarkFile: "branding", slImg: "slider", pfFiles: "policies" };
+  // handled by their own pages (tdFile, anPick) or kept inside the site on purpose (signature, stamp, licensed fonts)
+  const SKIP = new Set(["tdFile", "anPick", "hrSigFile", "hrStampFile", "fFiles"]);
 
   const ready = () => !!(cfg.cloudName && cfg.preset);
   function upload(file, { folder = "", onProgress } = {}){
@@ -21,7 +29,11 @@
       xhr.upload.onprogress = e => { if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded / e.total * 100)); };
       xhr.onload = () => {
         let j = {}; try { j = JSON.parse(xhr.responseText); } catch {}
-        if (xhr.status >= 200 && xhr.status < 300 && j.secure_url) resolve({ url: j.secure_url, publicId: j.public_id, name: file.name, size: j.bytes || file.size, type: file.type || "", format: j.format || "" });
+        if (xhr.status >= 200 && xhr.status < 300 && j.secure_url){
+          const r = { url: j.secure_url, publicId: j.public_id, name: file.name, size: j.bytes || file.size, type: file.type || "", format: j.format || "" };
+          if (db && me) db.collection("uploads").add({ name: String(file.name || "ملف").slice(0, 200), url: r.url, publicId: r.publicId || "", size: r.size || 0, type: r.type, area: folder || "other", by: me, at: new Date().toISOString() }).catch(e => console.error(e));
+          resolve(r);
+        }
         else reject(new Error((j.error && j.error.message) || "upload_failed"));
       };
       xhr.onerror = () => reject(new Error("network"));
@@ -30,6 +42,45 @@
   }
   const errText = e => ({ not_configured: "رفع الملفات غير مفعّل: اضبط حساب Cloudinary من التمكين التقني › الربط.", too_big: "حجم الملف أكبر من 10 ميجابايت.", network: "انقطع الاتصال أثناء الرفع." })[e && e.message] || ("تعذّر رفع الملف: " + ((e && e.message) || ""));
   window.Cloud = { ready, upload, errText, MAX };
+
+  /* ---------- a copy of every other file picked in the site ---------- */
+  function keep(files, area){
+    if (!ready() || !db) return;
+    [...files].filter(f => f && f.size && f.size <= MAX).forEach(f => upload(f, { folder: area }).catch(e => console.error("cloud copy", e)));
+  }
+  document.addEventListener("change", e => {
+    const el = e.target; if (!(el instanceof HTMLInputElement) || el.type !== "file" || !el.files || !el.files.length || SKIP.has(el.id)) return;
+    keep(el.files, INPUT_AREA[el.id] || "other");
+  }, true);
+  document.addEventListener("drop", e => {
+    const files = e.dataTransfer && e.dataTransfer.files; if (!files || !files.length) return;
+    const zone = e.target.closest && e.target.closest("label,.f-drop,.drop,[class*=drop],section,form");
+    const inp = zone && zone.querySelector('input[type="file"]');
+    if (!inp || SKIP.has(inp.id)) return;
+    keep(files, INPUT_AREA[inp.id] || "other");
+  }, true);
+
+  /* ---------- the list of uploaded files (التمكين التقني › الربط) ---------- */
+  const kb = n => n >= 1048576 ? (n / 1048576).toFixed(1) + " م.ب" : Math.max(1, Math.round(n / 1024)) + " ك.ب";
+  function renderUploads(){
+    const box = $("cdFiles"); if (!box) return;
+    const q = ($("cdQ").value || "").trim(), area = $("cdArea").value;
+    const list = uploads.filter(u => (!area || u.area === area) && (!q || (u.name || "").includes(q))).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    $("cdCount").textContent = `${list.length} ملف`;
+    box.innerHTML = list.length ? "" : '<p class="muted-text">لا توجد ملفات مرفوعة بعد</p>';
+    list.slice(0, 300).forEach(u => {
+      const row = document.createElement("div"); row.className = "cd-row";
+      row.innerHTML = `<a target="_blank" rel="noopener"></a><span class="cd-area"></span><span class="muted-text cd-meta"></span><button type="button" class="linkbtn">نسخ الرابط</button>`;
+      const a = row.querySelector("a"); a.href = u.url; a.textContent = u.name || "ملف";
+      row.querySelector(".cd-area").textContent = AREAS[u.area] || u.area || "";
+      row.querySelector(".cd-meta").textContent = [u.size ? kb(u.size) : "", (u.by || "").split("@")[0], u.at ? new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", year: "numeric" }).format(new Date(u.at)) : ""].filter(Boolean).join(" · ");
+      row.querySelector("button").addEventListener("click", async () => { try { await navigator.clipboard.writeText(u.url); UI.toast("نُسخ الرابط"); } catch { UI.alert(u.url); } });
+      box.append(row);
+    });
+  }
+  $("cdQ") && $("cdQ").addEventListener("input", renderUploads);
+  $("cdArea") && $("cdArea").addEventListener("change", renderUploads);
+  if ($("cdArea")) Object.entries(AREAS).forEach(([k, label]) => $("cdArea").append(new Option(label, k)));
 
   /* ---------- the admin's form (التمكين التقني › الربط) ---------- */
   function fill(){
@@ -55,10 +106,13 @@
   });
 
   function connect({ db: d, user }){
-    if (unsub){ unsub(); unsub = null; }
-    db = d; admin = false;
+    if (unsub){ unsub(); unsub = null; } if (unsubUp){ unsubUp(); unsubUp = null; }
+    db = d; admin = false; me = user ? user.email : ""; uploads = [];
     if (!db){ fill(); return; }
-    db.collection("allowed").doc(user.email).get().then(a => { admin = a.exists && a.data().role === "admin"; fill(); }).catch(() => {});
+    db.collection("allowed").doc(user.email).get().then(a => {
+      admin = a.exists && a.data().role === "admin"; fill();
+      if (admin && !unsubUp) unsubUp = db.collection("uploads").onSnapshot(s => { uploads = s.docs.map(x => ({ id: x.id, ...x.data() })); renderUploads(); }, () => {});
+    }).catch(() => {});
     unsub = db.collection("settings").doc("cloudinary").onSnapshot(s => { cfg = { cloudName: "", preset: "", folder: "", ...(s.exists ? s.data() : {}) }; fill(); }, () => {});
   }
   window.addEventListener("app:db", e => connect(e.detail));

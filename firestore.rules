@@ -124,6 +124,13 @@ service cloud.firestore {
       allow delete: if section("projects") && (isAdmin() || resource.data.owner == myEmail());
     }
 
+    // the list of files uploaded to Cloudinary: everyone records their own uploads, admins read and tidy the list
+    match /uploads/{id} {
+      allow read: if isAdmin();
+      allow create: if allowed() && request.resource.data.by == myEmail() && request.resource.data.url is string && request.resource.data.url.matches('https://res[.]cloudinary[.]com/.*');
+      allow delete: if isAdmin();
+    }
+
     // governance library (policies and associations are also read by the letters and the home page)
     match /policies/{id} {
       allow read: if allowed();

@@ -1273,3 +1273,16 @@ body.rq-open{overflow:hidden}
 .cd-state{margin:4px 0 10px;padding:8px 12px;border-radius:8px;background:var(--line-soft);font-size:13px;color:var(--ink-2)}
 .cd-state.on{background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--ok)}
 .ui-dialog p{overflow-wrap:anywhere;white-space:pre-line}
+
+.cd-list{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)}
+.cd-lh{display:flex;align-items:baseline;gap:10px}.cd-lh h3{margin:0;font-size:15px;font-weight:600}
+.cd-filt{display:flex;gap:8px;margin:10px 0}.cd-filt .input{flex:1;height:36px;padding:0 10px;line-height:normal}.cd-filt .select{height:36px;padding:0 10px;line-height:normal;width:auto}
+#cdFiles{display:flex;flex-direction:column;max-height:420px;overflow:auto;border:1px solid var(--line-soft);border-radius:10px}
+#cdFiles > .muted-text{margin:0;padding:14px}
+.cd-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line-soft);font-size:13px}
+.cd-row:last-child{border-bottom:0}
+.cd-row a{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:500}
+.cd-row a:hover{color:var(--accent)}
+.cd-area{flex:none;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.cd-meta{flex:none;font-size:12px}
+@media (max-width:640px){.cd-meta{display:none}}
