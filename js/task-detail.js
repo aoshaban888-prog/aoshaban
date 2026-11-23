@@ -70,7 +70,7 @@
       <div class="td-addrow"><input class="input" id="tdDepIn" list="tdDepList" placeholder="ابحث عن مهمة" aria-label="إضافة اعتمادية"><datalist id="tdDepList"></datalist><button class="btn small" type="button" id="tdDepAdd">إضافة</button></div></section>
     <section class="td-sec"><div class="td-sh"><h3>المرفقات</h3></div><ul class="td-files" id="tdFiles"></ul>
       <div class="td-addrow"><input class="input" id="tdUrl" dir="ltr" placeholder="https://… رابط ملف أو مستند"><button class="btn small" type="button" id="tdUrlAdd">إضافة رابط</button><label class="btn small">ملف<input type="file" id="tdFile" hidden></label></div>
-      <p class="muted-text td-note">الملفات حتى 700 كيلوبايت. للأكبر أضف رابطاً من Google Drive أو OneDrive</p></section>
+      <p class="muted-text td-note" id="tdFileNote">الملفات حتى 700 كيلوبايت. للأكبر أضف رابطاً من Google Drive أو OneDrive</p></section>
     <section class="td-sec" id="tdTalk"><div class="td-sh"><h3>التعليقات</h3></div><ul class="td-cm" id="tdCm"></ul>
       <form class="td-addrow" id="tdCmAdd"><textarea class="input" rows="2" placeholder="اكتب تعليقاً" aria-label="تعليق" maxlength="4000"></textarea><button class="btn small primary" type="submit">إرسال</button></form></section>
     <details class="td-sec td-log" id="tdLogBox"><summary>سجل النشاط <span class="tk-count" id="tdLogN"></span></summary><ol class="td-act" id="tdAct"></ol></details>
@@ -202,9 +202,10 @@
   }
   function drawFiles(){
     const ul = $("tdFiles"); ul.innerHTML = "";
+    $("tdFileNote").textContent = window.Cloud && Cloud.ready() ? "الملفات حتى 10 ميجابايت، وتُحفظ في Cloudinary." : "الملفات حتى 700 كيلوبايت. للأكبر أضف رابطاً من Google Drive أو OneDrive";
     cur().attachments.forEach(a => {
       const li = document.createElement("li");
-      li.innerHTML = `<span class="td-fic">${a.kind === "file" ? "📄" : "🔗"}</span><button class="linkbtn" type="button"></button><span class="muted-text"></span><button type="button" class="td-del" aria-label="إزالة المرفق">×</button>`;
+      li.innerHTML = `<span class="td-fic">${a.kind === "link" ? "🔗" : "📄"}</span><button class="linkbtn" type="button"></button><span class="muted-text"></span><button type="button" class="td-del" aria-label="إزالة المرفق">×</button>`;
       const b = li.querySelector(".linkbtn"); b.textContent = a.name || a.url;
       b.addEventListener("click", () => openFile(a));
       li.querySelector(".muted-text").textContent = a.size ? `${Math.max(1, Math.round(a.size / 1024))} ك.ب` : "";
@@ -217,7 +218,7 @@
     });
   }
   async function openFile(a){
-    if (a.kind === "link"){ window.open(a.url, "_blank", "noopener"); return; }
+    if (a.kind === "link" || a.kind === "cloud"){ window.open(a.url, "_blank", "noopener"); return; }
     try {
       const d = await T().db.collection("taskFiles").doc(a.fileId).get(); if (!d.exists) return UI.toast("الملف غير موجود", "err");
       const f = d.data(), bin = atob(f.data), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
@@ -320,6 +321,16 @@
   });
   on("tdFile", "change", async e => {
     const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    // with Cloudinary set, the file goes there (up to 10 MB) and the task keeps its link
+    if (window.Cloud && Cloud.ready()){
+      if (isNew()) return UI.toast("أنشئ المهمة أولاً ثم أرفق الملفات", "err");
+      const note = $("tdFileNote"), keep = note.textContent;
+      try {
+        const up = await Cloud.upload(f, { folder: "tasks", onProgress: p => { note.textContent = `جارٍ رفع «${f.name}»… ${p}%`; } });
+        set({ attachments: [...cur().attachments, { id: C.uid(), kind: "cloud", url: up.url, name: f.name.slice(0, 200), size: up.size }] });
+      } catch (err){ console.error(err); UI.alert(Cloud.errText(err)); }
+      note.textContent = keep; return;
+    }
     if (f.size > FILE_MAX) return UI.alert(`الملف ${Math.round(f.size / 1024)} ك.ب، والحد 700. ارفعه على Google Drive أو OneDrive وأضف رابطه.`);
     if (isNew()) return UI.toast("أنشئ المهمة أولاً ثم أرفق الملفات", "err");
     try {

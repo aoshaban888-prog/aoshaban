@@ -172,12 +172,19 @@
 
   /* ---------- uploading the document: a PDF goes to Claude as the file itself; Word and text become text in the box ---------- */
   const PDF_MAX = 3 * 1024 * 1024;
-  let pdf = null; // { name, data (base64) }
+  let pdf = null; // { name, data (base64) } or, through Cloudinary, { name, url }
   const xmlText = xml => { const d = new DOMParser().parseFromString(xml, "application/xml"); return [...d.getElementsByTagName("w:p")].map(p => [...p.getElementsByTagName("w:t")].map(t => t.textContent).join("")).join("\n"); };
   async function readFile(f){
     const name = f.name || "ملف", ext = (name.split(".").pop() || "").toLowerCase();
     try {
       if (ext === "pdf" || f.type === "application/pdf"){
+        if (window.Cloud && Cloud.ready()){
+          if (f.size > Cloud.MAX){ UI.alert("حجم ملف PDF أكبر من 10 ميجابايت. صغّر الملف أو انسخ نصه والصقه هنا."); return; }
+          showFile(name, true); $("anFileNote").textContent = "جارٍ رفع الملف… 0%"; $("anGo").disabled = true; pdf = null;
+          try { const up = await Cloud.upload(f, { folder: "initiatives", onProgress: p => { $("anFileNote").textContent = `جارٍ رفع الملف… ${p}%`; } }); pdf = { name, url: up.url }; showFile(name, true); }
+          catch (e){ clearFile(); UI.alert(Cloud.errText(e)); }
+          syncAn(); return;
+        }
         if (f.size > PDF_MAX){ UI.alert("حجم ملف PDF أكبر من 3 ميجابايت. صغّر الملف أو انسخ نصه والصقه هنا."); return; }
         const buf = new Uint8Array(await f.arrayBuffer()); let bin = ""; for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
         pdf = { name, data: btoa(bin) };
@@ -213,14 +220,14 @@
     if (mode === "create" && !v("inIdea")){ UI.toast("اكتب فكرة المبادرة", "err"); $("inIdea").focus(); return; }
     if (mode === "create" && !v("inAssoc")){ UI.toast("اكتب اسم الجمعية", "err"); $("inAssoc").focus(); return; }
     const prompt = mode === "create" ? createPrompt() : analyzePrompt();
-    cur = { kind: mode === "create" ? "doc" : "analysis", markdown: "", input: mode === "create" ? formInput() : { anText: v("anText").slice(0, 30000), pdfName: pdf ? pdf.name : "" }, assocName: mode === "create" ? v("inAssoc") : "", title: "" };
+    cur = { kind: mode === "create" ? "doc" : "analysis", markdown: "", input: mode === "create" ? formInput() : { anText: v("anText").slice(0, 30000), pdfName: pdf ? pdf.name : "", pdfUrl: pdf && pdf.url ? pdf.url : "" }, assocName: mode === "create" ? v("inAssoc") : "", title: "" };
     curId = null; showResult(); setRun(true, "جارٍ الكتابة…");
     const ctl = new AbortController(); running = ctl; const t0 = Date.now();
     const tick = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); $("resRun").textContent = `جارٍ الكتابة… ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} · ${cur.markdown.length.toLocaleString("en")} حرف`; }, 1000);
     let err = "";
     try {
       const token = window.appUser && window.appUser.getIdToken ? await window.appUser.getIdToken() : "";
-      const r = await fetch("/api/initiative", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + token }, body: JSON.stringify({ mode, prompt, ...(mode === "analyze" && pdf ? { pdf: pdf.data } : {}) }), signal: ctl.signal });
+      const r = await fetch("/api/initiative", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + token }, body: JSON.stringify({ mode, prompt, ...(mode === "analyze" && pdf ? (pdf.url ? { pdfUrl: pdf.url } : { pdf: pdf.data }) : {}) }), signal: ctl.signal });
       if (!r.ok){ let j = {}; try { j = await r.json(); } catch {} err = j.error || (r.status === 404 ? "not_configured" : "server"); }
       else {
         const rd = r.body.getReader(), dec = new TextDecoder(); let last = 0;
@@ -248,7 +255,8 @@
     $("iniForms").hidden = true; $("iniResult").hidden = false;
     $("resName").textContent = cur.title || (cur.kind === "doc" ? "وثيقة جديدة" : "تحليل الوثيقة");
     $("resEditor").hidden = true; $("resEdit").setAttribute("aria-pressed", "false");
-    $("resAgain").hidden = !cur.input || cur.legacy || (!!cur.input.pdfName && (!pdf || pdf.name !== cur.input.pdfName)); $("resSaved").textContent = curId ? "محفوظة في سجلّي" : "";
+    $("resAgain").hidden = !cur.input || cur.legacy || (!!cur.input.pdfName && !cur.input.pdfUrl && (!pdf || pdf.name !== cur.input.pdfName));
+    $("resFile").hidden = !(cur.input && cur.input.pdfUrl); if (cur.input && cur.input.pdfUrl) $("resFile").href = cur.input.pdfUrl; $("resSaved").textContent = curId ? "محفوظة في سجلّي" : "";
     $("resSave").hidden = !canEdit(cur);
     paint(); window.scrollTo(0, 0);
   }
@@ -264,7 +272,7 @@
   $("resAgain").addEventListener("click", async () => {
     if (!(await UI.confirm("إعادة الكتابة من جديد بنفس المدخلات؟ تُنشأ وثيقة جديدة وتبقى هذه في سجلّي.", { ok: "إعادة الكتابة" }))) return;
     const inp = cur.input, kind = cur.kind; closeResult();
-    if (kind === "doc"){ setTab("create"); fillForm(inp); generate("create"); } else { setTab("analyze"); $("anText").value = inp.anText || ""; syncAn(); generate("analyze"); }
+    if (kind === "doc"){ setTab("create"); fillForm(inp); generate("create"); } else { setTab("analyze"); $("anText").value = inp.anText || ""; if (inp.pdfUrl){ pdf = { name: inp.pdfName, url: inp.pdfUrl }; showFile(inp.pdfName, true); } syncAn(); generate("analyze"); }
   });
 
   /* ---------- saving (سجلّي) ---------- */

@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261122k"></script>
-<link rel="stylesheet" href="css/library.css?v=20261122k">
-<link rel="stylesheet" href="css/app.css?v=20261122k">
+<script src="js/boot.js?v=20261123a"></script>
+<link rel="stylesheet" href="css/library.css?v=20261123a">
+<link rel="stylesheet" href="css/app.css?v=20261123a">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -669,6 +669,7 @@
           <div class="ig-rt"><h1 id="resName"></h1><span class="muted-text" id="resSaved"></span><span class="ig-run" id="resRun" hidden></span></div>
           <div class="actions">
             <button class="btn small danger" type="button" id="resStop" hidden>إيقاف</button>
+            <a class="btn small" id="resFile" target="_blank" rel="noopener" hidden>الملف الأصلي</a>
             <button class="btn small" type="button" id="resAgain">إعادة الكتابة</button>
             <button class="btn small" type="button" id="resEdit" aria-pressed="false">تعديل النص</button>
             <button class="btn small" type="button" id="resWord">تنزيل Word</button>
@@ -740,6 +741,7 @@
         <button type="button" role="tab" data-atab="fonts" aria-selected="false">الخطوط</button>
         <button type="button" role="tab" data-atab="slider" aria-selected="false">السلايدر</button>
         <button type="button" role="tab" data-atab="users" aria-selected="false">المستخدمون</button>
+        <button type="button" role="tab" data-atab="links" aria-selected="false">الربط</button>
       </div>
       <p class="s-msg" id="sMsg" role="status"></p>
       <p class="muted-text s-signin" id="sSignin">سجّل الدخول لحفظ الإعدادات. التغييرات هنا تظهر فوراً لكنها لا تُحفظ قبل تسجيل الدخول</p>
@@ -814,6 +816,15 @@
           </div>
         </section>
 
+        <section class="card wide" data-atab="links" aria-labelledby="sCd" hidden><div class="card-h"><h2 id="sCd">Cloudinary: رفع الملفات</h2></div>
+          <p class="muted-text">الملفات المرفقة في المهام وملفات PDF في تحليل الوثائق تُرفع إلى حسابك في Cloudinary. من لوحة Cloudinary: Settings › Upload › Upload presets › Add upload preset، واجعل Signing mode = Unsigned.</p>
+          <div class="s-row"><label for="cdName">اسم الحساب (Cloud name)</label><input class="input" id="cdName" dir="ltr" placeholder="my-cloud" autocomplete="off"></div>
+          <div class="s-row"><label for="cdPreset">اسم الـUpload preset</label><input class="input" id="cdPreset" dir="ltr" placeholder="site_unsigned" autocomplete="off"></div>
+          <div class="s-row"><label for="cdFolder">المجلد <span class="muted-text">اختياري</span></label><input class="input" id="cdFolder" dir="ltr" placeholder="governance-office" autocomplete="off"></div>
+          <p class="cd-state" id="cdState"></p>
+          <div class="hr-actions"><button class="btn primary" type="button" id="cdSave">حفظ</button><button class="btn" type="button" id="cdTest">تجربة الرفع</button></div>
+          <p class="muted-text">ملاحظة: الحسابات المجانية تمنع عرض ملفات PDF افتراضياً. فعّل من Settings › Security خيار «Allow delivery of PDF and ZIP files» حتى تفتح ملفات PDF ويقرأها التحليل.</p>
+        </section>
         <section class="card wide" data-atab="users" aria-labelledby="s5"><div class="card-h"><h2 id="s5">المستخدمون والصلاحيات</h2></div>
           <p class="muted-text" id="uSignin">سجّل الدخول لإدارة المستخدمين</p>
           <div id="uNoAdmin" class="u-help" hidden>
@@ -1087,23 +1098,24 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261122k"></script>
-<script src="js/library.js?v=20261122k"></script>
+<script src="js/ui.js?v=20261123a"></script>
+<script src="js/library.js?v=20261123a"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/task-core.js?v=20261122k"></script>
-<script src="js/smart-task.js?v=20261122k"></script>
-<script src="js/reminders.js?v=20261122k"></script>
-<script src="js/home.js?v=20261122k"></script>
-<script src="js/tasks.js?v=20261122k"></script>
-<script src="js/task-detail.js?v=20261122k"></script>
-<script src="js/slider.js?v=20261122k"></script>
-<script src="js/settings.js?v=20261122k"></script>
-<script src="js/fonts.js?v=20261122k"></script>
-<script src="js/hr.js?v=20261122k"></script>
-<script src="js/initiatives.js?v=20261122k"></script>
-<script src="js/requests.js?v=20261122k"></script>
-<script src="js/table-tools.js?v=20261122k"></script>
-<script src="js/login.js?v=20261122k"></script>
-<script src="js/shell.js?v=20261122k"></script>
+<script src="js/cloud.js?v=20261123a"></script>
+<script src="js/task-core.js?v=20261123a"></script>
+<script src="js/smart-task.js?v=20261123a"></script>
+<script src="js/reminders.js?v=20261123a"></script>
+<script src="js/home.js?v=20261123a"></script>
+<script src="js/tasks.js?v=20261123a"></script>
+<script src="js/task-detail.js?v=20261123a"></script>
+<script src="js/slider.js?v=20261123a"></script>
+<script src="js/settings.js?v=20261123a"></script>
+<script src="js/fonts.js?v=20261123a"></script>
+<script src="js/hr.js?v=20261123a"></script>
+<script src="js/initiatives.js?v=20261123a"></script>
+<script src="js/requests.js?v=20261123a"></script>
+<script src="js/table-tools.js?v=20261123a"></script>
+<script src="js/login.js?v=20261123a"></script>
+<script src="js/shell.js?v=20261123a"></script>
 </body>
 </html>

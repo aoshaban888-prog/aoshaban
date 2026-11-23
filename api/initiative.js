@@ -35,7 +35,9 @@ export default async function handler(req, res){
   const pdf = body.mode === "analyze" && typeof body.pdf === "string" && body.pdf ? body.pdf.replace(/\s+/g, "") : "";
   if (pdf.length > MAX_PDF) return res.status(413).json({ error: "too_long" });
   if (pdf && !/^[A-Za-z0-9+/]+=*$/.test(pdf)) return res.status(400).json({ error: "bad_request" });
-  const content = pdf ? [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: pdf } }, { type: "text", text: prompt }] : prompt;
+  // or as a link to the file uploaded to Cloudinary (larger files), which Claude reads from there
+  const pdfUrl = body.mode === "analyze" && typeof body.pdfUrl === "string" && /^https:\/\/res\.cloudinary\.com\/[\w-]+\/[^\s]+$/.test(body.pdfUrl) ? body.pdfUrl : "";
+  const content = pdfUrl ? [{ type: "document", source: { type: "url", url: pdfUrl } }, { type: "text", text: prompt }] : pdf ? [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: pdf } }, { type: "text", text: prompt }] : prompt;
 
   const client = new Anthropic();
   let started = false;

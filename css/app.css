@@ -1269,3 +1269,6 @@ body.rq-open{overflow:hidden}
 .ig-or{display:flex;align-items:center;gap:10px;margin:0;font-size:13px;color:var(--muted)}
 .ig-or::before,.ig-or::after{content:"";flex:1;border-top:1px solid var(--line-soft)}
 .ig-drop[hidden]{display:none}
+
+.cd-state{margin:4px 0 10px;padding:8px 12px;border-radius:8px;background:var(--line-soft);font-size:13px;color:var(--ink-2)}
+.cd-state.on{background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--ok)}
