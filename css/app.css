@@ -1272,3 +1272,4 @@ body.rq-open{overflow:hidden}
 
 .cd-state{margin:4px 0 10px;padding:8px 12px;border-radius:8px;background:var(--line-soft);font-size:13px;color:var(--ink-2)}
 .cd-state.on{background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--ok)}
+.ui-dialog p{overflow-wrap:anywhere;white-space:pre-line}
