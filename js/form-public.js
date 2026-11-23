@@ -5,20 +5,47 @@
   const CONFIG = { apiKey: "AIzaSyBa4DhloyfrfAU_9RAe_Ac-qnTZhd-LdiA", authDomain: "aoshaban-87979.firebaseapp.com", projectId: "aoshaban-87979", storageBucket: "aoshaban-87979.firebasestorage.app", messagingSenderId: "681076685044", appId: "1:681076685044:web:99b1e1c9a202cfa43e46a1" };
   const root = document.getElementById("fp");
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const qp = new URLSearchParams(location.search), id = qp.get("id"), preview = qp.get("preview") === "1";
+  const qp = new URLSearchParams(location.search), id = qp.get("id"), preview = qp.get("preview") === "1", embed = qp.get("embed") === "1";
+  if (embed) document.documentElement.classList.add("embed");
   const CHOICE = new Set(["radio", "check", "select"]);
-  let form = null, db = null, page = 0, answers = {}, uploading = 0;
+  let form = null, db = null, page = 0, answers = {}, uploading = 0, L = {};
 
   function message(title, text, icon = "!"){ root.innerHTML = `<section class="fp-card fp-msg"><span class="fp-mi${icon === "✓" ? " ok" : ""}">${icon}</span><h1>${esc(title)}</h1><p>${esc(text)}</p></section>${foot()}`; }
-  const foot = () => form && form.brand && form.brand.siteName ? `<p class="fp-foot"><b>${esc(form.brand.siteName)}</b> · لا تشارك كلمات المرور أو المعلومات الحساسة عبر هذا النموذج.</p>` : "";
-  // the site's identity copied into the form: logo and name on top, its colours and font everywhere
-  function applyBrand(){
-    const b = form.brand || {}, st = document.documentElement.style;
-    if (b.a1) st.setProperty("--a1", b.a1); if (b.a2) st.setProperty("--a2", b.a2);
-    if (b.font){ const l = document.createElement("link"); l.rel = "stylesheet"; l.href = `https://fonts.googleapis.com/css2?family=${b.font.replace(/ /g, "+")}:wght@400;500;600;700&display=swap`; document.head.append(l); st.setProperty("--font", `"${b.font}",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif`); }
-    if (b.logo || b.siteName){ const top = document.createElement("header"); top.className = "fp-top"; top.innerHTML = `${b.logo ? `<img src="${esc(b.logo)}" alt="">` : ""}<b>${esc(b.siteName || "")}</b>`; root.before(top); }
-    if (b.logo){ const ic = document.createElement("link"); ic.rel = "icon"; ic.href = b.logo; document.head.append(ic); }
+  const foot = () => { if (!form) return ""; const t = L.footer ? esc(L.footer) : `${L.orgName ? `<b>${esc(L.orgName)}</b> · ` : ""}لا تشارك كلمات المرور أو المعلومات الحساسة عبر هذا النموذج.`; return `<p class="fp-foot">${t}</p>`; };
+  /* the look: the site's identity (form.brand) with the form's own choices on top (form.look) */
+  const RADII = { sharp: ["4px", "3px"], medium: ["14px", "11px"], round: ["24px", "16px"] };
+  function lookOf(f){
+    const b = f.brand || {}, l = f.look || {};
+    return { a1: l.a1 || b.a1 || "#7c3aed", a2: l.a2 || b.a2 || "#c026d3", font: l.font || b.font || "IBM Plex Sans Arabic",
+      bgStyle: l.bgStyle || "soft", bg: l.bg || "#f4f2f8", radius: RADII[l.radius] ? l.radius : "medium",
+      headerStyle: l.headerStyle || "gradient", headerImage: l.headerImage || "", headerHeight: l.headerHeight || "m", overlay: l.overlay !== false,
+      logo: l.logoMode === "none" ? "" : l.logoMode === "custom" ? l.logo || "" : b.logo || "", logoSize: +l.logoSize || 40,
+      orgName: l.showOrg === false ? "" : (l.orgName || b.siteName || ""), align: l.align === "center" ? "center" : "right",
+      numbering: l.numbering !== false, chips: l.chips !== false, width: l.width === "wide" ? "wide" : "normal",
+      submitText: l.submitText || "إرسال", nextText: l.nextText || "التالي", footer: l.footer || "" };
   }
+  const fontsLoaded = new Set();
+  function applyLook(){
+    L = lookOf(form);
+    const de = document.documentElement, st = de.style;
+    st.setProperty("--a1", L.a1); st.setProperty("--a2", L.a2); st.setProperty("--bg", L.bg);
+    st.setProperty("--r", RADII[L.radius][0]); st.setProperty("--r2", RADII[L.radius][1]);
+    if (!fontsLoaded.has(L.font)){ fontsLoaded.add(L.font); const l = document.createElement("link"); l.rel = "stylesheet"; l.href = `https://fonts.googleapis.com/css2?family=${L.font.replace(/ /g, "+")}:wght@400;500;600;700&display=swap`; document.head.append(l); }
+    st.setProperty("--font", `"${L.font}",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif`);
+    de.classList.remove("bg-soft", "bg-plain", "bg-color"); de.classList.add("bg-" + L.bgStyle);
+    de.classList.toggle("al-center", L.align === "center"); de.classList.toggle("wide", L.width === "wide"); de.classList.toggle("no-num", !L.numbering);
+    let top = document.querySelector(".fp-top");
+    if (L.logo || L.orgName){ if (!top){ top = document.createElement("header"); top.className = "fp-top"; root.before(top); } top.innerHTML = `${L.logo ? `<img src="${esc(L.logo)}" alt="" style="height:${L.logoSize}px">` : ""}${L.orgName ? `<b>${esc(L.orgName)}</b>` : ""}`; }
+    else if (top) top.remove();
+    let ic = document.querySelector('link[rel="icon"]'); if (L.logo){ if (!ic){ ic = document.createElement("link"); ic.rel = "icon"; document.head.append(ic); } ic.href = L.logo; }
+  }
+  // the editor's live preview sends the look as it changes
+  window.addEventListener("message", e => {
+    if (e.origin !== location.origin || !e.data || e.data.type !== "fp-look" || !form) return;
+    form.look = e.data.look || {}; if (e.data.brand) form.brand = e.data.brand;
+    if (typeof e.data.title === "string"){ form.title = e.data.title; form.description = e.data.description || ""; }
+    applyLook(); if (document.getElementById("fpForm")){ collect(); render(true); }
+  });
   if (!id){ message("رابط غير صحيح", "تأكد من رابط الاستبيان."); return; }
   if (!window.firebase){ message("تعذّر التحميل", "تحقق من اتصالك بالإنترنت ثم أعد المحاولة."); return; }
   firebase.initializeApp(CONFIG); db = firebase.firestore();
@@ -35,7 +62,7 @@
       form = d.data();
     } catch { message("الاستبيان غير متاح", "هذا الاستبيان لا يستقبل ردوداً حالياً."); return; }
     document.title = form.title || "استبيان";
-    applyBrand();
+    applyLook();
     const s = form.settings || {};
     const closed = !form.active || (s.closeAt && new Date(s.closeAt + "T23:59:59") < new Date());
     if (closed && !preview){ message(form.title || "استبيان", "هذا الاستبيان مغلق ولا يستقبل ردوداً حالياً.", "⏸"); return; }
@@ -67,22 +94,23 @@
     const type = { number: "number", email: "email", phone: "tel", date: "date", time: "time" }[q.type] || "text";
     return `<input class="fp-in" type="${type}" name="${name}" value="${esc(v || "")}" placeholder="إجابتك"${q.type === "phone" || q.type === "email" ? ' dir="ltr"' : ""}${q.type === "number" ? ' inputmode="decimal"' : ""}>`;
   }
-  function render(){
+  function render(keepScroll){
     const secs = form.sections, s = secs[page], last = page === secs.length - 1, showP = (form.settings || {}).showProgress !== false && secs.length > 1;
     const nq = secs.reduce((n, x) => n + x.questions.filter(q => q.type !== "text").length, 0), mins = Math.max(1, Math.round(nq * 0.4));
     let num = secs.slice(0, page).reduce((n, x) => n + x.questions.filter(q => q.type !== "text").length, 0);
     const plural = (n, one, two, few, many) => n === 1 ? one : n === 2 ? two : n <= 10 ? few : many;
-    root.innerHTML = `${page === 0 ? `<header class="fp-card fp-hero"><h1>${esc(form.title)}</h1>${form.description ? `<p>${esc(form.description).replace(/\n/g, "<br>")}</p>` : ""}
-        <div class="fp-chips"><span>${nq} ${plural(nq, "سؤال", "سؤالان", "أسئلة", "سؤالاً")}</span><span>نحو ${mins} ${plural(mins, "دقيقة", "دقيقتين", "دقائق", "دقيقة")}</span>${secs.length > 1 ? `<span>${secs.length} أقسام</span>` : ""}<span>الحقول المعلَّمة بـ * إجبارية</span></div></header>` : `<header class="fp-card fp-hero small"><h1>${esc(form.title)}</h1></header>`}
+    const hero = `fp-card fp-hero hs-${L.headerStyle}${L.headerStyle === "image" && L.headerImage ? ` hh-${L.headerHeight}${L.overlay ? " ov" : ""}` : ""}`, himg = L.headerStyle === "image" && L.headerImage ? ` style="background-image:url('${esc(L.headerImage)}')"` : "";
+    root.innerHTML = `${page === 0 ? `<header class="${hero}"${himg}><h1>${esc(form.title)}</h1>${form.description ? `<p>${esc(form.description).replace(/\n/g, "<br>")}</p>` : ""}
+        ${!L.chips ? "" : `<div class="fp-chips"><span>${nq} ${plural(nq, "سؤال", "سؤالان", "أسئلة", "سؤالاً")}</span><span>نحو ${mins} ${plural(mins, "دقيقة", "دقيقتين", "دقائق", "دقيقة")}</span>${secs.length > 1 ? `<span>${secs.length} أقسام</span>` : ""}<span>الحقول المعلَّمة بـ * إجبارية</span></div>`}</header>` : `<header class="${hero} small"${himg}><h1>${esc(form.title)}</h1></header>`}
       ${preview ? '<p class="fp-pv">وضع المعاينة: الإجابات لا تُرسل.</p>' : ""}
       ${showP ? `<div class="fp-steps"><div class="bar"><i style="width:${Math.round((page + 1) / secs.length * 100)}%"></i></div><span>القسم ${page + 1} من ${secs.length}</span></div>` : ""}
       <form id="fpForm" novalidate>
       ${s.title || s.desc ? `<section class="fp-card fp-sec"><h2>${esc(s.title)}</h2>${s.desc ? `<p>${esc(s.desc)}</p>` : ""}</section>` : ""}
       ${s.questions.map(q => q.type === "text" ? `<section class="fp-card fp-tb"><h2>${esc(q.title)}</h2>${q.desc ? `<p>${esc(q.desc)}</p>` : ""}</section>` :
-        `<section class="fp-card fp-q" data-qid="${q.id}"><div class="fp-qh"><span class="fp-n">${++num}</span><div><h3>${esc(q.title || "سؤال")}${q.required ? ' <b class="fp-r">*</b>' : ""}</h3>${q.desc ? `<p class="fp-d">${esc(q.desc)}</p>` : ""}</div></div><div class="fp-body">${field(q)}</div><p class="fp-err" hidden></p></section>`).join("")}
-      <div class="fp-nav">${page > 0 ? '<button type="button" class="fp-btn2" id="fpPrev">السابق</button>' : "<span></span>"}<button type="submit" class="fp-btn">${last ? "إرسال" : "التالي"}</button></div>
-      </form>${foot() || '<p class="fp-foot">لا تشارك كلمات المرور أو المعلومات الحساسة عبر هذا النموذج.</p>'}`;
-    window.scrollTo(0, 0);
+        `<section class="fp-card fp-q" data-qid="${q.id}"><div class="fp-qh">${L.numbering ? `<span class="fp-n">${++num}</span>` : ""}<div><h3>${esc(q.title || "سؤال")}${q.required ? ' <b class="fp-r">*</b>' : ""}</h3>${q.desc ? `<p class="fp-d">${esc(q.desc)}</p>` : ""}</div></div><div class="fp-body">${field(q)}</div><p class="fp-err" hidden></p></section>`).join("")}
+      <div class="fp-nav">${page > 0 ? '<button type="button" class="fp-btn2" id="fpPrev">السابق</button>' : "<span></span>"}<button type="submit" class="fp-btn">${esc(last ? L.submitText : L.nextText)}</button></div>
+      </form>${foot()}`;
+    if (!keepScroll) window.scrollTo(0, 0);
     const f = document.getElementById("fpForm");
     f.addEventListener("submit", e => { e.preventDefault(); collect(); if (!check()) return; if (last) send(); else { page++; render(); } });
     const prev = document.getElementById("fpPrev"); if (prev) prev.addEventListener("click", () => { collect(); page--; render(); });
@@ -143,6 +171,6 @@
       await db.collection("forms").doc(id).collection("responses").add({ answers: clean, at: firebase.firestore.FieldValue.serverTimestamp() });
       try { localStorage.setItem("fp-done-" + id, "1"); } catch {}
       message(form.title || "استبيان", (form.settings || {}).confirm || "شكراً لك، تم استلام إجابتك.", "✓");
-    } catch (e){ console.error(e); btn.disabled = false; btn.textContent = "إرسال"; alert("تعذّر الإرسال. ربما أُغلق الاستبيان، أو تحقق من اتصالك ثم أعد المحاولة."); }
+    } catch (e){ console.error(e); btn.disabled = false; btn.textContent = L.submitText || "إرسال"; alert("تعذّر الإرسال. ربما أُغلق الاستبيان، أو تحقق من اتصالك ثم أعد المحاولة."); }
   }
 })();

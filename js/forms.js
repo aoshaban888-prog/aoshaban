@@ -113,8 +113,8 @@
   function setTab(t){
     tab = t;
     document.querySelectorAll("[data-fmtab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.fmtab === t)));
-    $("fmBody").hidden = t !== "q"; $("fmResults").hidden = t !== "r"; $("fmSettings").hidden = t !== "s";
-    if (t === "q") renderBuilder(); if (t === "r") renderResults(); if (t === "s") renderSettings();
+    $("fmBody").hidden = t !== "q"; $("fmResults").hidden = t !== "r"; $("fmSettings").hidden = t !== "s"; $("fmLook").hidden = t !== "a";
+    if (t === "q") renderBuilder(); if (t === "r") renderResults(); if (t === "s") renderSettings(); if (t === "a") renderLook();
   }
   document.querySelectorAll("[data-fmtab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.fmtab)));
 
@@ -225,13 +225,91 @@
         <label class="s-check"><input type="checkbox" data-s="showProgress"${s.showProgress ? " checked" : ""}> <span>إظهار شريط التقدم بين الأقسام</span></label>
         <label class="ig-f"><span>إغلاق تلقائي في تاريخ <i>(اختياري)</i></span><input class="input" type="date" data-s="closeAt" value="${esc(s.closeAt)}"></label>
         <label class="ig-f"><span>رسالة الشكر بعد الإرسال</span><textarea class="input" rows="2" data-s="confirm">${esc(s.confirm)}</textarea></label></div>
-      <div class="fm-card-s"><h3>المظهر</h3><p class="muted-text">يظهر الاستبيان بهوية الموقع: الشعار والاسم والألوان والخط من التمكين التقني › الإعدادات العامة.</p></div>
     </fieldset>`;
     $("fmCopy2").addEventListener("click", () => copyLink({ ...cur, id: curId }));
   }
   $("fmSettings").addEventListener("change", e => { const k = e.target.dataset.s; if (!k) return; cur.settings[k] = e.target.type === "checkbox" ? e.target.checked : e.target.value; changed(); });
   $("fmSettings").addEventListener("input", e => { const k = e.target.dataset.s; if (!k || e.target.type === "checkbox") return; cur.settings[k] = e.target.value; changed(); });
   $("fmSettings").addEventListener("click", e => { const c = e.target.closest("[data-color]"); if (!c) return; cur.color = c.dataset.color; renderSettings(); changed(); });
+
+  /* ---------- the look (المظهر): the site's identity by default, everything adjustable, with a live preview ---------- */
+  const PALETTES = [["#7c3aed", "#c026d3"], ["#0f766e", "#14b8a6"], ["#1d4ed8", "#0ea5e9"], ["#b45309", "#f59e0b"], ["#be123c", "#f43f5e"], ["#334155", "#64748b"], ["#166534", "#65a30d"], ["#1e1b4b", "#6d28d9"]];
+  const seg = (k, val, opts) => `<div class="fm-seg" role="radiogroup">${opts.map(([v, l]) => `<button type="button" role="radio" data-lk="${k}" data-v="${v}" aria-checked="${v === val}">${l}</button>`).join("")}</div>`;
+  function look(){ const b = brand(), l = cur.look || {}; return { a1: l.a1 || b.a1, a2: l.a2 || b.a2, font: l.font || b.font, bgStyle: l.bgStyle || "soft", bg: l.bg || "#f4f2f8", radius: l.radius || "medium",
+    headerStyle: l.headerStyle || "gradient", headerImage: l.headerImage || "", headerHeight: l.headerHeight || "m", overlay: l.overlay !== false,
+    logoMode: l.logoMode || "site", logo: l.logo || "", logoSize: l.logoSize || 40, showOrg: l.showOrg !== false, orgName: l.orgName || "",
+    align: l.align || "right", numbering: l.numbering !== false, chips: l.chips !== false, width: l.width || "normal", submitText: l.submitText || "", nextText: l.nextText || "", footer: l.footer || "" }; }
+  // the preview frame is built once per form; the controls redraw on their own so the frame never reloads
+  function renderLook(){
+    const fr = $("lkFrame");
+    if (!fr || fr.dataset.id !== curId){
+      $("fmLook").innerHTML = `<div id="lkCtl"></div><div class="fm-lkp"><div class="fm-lkbar"><span>معاينة حية</span><div class="fm-seg"><button type="button" data-dev="d" aria-checked="true">حاسب</button><button type="button" data-dev="m" aria-checked="false">جوال</button></div></div>
+        <div class="fm-frame"><iframe id="lkFrame" data-id="${esc(curId)}" title="معاينة الاستبيان" src="${esc(link(curId))}&preview=1&embed=1"></iframe></div></div>`;
+      $("lkFrame").addEventListener("load", () => setTimeout(pushLook, 400));
+    } else pushLook();
+    renderControls();
+  }
+  function renderControls(){
+    const L = look(), ro = !canEdit(cur), b = brand(), fonts = Object.keys((window.SiteSettings && SiteSettings.FONTS) || { [b.font]: 1 });
+    $("lkCtl").innerHTML = `<fieldset class="fm-lk" ${ro ? "disabled" : ""}>
+      <div class="fm-card-s fm-lkh"><div><h3>المظهر</h3><p class="muted-text">يبدأ بهوية الموقع، وكل ما تغيّره هنا يخص هذا الاستبيان فقط.</p></div><button type="button" class="btn small" id="lkReset">استعادة هوية الموقع</button></div>
+      <div class="fm-card-s"><h3>الشعار واسم الجهة</h3>
+        ${seg("logoMode", L.logoMode, [["site", "شعار الموقع"], ["custom", "شعار مخصص"], ["none", "بدون شعار"]])}
+        ${L.logoMode === "custom" ? `<div class="fm-up">${L.logo ? `<img src="${esc(L.logo)}" alt="">` : '<span class="muted-text">لم يُرفع شعار</span>'}<label class="btn small">رفع شعار<input type="file" accept="image/*" data-img="logo" hidden></label></div>` : ""}
+        ${L.logoMode !== "none" ? `<label class="fm-rng"><span>حجم الشعار</span><input type="range" min="24" max="96" step="4" data-lk="logoSize" value="${L.logoSize}"><b>${L.logoSize}px</b></label>` : ""}
+        <label class="s-check"><input type="checkbox" data-lkc="showOrg"${L.showOrg ? " checked" : ""}> <span>إظهار اسم الجهة بجانب الشعار</span></label>
+        ${L.showOrg ? `<input class="input" data-lk="orgName" value="${esc(L.orgName)}" placeholder="${esc(b.siteName || "اسم الجهة")}">` : ""}</div>
+      <div class="fm-card-s"><h3>رأس الاستبيان</h3>
+        ${seg("headerStyle", L.headerStyle, [["gradient", "تدرّج"], ["solid", "لون واحد"], ["image", "صورة"], ["light", "فاتح"]])}
+        ${L.headerStyle === "image" ? `<div class="fm-up wide">${L.headerImage ? `<img src="${esc(L.headerImage)}" alt="">` : '<span class="muted-text">ارفع صورة عريضة (1600×500 تقريباً)</span>'}<label class="btn small">${L.headerImage ? "تغيير الصورة" : "رفع صورة"}<input type="file" accept="image/*" data-img="headerImage" hidden></label></div>
+          <div class="fm-row2"><span class="fm-lbl">الارتفاع</span>${seg("headerHeight", L.headerHeight, [["s", "صغير"], ["m", "متوسط"], ["l", "كبير"]])}</div>
+          <label class="s-check"><input type="checkbox" data-lkc="overlay"${L.overlay ? " checked" : ""}> <span>تظليل الصورة لوضوح العنوان</span></label>` : ""}
+        <div class="fm-row2"><span class="fm-lbl">محاذاة العنوان</span>${seg("align", L.align, [["right", "يمين"], ["center", "وسط"]])}</div>
+        <label class="s-check"><input type="checkbox" data-lkc="chips"${L.chips ? " checked" : ""}> <span>إظهار عدد الأسئلة والوقت المتوقع</span></label></div>
+      <div class="fm-card-s"><h3>الألوان</h3>
+        <div class="fm-pal">${PALETTES.map(([x, y]) => `<button type="button" data-pal="${x},${y}" style="background:linear-gradient(135deg,${x},${y})" aria-pressed="${x === L.a1 && y === L.a2}" aria-label="لوحة ألوان"></button>`).join("")}</div>
+        <div class="fm-row2"><label class="fm-color"><span>اللون الأساسي</span><input type="color" data-lk="a1" value="${esc(L.a1)}"></label><label class="fm-color"><span>اللون الثاني</span><input type="color" data-lk="a2" value="${esc(L.a2)}"></label></div>
+        <div class="fm-row2"><span class="fm-lbl">الخلفية</span>${seg("bgStyle", L.bgStyle, [["soft", "ناعمة"], ["plain", "سادة"], ["color", "لون مخصص"]])}${L.bgStyle === "color" ? `<input type="color" data-lk="bg" value="${esc(L.bg)}">` : ""}</div></div>
+      <div class="fm-card-s"><h3>الخط والشكل</h3>
+        <label class="ig-f"><span>الخط</span><select class="select" data-lk="font">${fonts.map(f => `<option${f === L.font ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
+        <div class="fm-row2"><span class="fm-lbl">الزوايا</span>${seg("radius", L.radius, [["sharp", "حادة"], ["medium", "متوسطة"], ["round", "دائرية"]])}</div>
+        <div class="fm-row2"><span class="fm-lbl">العرض</span>${seg("width", L.width, [["normal", "عادي"], ["wide", "عريض"]])}</div>
+        <label class="s-check"><input type="checkbox" data-lkc="numbering"${L.numbering ? " checked" : ""}> <span>ترقيم الأسئلة</span></label></div>
+      <div class="fm-card-s"><h3>النصوص</h3>
+        <div class="fm-row2"><label class="ig-f"><span>زر الإرسال</span><input class="input" data-lk="submitText" value="${esc(L.submitText)}" placeholder="إرسال"></label><label class="ig-f"><span>زر التالي</span><input class="input" data-lk="nextText" value="${esc(L.nextText)}" placeholder="التالي"></label></div>
+        <label class="ig-f"><span>نص التذييل <i>(اختياري)</i></span><input class="input" data-lk="footer" value="${esc(L.footer)}" placeholder="مثال: جميع الإجابات سرية وتُستخدم لأغراض التطوير فقط"></label></div>
+    </fieldset>`;
+    $("lkReset").addEventListener("click", async () => { if (!(await UI.confirm("استعادة هوية الموقع وإلغاء كل تخصيصات المظهر لهذا الاستبيان؟", { ok: "استعادة" }))) return; cur.look = {}; changed(); pushLook(); renderControls(); });
+  }
+  function pushLook(){ const fr = $("lkFrame"); if (fr && fr.contentWindow) fr.contentWindow.postMessage({ type: "fp-look", look: cur.look || {}, brand: brand(), title: cur.title, description: cur.description }, location.origin); }
+  function setLook(k, v, redraw){ cur.look = { ...(cur.look || {}), [k]: v }; changed(); pushLook(); if (redraw) renderControls(); }
+  $("fmLook").addEventListener("input", e => { const k = e.target.dataset.lk; if (!k) return; const v = e.target.type === "range" ? +e.target.value : e.target.value; if (e.target.type === "range") e.target.nextElementSibling.textContent = v + "px"; setLook(k, v); });
+  $("fmLook").addEventListener("change", e => {
+    const t = e.target;
+    if (t.dataset.lkc){ setLook(t.dataset.lkc, t.checked, ["showOrg", "overlay"].includes(t.dataset.lkc)); return; }
+    if (t.tagName === "SELECT" && t.dataset.lk){ setLook(t.dataset.lk, t.value); return; }
+    if (t.dataset.img){ const f = t.files[0]; if (f) pickImage(t.dataset.img, f); }
+  });
+  $("fmLook").addEventListener("click", e => {
+    const s = e.target.closest("[data-lk][data-v]"); if (s){ setLook(s.dataset.lk, s.dataset.v, true); return; }
+    const p = e.target.closest("[data-pal]"); if (p){ const [a1, a2] = p.dataset.pal.split(","); cur.look = { ...(cur.look || {}), a1, a2 }; changed(); pushLook(); renderLookKeepFrame(); return; }
+    const d = e.target.closest("[data-dev]"); if (d){ document.querySelectorAll("[data-dev]").forEach(x => x.setAttribute("aria-checked", String(x === d))); $("fmLook").querySelector(".fm-frame").classList.toggle("mobile", d.dataset.dev === "m"); }
+  });
+  const renderLookKeepFrame = () => renderControls();
+  async function pickImage(key, f){
+    try {
+      $("fmState").textContent = "جارٍ رفع الصورة…";
+      let url;
+      if (window.Cloud && Cloud.ready()) url = (await Cloud.upload(f, { folder: "forms" })).url;
+      else url = await shrinkImage(f, key === "logo" ? 400 : 1600, key === "logo" ? "image/png" : "image/jpeg");
+      cur.look = { ...(cur.look || {}), [key]: url }; changed(); pushLook(); renderLookKeepFrame();
+    } catch (e){ console.error(e); UI.alert(e.message === "too_big" ? "الصورة كبيرة، اختر صورة أصغر." : "تعذّر رفع الصورة"); $("fmState").textContent = ""; }
+  }
+  function shrinkImage(f, maxW, type){
+    return new Promise((res, rej) => { const r = new FileReader(); r.onerror = rej; r.onload = () => { const img = new Image(); img.onerror = rej; img.onload = () => {
+      const k = Math.min(1, maxW / img.width), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      const u = c.toDataURL(type, .82); u.length <= 600000 ? res(u) : rej(new Error("too_big")); }; img.src = r.result; }; r.readAsDataURL(f); });
+  }
 
   /* ---------- results ---------- */
   function watchResponses(){
