@@ -41,7 +41,9 @@
     });
   }
   const errText = e => ({ not_configured: "رفع الملفات غير مفعّل: اضبط حساب Cloudinary من التمكين التقني › الربط.", too_big: "حجم الملف أكبر من 10 ميجابايت.", network: "انقطع الاتصال أثناء الرفع." })[e && e.message] || ("تعذّر رفع الملف: " + ((e && e.message) || ""));
-  window.Cloud = { ready, upload, errText, MAX };
+  // what a public page needs to upload (the survey page copies it into the form)
+  const config = () => ready() ? { cloudName: cfg.cloudName, preset: cfg.preset, folder: cfg.folder || "" } : null;
+  window.Cloud = { ready, upload, errText, MAX, config };
 
   /* ---------- a copy of every other file picked in the site ---------- */
   function keep(files, area){

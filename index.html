@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261123f"></script>
-<link rel="stylesheet" href="css/library.css?v=20261123f">
-<link rel="stylesheet" href="css/app.css?v=20261123f">
+<script src="js/boot.js?v=20261123g"></script>
+<link rel="stylesheet" href="css/library.css?v=20261123g">
+<link rel="stylesheet" href="css/app.css?v=20261123g">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -68,6 +68,7 @@
       <button class="nav-group" data-sec="projects" type="button" id="prjBtn" data-group="projects" aria-expanded="false" aria-controls="prjSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 14h8M8 11h4"/></svg><span>إدارة المشاريع</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="nav-sub" data-sec="projects" id="prjSub" hidden>
         <a class="sub" href="#/projects/initiatives"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>منشئ وثائق المبادرات</a>
+        <a class="sub" href="#/projects/forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>الاستبيانات</a>
       </div>
       <button class="nav-group" type="button" id="admBtn" data-group="admin" data-sec="admin" aria-expanded="false" aria-controls="admSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>التمكين التقني</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="nav-sub" id="admSub" data-sec="admin" hidden>
@@ -712,6 +713,37 @@
       </div>
       <p class="muted-text" id="iniSignin">سجّل الدخول لاستخدام منشئ الوثائق</p>
     </section>
+    <section class="view" data-view="projects/forms" hidden>
+      <div id="fmHome">
+        <header class="page-h">
+          <div><p class="crumb">إدارة المشاريع</p><h1>الاستبيانات</h1><p class="rq-subh">أنشئ استبيانات وعدّلها وشارك رابطها وتابع الردود.</p></div>
+          <div class="actions"><div class="fm-views" role="group" aria-label="طريقة العرض"><button type="button" data-fmview="grid" aria-label="بطاقات" title="بطاقات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button><button type="button" data-fmview="list" aria-label="قائمة" title="قائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button></div>
+            <button class="btn primary" type="button" id="fmNew">+ إنشاء استبيان جديد</button></div>
+        </header>
+        <div class="rq-filters">
+          <div class="rq-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="input" id="fmQ" type="search" placeholder="ابحث بعنوان الاستبيان" aria-label="بحث في الاستبيانات"></div>
+          <select class="select" id="fmFStatus" aria-label="الحالة"><option value="">كل الحالات</option><option value="on">فعّال</option><option value="off">غير فعّال</option></select>
+        </div>
+        <div class="fm-list grid" id="fmList"></div>
+        <p class="ig-empty" id="fmEmpty" hidden></p>
+      </div>
+      <p class="muted-text" id="fmSignin">سجّل الدخول لعرض الاستبيانات</p>
+      <div id="fmEditor" hidden>
+        <header class="ig-rbar">
+          <button class="btn small ghost" type="button" id="fmBack"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>الاستبيانات</button>
+          <div class="ig-rt"><h1 id="fmTitle"></h1><span class="muted-text" id="fmState"></span></div>
+          <div class="actions">
+            <label class="fm-switch"><input type="checkbox" role="switch" id="fmActive"> <span id="fmActiveL"></span></label>
+            <button class="btn small" type="button" id="fmPreview">معاينة</button><button class="btn small" type="button" id="fmCopy">نسخ الرابط</button><button class="btn small" type="button" id="fmPrint">طباعة</button>
+          </div>
+        </header>
+        <p class="muted-text" id="fmRO" hidden>هذا الاستبيان لغيرك: تقدر تطّلع عليه وعلى ردوده، والتعديل لصاحبه.</p>
+        <div class="fm-tabs" role="tablist"><button type="button" role="tab" data-fmtab="q" aria-selected="true">الأسئلة</button><button type="button" role="tab" data-fmtab="r" aria-selected="false">الردود <span class="rq-count" id="fmRN">0</span></button><button type="button" role="tab" data-fmtab="s" aria-selected="false">الإعدادات</button></div>
+        <div class="fm-pane" id="fmBody"></div>
+        <div class="fm-pane" id="fmResults" hidden></div>
+        <div class="fm-pane" id="fmSettings" hidden></div>
+      </div>
+    </section>
     <section class="view" data-view="admin/permissions" hidden>
       <header class="page-h"><div><p class="crumb">التمكين التقني</p><h1>صلاحيات المستخدمين</h1></div></header>
       <p class="muted-text" id="pmSignin">سجّل الدخول لضبط الصلاحيات</p>
@@ -1129,25 +1161,26 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261123f"></script>
-<script src="js/library.js?v=20261123f"></script>
+<script src="js/ui.js?v=20261123g"></script>
+<script src="js/library.js?v=20261123g"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/cloud.js?v=20261123f"></script>
-<script src="js/task-core.js?v=20261123f"></script>
-<script src="js/smart-task.js?v=20261123f"></script>
-<script src="js/reminders.js?v=20261123f"></script>
-<script src="js/home.js?v=20261123f"></script>
-<script src="js/tasks.js?v=20261123f"></script>
-<script src="js/task-detail.js?v=20261123f"></script>
-<script src="js/slider.js?v=20261123f"></script>
-<script src="js/settings.js?v=20261123f"></script>
-<script src="js/fonts.js?v=20261123f"></script>
-<script src="js/hr.js?v=20261123f"></script>
-<script src="js/assocs.js?v=20261123f"></script>
-<script src="js/initiatives.js?v=20261123f"></script>
-<script src="js/requests.js?v=20261123f"></script>
-<script src="js/table-tools.js?v=20261123f"></script>
-<script src="js/login.js?v=20261123f"></script>
-<script src="js/shell.js?v=20261123f"></script>
+<script src="js/cloud.js?v=20261123g"></script>
+<script src="js/task-core.js?v=20261123g"></script>
+<script src="js/smart-task.js?v=20261123g"></script>
+<script src="js/reminders.js?v=20261123g"></script>
+<script src="js/home.js?v=20261123g"></script>
+<script src="js/tasks.js?v=20261123g"></script>
+<script src="js/task-detail.js?v=20261123g"></script>
+<script src="js/slider.js?v=20261123g"></script>
+<script src="js/settings.js?v=20261123g"></script>
+<script src="js/fonts.js?v=20261123g"></script>
+<script src="js/hr.js?v=20261123g"></script>
+<script src="js/assocs.js?v=20261123g"></script>
+<script src="js/forms.js?v=20261123g"></script>
+<script src="js/initiatives.js?v=20261123g"></script>
+<script src="js/requests.js?v=20261123g"></script>
+<script src="js/table-tools.js?v=20261123g"></script>
+<script src="js/login.js?v=20261123g"></script>
+<script src="js/shell.js?v=20261123g"></script>
 </body>
 </html>

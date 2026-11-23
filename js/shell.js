@@ -7,6 +7,7 @@
     "hr/letters": "الخطابات",
     "hr/requests": "الطلبات",
     "projects/initiatives": "منشئ وثائق المبادرات",
+    "projects/forms": "الاستبيانات",
     "admin": "التمكين التقني",
     "admin/requests": "إدارة الطلبات الإدارية",
     "admin/permissions": "صلاحيات المستخدمين",

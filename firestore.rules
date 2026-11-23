@@ -131,6 +131,23 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // surveys: the team builds them; anyone may read an active one and send an answer (the public form page)
+    match /forms/{id} {
+      allow get: if resource.data.get("active", false) == true || section("projects");
+      allow list: if section("projects");
+      allow create: if section("projects") && request.resource.data.owner == myEmail() && request.resource.data.title is string && request.resource.data.title.size() <= 300;
+      allow update: if section("projects") && (isAdmin() || resource.data.owner == myEmail()) && request.resource.data.owner == resource.data.owner;
+      allow delete: if section("projects") && (isAdmin() || resource.data.owner == myEmail());
+      match /responses/{r} {
+        allow create: if get(/databases/$(database)/documents/forms/$(id)).data.get("active", false) == true
+          && request.resource.data.keys().hasOnly(["answers", "at"])
+          && request.resource.data.answers is map && request.resource.data.answers.size() <= 300
+          && request.resource.data.at == request.time;
+        allow read: if section("projects");
+        allow delete: if section("projects") && (isAdmin() || get(/databases/$(database)/documents/forms/$(id)).data.owner == myEmail());
+      }
+    }
+
     // governance library (policies and associations are also read by the letters and the home page)
     match /policies/{id} {
       allow read: if allowed();
