@@ -27,8 +27,11 @@
 
   const numOf = w => /^\d+$/.test(w) ? +w : NUMS[w] ?? null;
 
+  // hours written as words after «الساعة» (الساعة العاشرة → الساعة 10)
+  const HOUR_WORDS = [["الحادية عشرة", 11], ["الحادية عشر", 11], ["الحاديه عشر", 11], ["الثانية عشرة", 12], ["الثانية عشر", 12], ["الثانيه عشر", 12], ["الواحدة", 1], ["الواحده", 1], ["الثانية", 2], ["الثانيه", 2], ["الثالثة", 3], ["الثالثه", 3], ["الرابعة", 4], ["الرابعه", 4], ["الخامسة", 5], ["الخامسه", 5], ["السادسة", 6], ["السادسه", 6], ["السابعة", 7], ["السابعه", 7], ["الثامنة", 8], ["الثامنه", 8], ["التاسعة", 9], ["التاسعه", 9], ["العاشرة", 10], ["العاشره", 10]];
+  const hourWords = s => HOUR_WORDS.reduce((x, [w, n]) => x.replace(new RegExp(`(الساعة|الساعه)\\s+${w}(?=\\s|$)`, "g"), `$1 ${n}`), s);
   function local(text, now = new Date()){
-    const src = (text || "").replace(/(\d)([؀-ۿ])/g, "$1 $2").replace(/([؀-ۿ])(\d)/g, "$1 $2").replace(/[،,؛]/g, " ").trim();
+    const src = hourWords(text || "").replace(/(\d)([؀-ۿ])/g, "$1 $2").replace(/([؀-ۿ])(\d)/g, "$1 $2").replace(/[،,؛]/g, " ").trim();
     const raw = src.split(/\s+/).filter(Boolean), t = raw.map(norm);
     const used = new Array(t.length).fill(false);
     let date = null, hh = null, mm = 0, ampm = null, period = null, priority = "medium", at = null, mentionedDate = false;

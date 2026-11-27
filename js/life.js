@@ -162,7 +162,7 @@
   async function addTask(title, area, goalId){
     if (!T() || !T().create){ UI.toast("قسم المهام غير متاح لحسابك", "err"); return; }
     let patch = { title };
-    if (window.SmartTask){ try { const p = SmartTask.parse(title); if (p && p.title) patch = { title: p.title, due: p.date || null, time: p.time || null, ...(p.priority ? { priority: p.priority } : {}) }; } catch {} }
+    if (window.SmartTask){ try { const p = await SmartTask.parse(title); if (p && p.title) patch = { title: p.title, due: p.date || null, time: p.time || null, ...(p.priority ? { priority: p.priority } : {}) }; } catch {} }
     const g = goals.find(x => x.id === goalId);
     if (g && !area) area = g.area || "";
     let goalValue = 0;

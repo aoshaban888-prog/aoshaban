@@ -21,7 +21,34 @@
     return fmtShort(s);
   }
   const q = () => ($("tkQ").value || "").trim();
-  const matches = t => !q() || [t.title, t.description, ...(t.tags || []), t.link && t.link.label].some(x => (x || "").includes(q()));
+  const areaName = id => { const a = (window.LifeAreas || []).find(x => x.id === id); return a ? a.name : ""; };
+  const textOf = t => [t.title, t.description, ...(t.tags || []), t.link && t.link.label, areaName(t.area), (projectOf(t.projectId) || {}).name].join(" ");
+  /* the smart lists: worked out from each task's own fields, so a task is never stored twice */
+  let list = "all", filt = { priority: "", area: "", project: "", status: "" }, sortBy = "smart", statsHidden = false;
+  try { const s = JSON.parse(localStorage.getItem("app-tasks-ui") || "{}"); list = s.list || "all"; filt = { ...filt, ...(s.filt || {}) }; sortBy = s.sortBy || "smart"; statsHidden = !!s.statsHidden; } catch {}
+  const saveUi = () => { try { localStorage.setItem("app-tasks-ui", JSON.stringify({ list, filt, sortBy, statsHidden })); } catch {} };
+  const isOpen = t => !C.CLOSED.has(t.status);
+  const addDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return C.ymd(d); };
+  const LISTS = [
+    ["all", "كل المهام", t => !t.archived && isOpen(t), '<path d="M4 6h16M4 12h16M4 18h16"/>'],
+    ["inbox", "صندوق الوارد", t => !t.archived && isOpen(t) && !t.due && !t.area && !t.projectId && !t.goalId, '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>'],
+    ["today", "اليوم", t => !t.archived && isOpen(t) && t.due === today(), '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'],
+    ["tomorrow", "الغد", t => !t.archived && isOpen(t) && t.due === addDays(1), '<path d="M17 18a5 5 0 1 0-10 0"/><path d="M12 2v7M4.2 10.2l1.4 1.4M1 18h2M21 18h2M18.4 11.6l1.4-1.4M23 22H1M8 6l4-4 4 4"/>'],
+    ["week", "هذا الأسبوع", t => !t.archived && isOpen(t) && t.due && t.due >= today() && t.due <= addDays(6), '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'],
+    ["upcoming", "القادمة", t => !t.archived && isOpen(t) && t.due && t.due > today(), '<path d="M5 12h14M13 6l6 6-6 6"/>'],
+    ["overdue", "المتأخرة", t => !t.archived && isOpen(t) && t.due && t.due < today(), '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'],
+    ["doing", "قيد التنفيذ", t => !t.archived && t.status === "doing", '<path d="M5 3l14 9-14 9z"/>'],
+    ["waiting", "بانتظار طرف آخر", t => !t.archived && t.status === "waiting", '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5"/><circle cx="17" cy="16" r="4"/><path d="M17 14v2l1 1"/>'],
+    ["recurring", "المتكررة", t => !t.archived && isOpen(t) && !!t.recurrence, '<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>'],
+    ["nodate", "دون موعد", t => !t.archived && isOpen(t) && !t.due, '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M9 15l6 4M15 15l-6 4"/>'],
+    ["done", "المكتملة", t => !t.archived && t.status === "done", '<path d="M20 6 9 17l-5-5"/>'],
+    ["archived", "المؤرشفة", t => t.archived, '<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/>'],
+  ];
+  const LIST = Object.fromEntries(LISTS.map(l => [l[0], l]));
+  const inList = t => (LIST[list] || LIST.all)[2](t);
+  const passFilters = t => (!filt.priority || t.priority === filt.priority) && (!filt.area || (filt.area === "_none" ? !t.area : t.area === filt.area))
+    && (!filt.project || (filt.project === "_none" ? !t.projectId : t.projectId === filt.project)) && (!filt.status || t.status === filt.status);
+  const matches = t => inList(t) && passFilters(t) && (!q() || textOf(t).includes(q()));
   const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.createdAt).localeCompare(String(b.createdAt));
   const childrenOf = id => kids.get(id) || [];
   const pct = t => C.progress(t, childrenOf(t.id));
@@ -199,6 +226,8 @@
     if (t.assignee && t.assignee !== me){ const w = el.querySelector(".tk-who"); w.hidden = false; w.textContent = personName(t.assignee); w.title = "المسؤول"; }
     if (t.link){ const b = el.querySelector(".tk-link"); b.hidden = false; b.textContent = t.link.label; b.title = t.link.type === "policy" ? "فتح اللائحة" : "فتح سجل الخطابات";
       b.addEventListener("click", e => { e.stopPropagation(); openLink(t.link); }); }
+    if (db && canEdit(t)){ const mb = document.createElement("button"); mb.type = "button"; mb.className = "tk-kebab"; mb.setAttribute("aria-label", "خيارات المهمة"); mb.textContent = "⋯"; mb.addEventListener("click", e => { e.stopPropagation(); actionMenu(mb, t); }); el.querySelector(".tk-top").append(mb); }
+    if (t.mit === today()) el.classList.add("is-mit");
     el.addEventListener("click", () => TaskDetail.open(t.id));
     el.addEventListener("keydown", e => { if (e.key === "Enter") TaskDetail.open(t.id); });
     el.addEventListener("dragstart", e => { dragId = t.id; el.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", t.id); });
@@ -211,12 +240,12 @@
   }
 
   /* ---------- board ---------- */
-  const BOARD = ["todo", "doing", "review", "done"];
+  const BOARD = ["todo", "doing", "waiting", "done"];
   function renderBoard(){
     const board = $("tkBoard"); board.innerHTML = "";
     const top = tasks.filter(t => !t.parentId && matches(t));
     BOARD.forEach(st => {
-      let items = top.filter(t => t.status === st);
+      let items = top.filter(t => t.status === st || (st === "todo" && t.status === "new"));
       items = st === "done" ? items.sort((a, b) => String(b.doneAt || b.updatedAt).localeCompare(String(a.doneAt || a.updatedAt))) : items.sort(byOrder);
       const col = document.createElement("section"); col.className = "tk-col"; col.dataset.status = st;
       col.innerHTML = `<header><span class="tk-sdot"></span><h2></h2><span class="tk-count"></span></header><div class="tk-cards"></div>`;
@@ -225,7 +254,7 @@
       const list = col.querySelector(".tk-cards");
       (st === "done" ? items.slice(0, DONE_SHOWN) : items).forEach(t => list.append(card(t)));
       if (st === "done" && items.length > DONE_SHOWN){ const more = document.createElement("p"); more.className = "tk-more"; more.textContent = `و${items.length - DONE_SHOWN} مكتملة أقدم في عرض القائمة`; list.append(more); }
-      if (!items.length){ const e = document.createElement("p"); e.className = "tk-empty"; e.textContent = { todo: "لا مهام جديدة", doing: "اسحب مهمة هنا لتبدأ بها", review: "لا شيء بانتظار المراجعة", done: "لا مهام مكتملة" }[st]; list.append(e); }
+      if (!items.length){ const e = document.createElement("p"); e.className = "tk-empty"; e.textContent = { todo: "لا مهام لم تبدأ", doing: "اسحب مهمة هنا لتبدأ بها", waiting: "لا شيء بانتظار طرف آخر", done: "لا مهام مكتملة" }[st]; list.append(e); }
       if (st === "todo" && db){
         const add = document.createElement("button"); add.type = "button"; add.className = "tk-add"; add.textContent = "+ مهمة";
         add.addEventListener("click", () => TaskDetail.open(null, { status: st })); col.append(add);
@@ -259,9 +288,22 @@
   }
 
   /* ---------- list ---------- */
+  const RANK = { urgent: 0, high: 1, medium: 2, low: 3 };
+  function sorted(items){
+    const by = { due: (a, b) => (a.due || "9").localeCompare(b.due || "9") || RANK[a.priority] - RANK[b.priority],
+      priority: (a, b) => RANK[a.priority] - RANK[b.priority] || (a.due || "9").localeCompare(b.due || "9"),
+      created: (a, b) => String(b.createdAt).localeCompare(String(a.createdAt)), manual: byOrder,
+      smart: (a, b) => (a.due || "9").localeCompare(b.due || "9") || RANK[a.priority] - RANK[b.priority] }[sortBy] || byOrder;
+    return items.slice().sort(by);
+  }
   function renderList(){
     const box = $("tkList"); box.innerHTML = "";
     const top = tasks.filter(t => !t.parentId && matches(t));
+    if (list !== "all" || sortBy !== "smart"){
+      if (!top.length){ const p = document.createElement("div"); p.className = "tk-blank"; p.innerHTML = q() ? "<b>لا نتائج</b><span>جرّب كلمة أخرى</span>" : `<b>لا مهام في «${LIST[list][1]}»</b><span>${list === "inbox" ? "صندوق الوارد فارغ: كل مهامك منظمة 👌" : "اختر تصنيفاً آخر أو أضف مهمة"}</span>`; box.append(p); return; }
+      const items = list === "done" || list === "archived" ? top.slice().sort((a, b) => String(b.doneAt || b.updatedAt || "").localeCompare(String(a.doneAt || a.updatedAt || ""))) : sorted(top);
+      box.append(group(LIST[list][1], items, list === "overdue")); return;
+    }
     const open = top.filter(t => !C.CLOSED.has(t.status) && t.status !== "deferred");
     const groups = [
       ["متأخرة", open.filter(t => (dayDiff(t.due) ?? 1) < 0)],
@@ -303,6 +345,10 @@
       rp.disabled = s.disabled = !editable;
       rp.addEventListener("click", () => stepMenu(rp, t)); s.addEventListener("click", () => stepMenu(s, t));
       li.querySelector(".tk-due").textContent = t.status === "done" ? "" : dueLabel(t.due) + (t.due && t.time && window.SmartTask ? " · " + SmartTask.timeLabel(t.time) : "");
+      if (t.mit === today()){ const m = document.createElement("span"); m.className = "tk-mitb"; m.title = "من أهم مهام اليوم"; m.textContent = "★"; li.querySelector(".tk-title").before(m); }
+      if (t.area){ const a = (window.LifeAreas || []).find(x => x.id === t.area); if (a){ const s = document.createElement("span"); s.className = "tk-area"; s.style.setProperty("--c", a.color); s.textContent = a.short; li.querySelector(".tk-st").before(s); } }
+      const mb = document.createElement("button"); mb.type = "button"; mb.className = "tk-kebab"; mb.setAttribute("aria-label", "خيارات المهمة"); mb.textContent = "⋯"; mb.disabled = !db || !canEdit(t);
+      mb.addEventListener("click", e => { e.stopPropagation(); actionMenu(mb, t); }); li.append(mb);
       ul.append(li);
     });
     return sec;
@@ -314,7 +360,7 @@
     { p: 25, label: "بدأت", status: "doing" },
     { p: 50, label: "في المنتصف", status: "doing" },
     { p: 75, label: "قاربت على الانتهاء", status: "doing" },
-    { p: 90, label: "قيد المراجعة", status: "review" },
+    { p: 90, label: "بانتظار طرف آخر", status: "waiting" },
     { p: 100, label: "مكتملة", status: "done" },
   ];
   let menuEl = null;
@@ -334,8 +380,8 @@
       if (b.dataset.st){ await update(t.id, { status: b.dataset.st }); return; }
       const x = STEPS.find(y => y.p === +b.dataset.p);
       const patch = { status: x.status };
-      if (x.p > 0 && x.p < 100 && x.status !== "review") Object.assign(patch, { progressMode: "manual", progressManual: x.p });
-      else if (x.status === "review") Object.assign(patch, { progressMode: "manual", progressManual: 90 });
+      if (x.p > 0 && x.p < 100 && x.status !== "waiting") Object.assign(patch, { progressMode: "manual", progressManual: x.p });
+      else if (x.status === "waiting") Object.assign(patch, { progressMode: "manual", progressManual: 90 });
       else Object.assign(patch, { progressMode: hasParts ? t.progressMode : "manual", progressManual: x.p });
       await update(t.id, patch);
     });
@@ -362,13 +408,160 @@
     $("tkBoard").hidden = view !== "board"; $("tkList").hidden = view !== "list";
     const loading = (!db || !loaded) && !(window.appAuth && window.appAuth.user === null);
     $("tkSkel").hidden = !loading; $("tkSignin").hidden = !!db || loading;
+    $("tkLayout").hidden = !db || !loaded; $("tkStats").hidden = !db || !loaded || statsHidden; $("tkQuick").hidden = !db;
     if (!db || !loaded){ $("tkBoard").hidden = $("tkList").hidden = true; $("tkSum").hidden = true; return; }
-    renderSummary();
+    renderStats(); renderLists(); renderCtx(); renderMit();
     if (view === "board") renderBoard(); else renderList();
     if (window.TaskDetail) TaskDetail.refresh();
   }
   document.querySelectorAll("[data-tkview]").forEach(b => b.addEventListener("click", () => setView(b.dataset.tkview)));
   $("tkQ").addEventListener("input", render);
+  /* ---------- the header date (Gregorian and Hijri) ---------- */
+  (() => { const d = new Date(), g = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d), hj = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn", { day: "numeric", month: "long", year: "numeric" }).format(d); $("tkDate").textContent = `${g} · ${hj}`; })();
+
+  /* ---------- the metric cards: each one opens its list ---------- */
+  const STAT = [["all", "إجمالي المهام"], ["today", "مهام اليوم"], ["upcoming", "القادمة"], ["doing", "قيد التنفيذ"], ["overdue", "المتأخرة"], ["done", "المكتملة"]];
+  const countOf = id => tasks.filter(t => !t.parentId && LIST[id][2](t)).length;
+  function renderStats(){
+    const box = $("tkStats"); if (statsHidden){ box.hidden = true; return; }
+    box.innerHTML = STAT.map(([id, label]) => `<button type="button" class="tk-stat${list === id ? " on" : ""}${id === "overdue" && countOf(id) ? " warn" : ""}" data-list="${id}"><b>${countOf(id)}</b><span>${label}</span></button>`).join("");
+  }
+  /* ---------- the smart lists with their counts ---------- */
+  function renderLists(){
+    $("tkLists").innerHTML = LISTS.map(([id, label, , icon]) => { const n = countOf(id);
+      return `<button type="button" class="tk-li${list === id ? " on" : ""}${id === "overdue" && n ? " warn" : ""}" data-list="${id}" aria-current="${list === id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg><span>${label}</span><i>${n || ""}</i></button>`; }).join("");
+  }
+  function renderCtx(){
+    const parts = [];
+    if (filt.priority) parts.push(["priority", "الأولوية: " + C.PR[filt.priority].label]);
+    if (filt.area) parts.push(["area", "المجال: " + (filt.area === "_none" ? "بدون" : areaName(filt.area))]);
+    if (filt.project) parts.push(["project", "المشروع: " + (filt.project === "_none" ? "بدون" : (projectOf(filt.project) || {}).name || "")]);
+    if (filt.status) parts.push(["status", "الحالة: " + C.ST[filt.status].label]);
+    $("tkFDot").hidden = !parts.length;
+    $("tkCtx").innerHTML = `<h2>${LIST[list][1]}</h2><span class="tk-cn">${tasks.filter(t => !t.parentId && matches(t)).length} مهمة</span>` + parts.map(([k, l]) => `<button type="button" class="tk-chipf" data-unfilt="${k}">${l} ×</button>`).join("") + (parts.length ? '<button type="button" class="linkbtn" data-unfilt="*">مسح الكل</button>' : "");
+  }
+  /* ---------- the day's three most important tasks ---------- */
+  function renderMit(){
+    const box = $("tkMit"), mits = tasks.filter(t => t.mit === today() && !t.archived);
+    const open = mits.filter(isOpen);
+    box.hidden = !mits.length;
+    if (box.hidden) return;
+    box.innerHTML = `<header><b>★ أهم مهام اليوم</b><span>${mits.length - open.length} من ${mits.length} أُنجزت</span></header><ul>${mits.map(t => `<li class="${isOpen(t) ? "" : "done"}"><input type="checkbox" data-mitdone="${t.id}"${isOpen(t) ? "" : " checked"} aria-label="مكتملة"><button type="button" data-openid="${t.id}">${escH(t.title)}</button><span class="tk-pdot" style="--pc:${C.PR[t.priority].color}"></span><button type="button" class="tk-x" data-unmit="${t.id}" aria-label="إزالة من أهم المهام">×</button></li>`).join("")}</ul>`;
+  }
+  const escH = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const setList = id => { list = LIST[id] ? id : "all"; saveUi(); render(); };
+  ["tkStats", "tkLists"].forEach(id => $(id).addEventListener("click", e => { const b = e.target.closest("[data-list]"); if (b) setList(b.dataset.list); }));
+  $("tkCtx").addEventListener("click", e => { const b = e.target.closest("[data-unfilt]"); if (!b) return; if (b.dataset.unfilt === "*") filt = { priority: "", area: "", project: "", status: "" }; else filt[b.dataset.unfilt] = ""; saveUi(); render(); });
+  $("tkMit").addEventListener("click", e => {
+    const o = e.target.closest("[data-openid]"); if (o) return TaskDetail.open(o.dataset.openid);
+    const u = e.target.closest("[data-unmit]"); if (u) update(u.dataset.unmit, { mit: null }, { log: false });
+  });
+  $("tkMit").addEventListener("change", e => { const id = e.target.dataset.mitdone; if (id) update(id, { status: e.target.checked ? "done" : "todo" }); });
+
+  /* ---------- search, filters, more ---------- */
+  $("tkSearchBtn").addEventListener("click", () => { const s = $("tkSearch"); s.hidden = !s.hidden; if (!s.hidden) $("tkQ").focus(); else if ($("tkQ").value){ $("tkQ").value = ""; render(); } });
+  $("tkQ").addEventListener("keydown", e => { if (e.key === "Escape"){ $("tkQ").value = ""; $("tkSearch").hidden = true; render(); } });
+  function popToggle(btn, pop, fill){
+    const open = pop.hidden; document.querySelectorAll(".tk-pop").forEach(p => { p.hidden = true; }); document.querySelectorAll("[aria-expanded].tk-ib").forEach(b => b.setAttribute("aria-expanded", "false"));
+    if (!open) return; if (fill) fill(); pop.hidden = false; btn.setAttribute("aria-expanded", "true");
+  }
+  document.addEventListener("pointerdown", e => { if (!e.target.closest(".tk-pop, .tk-ib")) document.querySelectorAll(".tk-pop").forEach(p => { p.hidden = true; }); });
+  function fillFilters(){
+    const sel = (k, label, opts) => `<label class="ig-f"><span>${label}</span><select class="select" data-filt="${k}"><option value="">الكل</option>${opts.map(([v, l]) => `<option value="${v}"${filt[k] === v ? " selected" : ""}>${escH(l)}</option>`).join("")}</select></label>`;
+    $("tkFilters").innerHTML = `<div class="tk-fgrid">${sel("priority", "الأولوية", C.PRIORITIES.slice().reverse().map(p => [p.id, p.label]))}${sel("status", "الحالة", C.STATUSES.map(s => [s.id, s.label]))}
+      ${sel("area", "المجال", [["_none", "بدون مجال"], ...(window.LifeAreas || []).map(a => [a.id, a.name])])}${sel("project", "المشروع", [["_none", "بدون مشروع"], ...projects.map(p => [p.id, p.name])])}
+      <label class="ig-f"><span>الترتيب</span><select class="select" data-sort>${[["smart", "حسب الموعد ثم الأولوية"], ["priority", "حسب الأولوية"], ["due", "حسب تاريخ الاستحقاق"], ["created", "الأحدث إنشاءً"], ["manual", "يدوي"]].map(([v, l]) => `<option value="${v}"${sortBy === v ? " selected" : ""}>${l}</option>`).join("")}</select></label></div>
+      <div class="tk-factions"><button type="button" class="linkbtn" data-clearf>مسح التصفية</button></div>`;
+  }
+  $("tkFilterBtn").addEventListener("click", () => popToggle($("tkFilterBtn"), $("tkFilters"), fillFilters));
+  $("tkFilters").addEventListener("change", e => { const k = e.target.dataset.filt; if (k){ filt[k] = e.target.value; } if (e.target.dataset.sort !== undefined) sortBy = e.target.value; saveUi(); render(); });
+  $("tkFilters").addEventListener("click", e => { if (e.target.closest("[data-clearf]")){ filt = { priority: "", area: "", project: "", status: "" }; sortBy = "smart"; saveUi(); fillFilters(); render(); } });
+  $("tkMoreBtn").addEventListener("click", () => popToggle($("tkMoreBtn"), $("tkMoreMenu"), () => { $("tkToggleStats").textContent = statsHidden ? "إظهار المؤشرات" : "إخفاء المؤشرات"; }));
+  $("tkToggleStats").addEventListener("click", () => { statsHidden = !statsHidden; saveUi(); $("tkMoreMenu").hidden = true; render(); });
+
+  /* ---------- quick add: the text is read on this device (and refined by Claude when it is set up), shown before saving ---------- */
+  // Arabic words have no \b boundary in JS regexes, so a space or the text's edge marks them
+  const REC = [[/(^|\s)(يوميا|يومياً|كل يوم)(?=\s|$)/, { freq: "daily", interval: 1 }], [/(^|\s)(اسبوعيا|أسبوعياً|اسبوعياً|أسبوعيا|كل اسبوع|كل أسبوع)(?=\s|$)/, { freq: "weekly", interval: 1 }], [/(^|\s)((في )?(أول|اول) يوم من كل شهر|شهريا|شهرياً|كل شهر)(?=\s|$)/, { freq: "monthly", interval: 1 }]];
+  const DAYS = { "الأحد": 0, "الاحد": 0, "الاثنين": 1, "الإثنين": 1, "الثلاثاء": 2, "الأربعاء": 3, "الاربعاء": 3, "الخميس": 4, "الجمعة": 5, "السبت": 6 };
+  function recurrenceOf(text){
+    let rec = null, rest = text;
+    for (const [re, r] of REC){ if (re.test(rest)){ rec = { ...r, days: [] }; rest = rest.replace(re, " "); break; } }
+    const m = /كل (يوم )?(الأحد|الاحد|الاثنين|الإثنين|الثلاثاء|الأربعاء|الاربعاء|الخميس|الجمعة|السبت)/.exec(rest);
+    if (m){ rec = { freq: "weekly", interval: 1, days: [DAYS[m[2]]] }; rest = rest.replace(m[0], " "); }
+    const firstOfMonth = /(أول|اول) يوم من كل شهر/.test(text);
+    return { rec, rest: rest.replace(/\s+/g, " ").trim(), firstOfMonth };
+  }
+  let qParsed = null, qTimer = 0, qSeq = 0;
+  async function readQuick(){
+    const v = $("tkQuickIn").value.trim(), box = $("tkQPrev");
+    if (!v){ qParsed = null; box.hidden = true; return; }
+    const seq = ++qSeq, r = recurrenceOf(v);
+    let p = window.SmartTask ? SmartTask.local(r.rest) : { title: r.rest, date: null, time: null, priority: "medium", tags: [] };
+    show();
+    if (window.SmartTask && SmartTask.aiOn && p.mentionedDate){ try { const a = await SmartTask.parse(r.rest); if (seq === qSeq && a){ p = a; show(); } } catch {} }
+    function show(){
+      let date = p.date;
+      if (r.firstOfMonth && !date){ const d = new Date(); d.setMonth(d.getMonth() + 1, 1); date = C.ymd(d); }
+      if (r.rec && !date) date = today();
+      qParsed = { title: p.title || v, due: date || null, time: p.time || null, priority: p.priority || "medium", tags: p.tags || [], recurrence: r.rec };
+      const chip = (icon, t, cls = "") => `<span class="tk-qc ${cls}">${icon} ${escH(t)}</span>`;
+      box.innerHTML = `<span class="tk-ql">ستُضاف:</span>${chip("✎", qParsed.title, "t")}${qParsed.due ? chip("📅", window.SmartTask ? SmartTask.dayLabel(qParsed.due) : qParsed.due) : ""}${qParsed.time ? chip("⏰", window.SmartTask ? SmartTask.timeLabel(qParsed.time) : qParsed.time) : ""}
+        ${qParsed.recurrence ? chip("↻", { daily: "يومياً", weekly: qParsed.recurrence.days.length ? "أسبوعياً" : "أسبوعياً", monthly: r.firstOfMonth ? "أول كل شهر" : "شهرياً" }[qParsed.recurrence.freq]) : ""}${qParsed.priority !== "medium" ? chip("⚑", C.PR[qParsed.priority].label, "p-" + qParsed.priority) : ""}${qParsed.tags.map(tg => chip("#", tg)).join("")}
+        ${qParsed.time && !p.date && !r.rec ? '<span class="tk-qw">لم تذكر يوماً، فاخترنا أقرب موعد قادم لهذا الوقت. عدّله إن لزم.</span>' : ""}<span class="tk-qh">Enter للإضافة · Esc للمسح</span>`;
+      box.hidden = false;
+    }
+  }
+  $("tkQuickIn").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(readQuick, 180); });
+  $("tkQuickIn").addEventListener("keydown", e => { if (e.key === "Escape"){ $("tkQuickIn").value = ""; readQuick(); } });
+  $("tkQuick").addEventListener("submit", async e => {
+    e.preventDefault(); clearTimeout(qTimer); await readQuick(); if (!qParsed || !db) return;
+    const data = { ...qParsed, status: "new", ...(list === "today" && !qParsed.due ? { due: today() } : {}), ...(filt.area ? { area: filt.area === "_none" ? null : filt.area } : {}) };
+    try { await create(data); $("tkQuickIn").value = ""; readQuick(); UI.toast("أُضيفت المهمة"); } catch {}
+  });
+
+  /* ---------- one menu with every quick action of a task ---------- */
+  let actEl = null;
+  const closeAct = () => { if (actEl){ actEl.remove(); actEl = null; } };
+  document.addEventListener("pointerdown", e => { if (actEl && !actEl.contains(e.target) && !e.target.closest(".tk-kebab")) closeAct(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeAct(); });
+  window.addEventListener("hashchange", closeAct);
+  function actionMenu(anchor, t){
+    if (actEl && actEl.dataset.id === t.id){ closeAct(); return; } closeAct();
+    const mitN = tasks.filter(x => x.mit === today() && x.id !== t.id && !x.archived).length;
+    const m = document.createElement("div"); m.className = "tk-act"; m.dataset.id = t.id; m.setAttribute("role", "menu");
+    const it = (a, label, extra = "") => `<button type="button" role="menuitem" data-a="${a}" ${extra}>${label}</button>`;
+    m.innerHTML = it("edit", "✎ تعديل المهمة") + (isOpen(t) ? it("done", "✓ إكمال المهمة") : it("reopen", "↺ إعادة فتحها")) +
+      `<div class="tk-actg"><span>تأجيل</span>${it("snooze1", "غداً")}${it("snooze7", "الأسبوع القادم")}${it("date", "تاريخ آخر…")}</div>` +
+      `<div class="tk-actg"><span>الأولوية</span>${C.PRIORITIES.slice().reverse().map(p => `<button type="button" data-pri="${p.id}" class="tk-prib${t.priority === p.id ? " on" : ""}" style="--pc:${p.color}" title="${p.label}" aria-label="${p.label}"></button>`).join("")}</div>` +
+      `<div class="tk-actg"><span>المجال</span><select class="select" data-area><option value="">بدون</option>${(window.LifeAreas || []).map(a => `<option value="${a.id}"${t.area === a.id ? " selected" : ""}>${escH(a.name)}</option>`).join("")}</select></div>` +
+      (t.mit === today() ? it("unmit", "☆ إزالة من أهم مهام اليوم") : it("mit", "★ تثبيت من أهم مهام اليوم", mitN >= 3 ? 'disabled title="ثلاث مهام كحد أعلى"' : "")) +
+      it("sub", "+ إضافة مهمة فرعية") + it("dup", "⧉ نسخ المهمة") + (t.archived ? it("unarchive", "⤴ إخراج من الأرشيف") : it("archive", "▣ أرشفة")) + it("del", "🗑 حذف", 'class="danger"');
+    document.body.append(m); actEl = m;
+    const r = anchor.getBoundingClientRect(), w = m.offsetWidth, hgt = m.offsetHeight;
+    m.style.left = Math.min(Math.max(8, r.left), innerWidth - w - 8) + "px";
+    m.style.top = (r.bottom + 4 + hgt > innerHeight - 8 ? Math.max(8, r.top - hgt - 4) : r.bottom + 4) + "px";
+    m.addEventListener("change", e => { if (e.target.dataset.area !== undefined){ update(t.id, { area: e.target.value || null }); closeAct(); } });
+    m.addEventListener("click", async e => {
+      const pb = e.target.closest("[data-pri]"); if (pb){ closeAct(); update(t.id, { priority: pb.dataset.pri }); return; }
+      const b = e.target.closest("[data-a]"); if (!b) return; closeAct();
+      const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return C.ymd(d); };
+      switch (b.dataset.a){
+        case "edit": TaskDetail.open(t.id); break;
+        case "done": update(t.id, { status: "done" }); break;
+        case "reopen": update(t.id, { status: "todo" }); break;
+        case "snooze1": update(t.id, { due: day(1) }).then(ok => ok && UI.toast("أُجّلت إلى الغد")); break;
+        case "snooze7": update(t.id, { due: day(7) }).then(ok => ok && UI.toast("أُجّلت أسبوعاً")); break;
+        case "date": { const v = await UI.prompt("الموعد الجديد للمهمة (YYYY-MM-DD)", { title: "تغيير الموعد", ok: "حفظ", note: t.due || today(), noteRequired: true, placeholder: "2026-12-01" }); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v.note.trim())) update(t.id, { due: v.note.trim() }); else if (v) UI.toast("اكتب التاريخ بصيغة YYYY-MM-DD", "err"); break; }
+        case "mit": update(t.id, { mit: today() }, { log: false }); break;
+        case "unmit": update(t.id, { mit: null }, { log: false }); break;
+        case "sub": TaskDetail.open(t.id); setTimeout(() => { const i = document.querySelector("#tdSubAdd input"); if (i) i.focus(); }, 300); break;
+        case "dup": { const c = JSON.parse(JSON.stringify(t)); ["id", "doneAt", "nextSpawned", "remindedFor", "mit"].forEach(k => delete c[k]); c.title = t.title + " (نسخة)"; c.status = "todo"; c.archived = false; try { await create(c); UI.toast("نُسخت المهمة"); } catch {} break; }
+        case "archive": update(t.id, { archived: true }).then(ok => ok && undoBar("أُرشفت المهمة", () => update(t.id, { archived: false }))); break;
+        case "unarchive": update(t.id, { archived: false }); break;
+        case "del": remove(t.id); break;
+      }
+    });
+  }
   $("tkNew").addEventListener("click", () => TaskDetail.open(null));
   // a backup of every task this person can see, exactly as stored, with comments and the activity log
   $("tkExport").addEventListener("click", async () => {
@@ -413,7 +606,7 @@
   window.Tasks = {
     get list(){ return tasks; }, get byId(){ return byId; }, get projects(){ return projects; }, get people(){ return people; },
     get policies(){ return policies; }, get letters(){ return letters; }, get me(){ return me; }, get myName(){ return myName; }, get admin(){ return !!admin; },
-    get db(){ return db; }, childrenOf, pct, canEdit, personName, projectOf, ring, bar, dueLabel,
+    get db(){ return db; }, childrenOf, pct, canEdit, personName, projectOf, ring, bar, dueLabel, showList: l => { list = LIST[l] ? l : "all"; saveUi(); render(); },
     create, update, remove, log, openLink,
   };
   if (window.appDb) connect({ db: window.appDb, user: window.appUser });

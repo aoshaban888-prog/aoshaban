@@ -9,9 +9,10 @@
 (function (root){
   const SCHEMA = 2;
   const STATUSES = [
+    { id: "new", label: "جديدة", color: "#a855f7" },
     { id: "todo", label: "لم تبدأ", color: "#8b93a7" },
     { id: "doing", label: "قيد التنفيذ", color: "#3b82f6" },
-    { id: "review", label: "قيد المراجعة", color: "#d97706" },
+    { id: "waiting", label: "بانتظار طرف آخر", color: "#d97706" },
     { id: "done", label: "مكتملة", color: "#16a34a" },
     { id: "deferred", label: "مؤجلة", color: "#7c8798" },
     { id: "cancelled", label: "ملغاة", color: "#dc2626" },
@@ -33,7 +34,8 @@
   /* ---------- reading any version of a task ---------- */
   function normalize(raw, id){
     const r = raw || {};
-    const status = ST[r.status] ? r.status : "todo";
+    // «قيد المراجعة» (older tasks) now reads as «بانتظار طرف آخر»; it is written back only when the task changes
+    const status = r.status === "review" ? "waiting" : ST[r.status] ? r.status : "todo";
     const priority = PR[r.priority] ? r.priority : r.priority === "high" ? "high" : "medium";
     const list = v => Array.isArray(v) ? v : [];
     return {
@@ -47,6 +49,8 @@
       area: typeof r.area === "string" && r.area ? r.area : null,
       goalId: typeof r.goalId === "string" && r.goalId ? r.goalId : null,
       goalValue: Number.isFinite(+r.goalValue) && +r.goalValue > 0 ? +r.goalValue : 0,
+      archived: !!r.archived,
+      mit: typeof r.mit === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.mit) ? r.mit : null,
       tags: list(r.tags).map(String).filter(Boolean),
       startDate: isDay(r.startDate) ? r.startDate : null,
       due: isDay(r.due) ? r.due : null,
@@ -87,7 +91,7 @@
     if (t.progressMode === "manual") return clamp(t.progressManual);
     const kids = children.filter(c => c.status !== "cancelled");
     const units = t.checklist.length + kids.length;
-    if (!units) return t.status === "review" ? 90 : 0;
+    if (!units) return t.status === "waiting" ? 90 : 0;
     const sum = t.checklist.filter(c => c.done).length + kids.reduce((s, c) => s + progress(c, []) / 100, 0);
     return clamp(sum / units * 100);
   }
@@ -128,7 +132,7 @@
     return false;
   }
   // a task waiting on open tasks can't start or finish
-  const canMoveTo = (task, status, byId) => !["doing", "review", "done"].includes(status) || blockers(task, byId).length === 0;
+  const canMoveTo = (task, status, byId) => !["doing", "waiting", "done"].includes(status) || blockers(task, byId).length === 0;
 
   /* ---------- recurrence ---------- */
   function addMonths(d, n){

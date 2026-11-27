@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261128a"></script>
-<link rel="stylesheet" href="css/library.css?v=20261128a">
-<link rel="stylesheet" href="css/app.css?v=20261128a">
+<script src="js/boot.js?v=20261128d"></script>
+<link rel="stylesheet" href="css/library.css?v=20261128d">
+<link rel="stylesheet" href="css/app.css?v=20261128d">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -179,23 +179,36 @@
       </div>
     </section>
     <section class="view tasks" data-view="tasks" hidden>
-      <header class="page-h">
-        <div><h1>المهام</h1></div>
-        <div class="actions">
-          <input class="input tk-q" id="tkQ" type="search" placeholder="بحث" aria-label="بحث في المهام">
-          <div class="seg-tabs" role="tablist" aria-label="طريقة العرض">
-            <button type="button" role="tab" data-tkview="board" aria-selected="true">لوحة</button>
-            <button type="button" role="tab" data-tkview="list" aria-selected="false">قائمة</button>
+      <header class="tk-head">
+        <div class="tk-hl"><p class="crumb">إدارة حياتي الشخصية</p><h1>إدارة المهام</h1><p class="tk-date" id="tkDate"></p></div>
+        <div class="tk-ha">
+          <div class="tk-search" id="tkSearch" hidden><input class="input tk-q" id="tkQ" type="search" placeholder="ابحث في العنوان والوصف والوسوم والمجال والمشروع" aria-label="بحث في المهام"></div>
+          <button class="tk-ib" type="button" id="tkSearchBtn" title="بحث" aria-label="بحث"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+          <button class="tk-ib" type="button" id="tkFilterBtn" title="تصفية وترتيب" aria-label="تصفية وترتيب" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg><span class="tk-fdot" id="tkFDot" hidden></span></button>
+          <div class="tk-views" role="tablist" aria-label="طريقة العرض">
+            <button type="button" role="tab" data-tkview="list" aria-selected="false" title="قائمة" aria-label="قائمة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+            <button type="button" role="tab" data-tkview="board" aria-selected="true" title="لوحة كانبان" aria-label="لوحة كانبان"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="5" height="18" rx="1.5"/><rect x="10" y="3" width="5" height="12" rx="1.5"/><rect x="17" y="3" width="4" height="8" rx="1.5"/></svg></button>
           </div>
-          <button class="btn" type="button" id="tkExport" title="تنزيل كل مهامك في ملف JSON نسخةً احتياطية">تصدير</button>
-          <button class="btn primary" type="button" id="tkNew">مهمة جديدة</button>
+          <div class="tk-more"><button class="tk-ib" type="button" id="tkMoreBtn" title="المزيد" aria-label="المزيد" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></button>
+            <div class="tk-pop tk-moremenu" id="tkMoreMenu" hidden><button type="button" id="tkToggleStats">إخفاء المؤشرات</button><button type="button" id="tkExport">تصدير نسخة احتياطية (JSON)</button></div></div>
+          <button class="btn primary" type="button" id="tkNew">+ مهمة جديدة</button>
         </div>
       </header>
+      <div class="tk-pop tk-filters" id="tkFilters" hidden></div>
+      <form class="tk-quick" id="tkQuick" autocomplete="off"><span class="tk-qi">+</span><input class="input" id="tkQuickIn" placeholder="أضف مهمة بسرعة… مثال: الاتصال بالجمعية الخميس القادم الساعة العاشرة !عالية #جمعيات" aria-label="إضافة سريعة"><button class="btn small primary" type="submit">إضافة</button><div class="tk-qprev" id="tkQPrev" hidden></div></form>
+      <div class="tk-stats" id="tkStats"></div>
       <div class="tk-skel" id="tkSkel" aria-hidden="true"><div class="skel-col"><i></i><i></i><i></i></div><div class="skel-col"><i></i><i></i></div><div class="skel-col"><i></i></div></div>
       <p class="muted-text" id="tkSignin" hidden>سجّل الدخول من القائمة الجانبية لعرض مهامك</p>
-      <section class="tk-sum" id="tkSum" hidden aria-label="نسب الإنجاز"></section>
-      <div class="tk-board" id="tkBoard" hidden></div>
-      <div class="tk-list" id="tkList" hidden></div>
+      <div class="tk-layout" id="tkLayout">
+        <nav class="tk-lists" id="tkLists" aria-label="تصنيفات المهام"></nav>
+        <div class="tk-main">
+          <div class="tk-ctx" id="tkCtx"></div>
+          <section class="tk-mit" id="tkMit" hidden></section>
+          <section class="tk-sum" id="tkSum" hidden aria-label="نسب الإنجاز"></section>
+          <div class="tk-board" id="tkBoard" hidden></div>
+          <div class="tk-list" id="tkList" hidden></div>
+        </div>
+      </div>
     </section>
     <section class="view" data-view="life" data-prefix="life/" hidden><div id="lifeView"></div></section>
     <section class="view" data-view="governance/library" hidden>
@@ -1177,27 +1190,27 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261128a"></script>
-<script src="js/library.js?v=20261128a"></script>
+<script src="js/ui.js?v=20261128d"></script>
+<script src="js/library.js?v=20261128d"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/cloud.js?v=20261128a"></script>
-<script src="js/task-core.js?v=20261128a"></script>
-<script src="js/smart-task.js?v=20261128a"></script>
-<script src="js/reminders.js?v=20261128a"></script>
-<script src="js/life.js?v=20261128a"></script>
-<script src="js/home.js?v=20261128a"></script>
-<script src="js/tasks.js?v=20261128a"></script>
-<script src="js/task-detail.js?v=20261128a"></script>
-<script src="js/slider.js?v=20261128a"></script>
-<script src="js/settings.js?v=20261128a"></script>
-<script src="js/fonts.js?v=20261128a"></script>
-<script src="js/hr.js?v=20261128a"></script>
-<script src="js/assocs.js?v=20261128a"></script>
-<script src="js/forms.js?v=20261128a"></script>
-<script src="js/initiatives.js?v=20261128a"></script>
-<script src="js/requests.js?v=20261128a"></script>
-<script src="js/table-tools.js?v=20261128a"></script>
-<script src="js/login.js?v=20261128a"></script>
-<script src="js/shell.js?v=20261128a"></script>
+<script src="js/cloud.js?v=20261128d"></script>
+<script src="js/task-core.js?v=20261128d"></script>
+<script src="js/smart-task.js?v=20261128d"></script>
+<script src="js/reminders.js?v=20261128d"></script>
+<script src="js/life.js?v=20261128d"></script>
+<script src="js/home.js?v=20261128d"></script>
+<script src="js/tasks.js?v=20261128d"></script>
+<script src="js/task-detail.js?v=20261128d"></script>
+<script src="js/slider.js?v=20261128d"></script>
+<script src="js/settings.js?v=20261128d"></script>
+<script src="js/fonts.js?v=20261128d"></script>
+<script src="js/hr.js?v=20261128d"></script>
+<script src="js/assocs.js?v=20261128d"></script>
+<script src="js/forms.js?v=20261128d"></script>
+<script src="js/initiatives.js?v=20261128d"></script>
+<script src="js/requests.js?v=20261128d"></script>
+<script src="js/table-tools.js?v=20261128d"></script>
+<script src="js/login.js?v=20261128d"></script>
+<script src="js/shell.js?v=20261128d"></script>
 </body>
 </html>
