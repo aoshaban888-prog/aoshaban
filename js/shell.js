@@ -66,7 +66,7 @@
     loadT = setTimeout(() => { loader.classList.add("out"); loadT = setTimeout(() => { loader.hidden = true; loader.classList.remove("on", "out"); }, 220); }, 700);
   }
   window.addEventListener("hashchange", route);
-  document.querySelector(".menu-btn").addEventListener("click", () => app.classList.add("nav-open"));
+  document.querySelector(".menu-btn").addEventListener("click", () => { if (innerWidth <= 900) app.classList.add("nav-open"); else setPinned(app.classList.contains("side-mini"), true); });
   document.querySelector(".scrim").addEventListener("click", () => app.classList.remove("nav-open"));
   document.addEventListener("keydown", e => { if (e.key === "Escape") app.classList.remove("nav-open"); });
   route();
@@ -74,10 +74,10 @@
   /* pin or hide the sidebar on wide screens; hidden, it opens over the page from the menu button */
   const pinBtn = document.getElementById("pinBtn");
   function setPinned(on, save){
-    app.classList.toggle("side-hidden", !on);
+    app.classList.toggle("side-mini", !on); app.classList.remove("side-hidden");
     app.classList.remove("nav-open");
     pinBtn.setAttribute("aria-pressed", on ? "true" : "false");
-    const label = on ? "إخفاء القائمة" : "تثبيت القائمة";
+    const label = on ? "طي القائمة إلى الأيقونات" : "توسعة القائمة";
     pinBtn.title = label; pinBtn.setAttribute("aria-label", label);
     if (save){ try { localStorage.setItem("app-side", on ? "pinned" : "hidden"); } catch {} }
     window.dispatchEvent(new Event("resize"));

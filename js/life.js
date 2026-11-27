@@ -208,7 +208,8 @@
     if (window.Tasks && window.Tasks.list) tasks = window.Tasks.list;
     draw();
   }
-  window.Life = { goals: () => goals.slice(), AREAS, ROUTES };
+  window.Life = { goals: () => goals.slice(), AREAS, ROUTES, newGoal: area => goalForm(null, area || ""),
+    addNote: async text => { if (!db || !String(text || "").trim()) return; try { await db.collection("lifeNotes").add({ owner: me, text: String(text).trim().slice(0, 5000), area: "", pinned: false, at: new Date().toISOString() }); UI.toast("حُفظت الملاحظة في «الأفكار والملاحظات»"); } catch (e){ console.error(e); UI.toast("تعذّر الحفظ", "err"); } } };
   window.addEventListener("app:db", e => connect(e.detail));
   if (window.appDb) connect({ db: window.appDb, user: window.appUser });
   const r0 = location.hash.replace(/^#\/?/, ""); if (r0.startsWith("life/")){ route = r0; draw(); }
