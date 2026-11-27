@@ -105,7 +105,7 @@
     if (!r) return;
     const top = r.split("/")[0];
     const sec = isAdmin() || !my.sections ? null : new Set(my.sections);
-    const blocked = (top === "admin" && !isAdmin()) || (sec && ["tasks", "governance", "hr", "projects"].includes(top) && !sec.has(top));
+    const blocked = ((top === "admin" || top === "orgs") && !isAdmin()) || (sec && ["tasks", "governance", "hr", "projects"].includes(top) && !sec.has(top));
     if (blocked && db){ UI.toast("لا تملك صلاحية فتح هذا القسم", "err"); location.hash = "#/home"; }
   }
   window.addEventListener("app:view", e => { guard(e.detail); if (e.detail === "hr/requests") renderList(); });
@@ -356,13 +356,13 @@
     }
     if (r.submittedBy === me && r.status === "returned") add("تعديل وإعادة الرفع", "primary", () => editAs(r, "submitter"));
     if (r.submittedBy === me && (r.status === "pending" || r.status === "returned")) add("سحب الطلب", "ghost", () => act(r, "cancel"));
-    add("معاينة كاملة", "ghost", () => HRLetters.preview({ ...HRLetters.finalize(r.letter, r.status === "approved"), ref: r.ref }, { title: r.title, print: r.status === "approved", pdf: r.status === "approved" }));
-    if (r.status === "approved") add("طباعة الخطاب", "primary", () => HRLetters.print({ ...HRLetters.finalize(r.letter, r.status === "approved"), ref: r.ref }));
-    if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...HRLetters.finalize(r.letter, r.status === "approved"), ref: r.ref }));
+    add("معاينة كاملة", "ghost", () => HRLetters.preview({ ...HRLetters.finalize({ ...r.letter, sealSnap: r.sealSnap || null }, r.status === "approved"), ref: r.ref }, { title: r.title, print: r.status === "approved", pdf: r.status === "approved" }));
+    if (r.status === "approved") add("طباعة الخطاب", "primary", () => HRLetters.print({ ...HRLetters.finalize({ ...r.letter, sealSnap: r.sealSnap || null }, r.status === "approved"), ref: r.ref }));
+    if (r.status === "approved" && permsOf(my).pdf) add("حفظ PDF", "", () => HRLetters.pdf({ ...HRLetters.finalize({ ...r.letter, sealSnap: r.sealSnap || null }, r.status === "approved"), ref: r.ref }));
     if (isAdmin()) add("حذف الطلب", "ghost danger-text", () => deleteRequests([r.id]));
     $("rqNoteWrap").hidden = !amApprover(r);
     // preview
-    const pv = HRLetters.paper({ ...HRLetters.finalize(r.letter, r.status === "approved"), ref: r.ref });
+    const pv = HRLetters.paper({ ...HRLetters.finalize({ ...r.letter, sealSnap: r.sealSnap || null }, r.status === "approved"), ref: r.ref });
     const paper = $("rqPaper"); paper.setAttribute("style", pv.style); paper.innerHTML = pv.html;
     setTimeout(() => { HRLetters.fit(); HRLetters.place(paper); }, 30);
   }
@@ -385,6 +385,7 @@
       if (action === "approve" && last){
         // the outgoing number, the letter in the log, and the request closed
         const L = HRLetters.finalize(r.letter || {});
+        const snap = HRLetters.sealSnapshot ? HRLetters.sealSnapshot() : null;
         const year = +new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn", { year: "numeric" }).format(new Date((L.date || now.slice(0, 10)) + "T12:00:00")).replace(/\D/g, "");
         const no = await db.runTransaction(async tx => {
           const c = db.collection("hrMeta").doc("counter"); const d = await tx.get(c);
@@ -395,7 +396,7 @@
         // the letter and the closed request are written together
         const letter = db.collection("hrLetters").doc(), b = db.batch();
         b.set(letter, { ...L, no, year, ref: refNo, createdAt: now, createdBy: r.submittedBy, requestId: r.id, approvedBy: me, approvals: [...(r.history || []), entry] });
-        b.update(ref, { status: "approved", ref: refNo, letterId: letter.id, currentApprovers: [], updatedAt: now, history: [...(r.history || []), entry] });
+        b.update(ref, { status: "approved", ref: refNo, letterId: letter.id, currentApprovers: [], updatedAt: now, history: [...(r.history || []), entry], ...(snap ? { sealSnap: snap } : {}) });
         await b.commit();
         UI.toast(`اعتُمد الطلب وصدر الخطاب برقم ${refNo}`);
       } else if (action === "approve"){

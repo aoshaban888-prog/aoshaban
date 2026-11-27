@@ -1815,3 +1815,6 @@ html.privacy .sensitive:hover{filter:blur(7px)}
 .fav-empty{margin:4px 8px 8px;font-size:13px}
 #privBtn[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 @media (max-width:640px){.fav-wrap{display:none}}
+
+.bk-h{margin:18px 0 4px;font-size:15px;font-weight:600}
+.bk-t{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}.bk-t th,.bk-t td{padding:6px 10px;border-bottom:1px solid var(--line-soft);text-align:start}.bk-t th{color:var(--muted);font-weight:500}

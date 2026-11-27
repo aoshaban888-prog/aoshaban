@@ -76,7 +76,8 @@ service cloud.firestore {
         && d.get("dependsOn", []) is list && d.get("dependsOn", []).size() <= 20
         && d.get("attachments", []) is list && d.get("attachments", []).size() <= 30
         && d.get("progressManual", 0) is number && d.get("progressManual", 0) >= 0 && d.get("progressManual", 0) <= 100
-        && d.get("estimate", 0) is number && d.get("spent", 0) is number;
+        && d.get("estimate", 0) is number && d.get("spent", 0) is number
+        && d.get("scope", "work") in ["work", "personal"];
     }
     function taskAt(id) {
       return get(/databases/$(database)/documents/tasks/$(id)).data;
@@ -184,7 +185,7 @@ service cloud.firestore {
       allow write: if perm("heads");
     }
     match /hrMeta/{id} {
-      allow read: if allowed();
+      allow read: if allowed() && (id != "seal" || isAdmin() || perm("seal") || perm("issue") || perm("viewLog"));
       allow write: if (id == "seal" && perm("seal")) || (id == "templates" && perm("templates")) || (id == "counter" && counterStep());
     }
 
@@ -254,7 +255,8 @@ service cloud.firestore {
       return o.status == "pending" && actsFor(o.get("currentApprovers", [])) && o.submittedBy != myEmail()
         && ((n.status == "pending" && (n.stageIndex == o.stageIndex || n.stageIndex == o.stageIndex + 1))
             || (n.status in ["returned", "rejected"] && n.stageIndex == o.stageIndex)
-            || (n.status == "approved" && n.stageIndex == o.stageIndex && o.stageIndex == o.stages.size() - 1));
+            || (n.status == "approved" && n.stageIndex == o.stageIndex && o.stageIndex == o.stages.size() - 1))
+        && (n.status == "approved" || n.get("sealSnap", null) == o.get("sealSnap", null));
     }
     // the person who made it: withdraw it, or send it again from the first stage
     function asSubmitter() {
@@ -262,7 +264,8 @@ service cloud.firestore {
       return o.submittedBy == myEmail() && o.status in ["pending", "returned"]
         && ((n.status == "cancelled" && n.stageIndex == o.stageIndex)
             || (n.status == "pending" && (n.stageIndex == 0 || (o.status == "returned" && n.stageIndex == o.stageIndex))))
-        && n.get("letterId", null) == o.get("letterId", null) && n.get("ref", null) == o.get("ref", null);
+        && n.get("letterId", null) == o.get("letterId", null) && n.get("ref", null) == o.get("ref", null)
+        && n.get("sealSnap", null) == o.get("sealSnap", null);
     }
     match /requests/{id} {
       allow read: if allowed();
@@ -270,7 +273,8 @@ service cloud.firestore {
                     && request.resource.data.status == "pending" && request.resource.data.stageIndex == 0
                     && request.resource.data.stages == get(/databases/$(database)/documents/settings/workflows).data.list[request.resource.data.wfIndex].stages
                     && request.resource.data.currentApprovers == request.resource.data.stages[0].emails
-                    && request.resource.data.get("letterId", null) == null && request.resource.data.get("ref", null) == null;
+                    && request.resource.data.get("letterId", null) == null && request.resource.data.get("ref", null) == null
+                    && request.resource.data.get("sealSnap", null) == null;
       allow update: if isAdmin() || (allowed() && samePath() && approversFollow() && (asApprover() || asSubmitter()));
       allow delete: if isAdmin();
     }

@@ -38,6 +38,54 @@
     finally { btn.disabled = false; }
   }
   $("bkAll") && $("bkAll").addEventListener("click", run);
+
+  /* ---------- safe restore: read the file, show what is in it, then add only the records that are missing ---------- */
+  let plan = null;
+  $("bkFileAll") && $("bkFileAll").addEventListener("change", async e => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f || !db) return;
+    const st = $("bkCheck"), box = $("bkPlan"); box.hidden = true; plan = null;
+    let j; try { j = JSON.parse(await f.text()); } catch { st.textContent = "الملف ليس JSON صالحاً."; return; }
+    if (!j || typeof j.collections !== "object"){ st.textContent = "هذا ليس ملف نسخة احتياطية شاملة من الموقع."; return; }
+    st.textContent = "جارٍ مقارنة الملف بالبيانات الحالية…";
+    const rows = [];
+    for (const [col, docs] of Object.entries(j.collections)){
+      if (!SHARED.includes(col) && !PERSONAL.includes(col)) continue;
+      const ids = Object.keys(docs || {}); let missing = [];
+      for (const id of ids){
+        if (PERSONAL.includes(col) && (docs[id] || {}).owner !== me) continue;
+        try { const d = await db.collection(col).doc(id).get(); if (!d.exists) missing.push(id); } catch { /* not readable: left alone */ }
+      }
+      rows.push({ col, total: ids.length, missing });
+    }
+    plan = { j, rows };
+    const n = rows.reduce((s, r) => s + r.missing.length, 0);
+    st.textContent = `نسخة بتاريخ ${String(j.exportedAt || "").slice(0, 10)} · ${n} سجلاً مفقوداً يمكن إضافته.`;
+    box.innerHTML = `<table class="bk-t"><thead><tr><th>المجموعة</th><th>في الملف</th><th>مفقود الآن</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.col}</td><td>${r.total}</td><td>${r.missing.length || "—"}</td></tr>`).join("")}</tbody></table>
+      ${n ? `<div class="hr-actions"><button class="btn primary" type="button" id="bkGo">إضافة ${n} سجلاً مفقوداً</button></div>` : '<p class="muted-text">لا شيء مفقود: بياناتك الحالية تشمل كل ما في الملف.</p>'}`;
+    box.hidden = false;
+    const go = $("bkGo"); if (go) go.addEventListener("click", restore);
+  });
+  async function restore(){
+    if (!plan) return;
+    const n = plan.rows.reduce((s, r) => s + r.missing.length, 0);
+    if (!(await UI.confirm(`إضافة ${n} سجلاً مفقوداً من النسخة؟ لن يُعدَّل أو يُحذف أي سجل موجود.`, { ok: "إضافة" }))) return;
+    const st = $("bkCheck"); let ok = 0, failed = 0;
+    for (const r of plan.rows){
+      for (const id of r.missing){
+        const raw = { ...plan.j.collections[r.col][id] }, subs = {};
+        Object.keys(raw).filter(k => k.startsWith("__")).forEach(k => { subs[k.slice(2)] = raw[k]; delete raw[k]; });
+        try {
+          const ref = db.collection(r.col).doc(id);
+          const again = await ref.get(); if (again.exists) continue;
+          await ref.set(raw); ok++;
+          for (const [sub, docs] of Object.entries(subs)) for (const [sid, sd] of Object.entries(docs || {})){ try { await ref.collection(sub).doc(sid).set(sd); } catch { failed++; } }
+        } catch (e){ console.error(r.col, id, e); failed++; }
+        st.textContent = `أُضيف ${ok}…`;
+      }
+    }
+    st.textContent = `اكتملت الاستعادة: أُضيف ${ok} سجلاً${failed ? `، وتعذّر ${failed} (غالباً لا تسمح به الصلاحيات)` : ""}.`;
+    $("bkPlan").hidden = true; plan = null; UI.toast("اكتملت الاستعادة");
+  }
   window.addEventListener("app:db", e => { db = e.detail.db; me = (e.detail.user && e.detail.user.email) || ""; });
   if (window.appDb){ db = window.appDb; me = (window.appUser && window.appUser.email) || ""; }
 })();

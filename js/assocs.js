@@ -1,4 +1,4 @@
-/* التمكين التقني › الجمعيات: a directory of associations (data, not accounts). Firestore "associations" — the same records the
+/* إدارة الجمعيات: a directory of associations (data, not accounts). Firestore "associations" — the same records the
    policy library, the letters and the initiatives tool already read, so every page that picks an association finds them.
    Only the name is required; everything else is optional. The library keeps its own fields on the same record
    (letterhead chunks, page settings, approvals) and this page never touches them.

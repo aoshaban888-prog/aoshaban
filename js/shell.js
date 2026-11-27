@@ -15,14 +15,14 @@
     "admin": "التمكين التقني",
     "admin/requests": "إدارة الطلبات الإدارية",
     "admin/permissions": "صلاحيات المستخدمين",
-    "admin/associations": "الجمعيات",
+    "orgs/associations": "الجمعيات",
   };
   const DEFAULT = () => (window.siteSettings && ROUTES[window.siteSettings.startPage]) ? window.siteSettings.startPage : "home";
   const app = document.querySelector(".app");
   let current = null;
 
   // older links that moved
-  const MOVED = { "governance/hr": "hr/letters", "governance/associations": "admin/associations" };
+  const MOVED = { "governance/hr": "hr/letters", "governance/associations": "orgs/associations", "admin/associations": "orgs/associations" };
   /* collapsible groups in the sidebar (الحوكمة، الموارد البشرية): open by click, remembered, and opened for their own pages */
   const groups = [...document.querySelectorAll(".nav-group[data-group]")].map(btn => ({ btn, sub: document.getElementById(btn.getAttribute("aria-controls")), key: btn.dataset.group }));
   function setGroup(g, open, save){

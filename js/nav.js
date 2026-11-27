@@ -118,8 +118,8 @@
       const T = window.Tasks;
       if (T && T.list) T.list.filter(x => !x.archived && (has(x.title) || has(x.description) || (x.tags || []).some(has))).slice(0, 8).forEach(x => items.push({ kind: "task", title: x.title, sub: [{ done: "مكتملة" }[x.status] || "", x.due || ""].filter(Boolean).join(" · "), task: x.id }));
       if (window.Life && Life.goals) Life.goals().filter(g => has(g.title)).slice(0, 5).forEach(g => items.push({ kind: "goal", title: g.title, sub: "هدف شخصي", href: "#/life/goals" }));
-      const adminLink = document.querySelector('a[href="#/admin/associations"]');
-      if (window.Assocs && visible(adminLink)) Assocs.list().filter(a => has(a.name) || has(a.shortName) || has(a.city)).slice(0, 5).forEach(a => items.push({ kind: "assoc", title: a.name, sub: a.city || "", href: "#/admin/associations" }));
+      const adminLink = document.querySelector('a[href="#/orgs/associations"]');
+      if (window.Assocs && visible(adminLink)) Assocs.list().filter(a => has(a.name) || has(a.shortName) || has(a.city)).slice(0, 5).forEach(a => items.push({ kind: "assoc", title: a.name, sub: a.city || "", href: "#/orgs/associations" }));
       if (T && T.policies) T.policies.filter(p => has(p.title)).slice(0, 5).forEach(p => items.push({ kind: "policy", title: p.title, sub: "لائحة", policy: p.id }));
       if (T && T.letters) T.letters.filter(l => has(l.title) || has(l.ref) || has(l.employee) || has(l.assoc)).slice(0, 5).forEach(l => items.push({ kind: "letter", title: l.title || "خطاب", sub: [l.ref, l.employee].filter(Boolean).join(" · "), href: "#/hr/letters" }));
     }

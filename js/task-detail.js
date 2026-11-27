@@ -52,6 +52,7 @@
       <label>المسؤول<select class="select" id="tdAssignee"></select></label>
       <label>المشروع<select class="select" id="tdProject"></select></label>
       <label>مجال الحياة<select class="select" id="tdArea"></select></label>
+      <label>الخصوصية<select class="select" id="tdScope"><option value="work">مؤسسية (وفق الصلاحيات)</option><option value="personal">شخصية خاصة (لك وحدك)</option></select></label>
       <label>الهدف<select class="select" id="tdGoal"></select></label>
       <label id="tdGVw" hidden>قيمتها في الهدف<input class="input" id="tdGV" inputmode="decimal" placeholder="مثال: 500"></label>
       <label>تاريخ البدء<input class="input" type="date" id="tdStart"></label>
@@ -124,6 +125,7 @@
     if (t.assignee && !ppl.some(p => p.email === t.assignee)) ppl.push({ email: t.assignee, name: t.assignee });
     ppl.forEach(p => pe.append(new Option(p.email === T().me ? `${p.name || p.email} (أنا)` : p.name || p.email, p.email))); pe.value = t.assignee || "";
     const pj = $("tdProject"); pj.innerHTML = `<option value="">بدون مشروع</option>`; T().projects.forEach(p => pj.append(new Option(p.name, p.id))); pj.append(new Option("+ مشروع جديد…", "__new")); pj.value = t.projectId || "";
+    $("tdScope").value = t.scope || "work"; $("tdScope").disabled = !!t.owner && t.owner !== T().me;
     // life area and goal (إدارة حياتي الشخصية)
     const ar = $("tdArea"); ar.innerHTML = '<option value="">بدون</option>' + (window.LifeAreas || []).map(a => `<option value="${a.id}">${a.name}</option>`).join(""); ar.value = t.area || "";
     const goalSel = $("tdGoal"), gs = window.Life ? Life.goals() : []; goalSel.innerHTML = '<option value="">بدون هدف</option>' + gs.filter(g => !t.area || !g.area || g.area === t.area || g.id === t.goalId).map(g => `<option value="${g.id}">${String(g.title).replace(/</g, "&lt;")}</option>`).join(""); goalSel.value = t.goalId || "";
@@ -275,6 +277,7 @@
   on("tdStatus", "change", () => set({ status: $("tdStatus").value }));
   on("tdPriority", "change", () => set({ priority: $("tdPriority").value }));
   on("tdAssignee", "change", () => set({ assignee: $("tdAssignee").value || null }));
+  on("tdScope", "change", () => set({ scope: $("tdScope").value }));
   on("tdArea", "change", () => { set({ area: $("tdArea").value || null }); fill && fill(); });
   on("tdGoal", "change", () => { const g = (window.Life ? Life.goals() : []).find(x => x.id === $("tdGoal").value); set({ goalId: $("tdGoal").value || null, ...(g && g.area && !cur().area ? { area: g.area } : {}) }); fill && fill(); });
   on("tdGV", "input", () => set({ goalValue: +String($("tdGV").value).replace(/[^\d.]/g, "") || 0 }, 700));

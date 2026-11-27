@@ -167,7 +167,7 @@
     if (g && !area) area = g.area || "";
     let goalValue = 0;
     if (g && g.measure === "number"){ const v = await UI.prompt(`كم تضيف هذه المهمة إلى «${g.title}» عند إنجازها؟ (${g.unit || "رقم"})`, { title: "قيمة المهمة في الهدف", ok: "إضافة", note: "", noteRequired: false, placeholder: "مثال: 500" }); if (!v) return; goalValue = +String(v.note).replace(/[^\d.]/g, "") || 0; }
-    const id = await T().create({ ...patch, area: area || null, goalId: goalId || null, ...(goalValue ? { goalValue } : {}) });
+    const id = await T().create({ ...patch, area: area || null, goalId: goalId || null, scope: "personal", ...(goalValue ? { goalValue } : {}) });
     if (id) UI.toast("أُضيفت المهمة، وتظهر في قسم المهام");
   }
 

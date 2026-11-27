@@ -50,6 +50,8 @@
       goalId: typeof r.goalId === "string" && r.goalId ? r.goalId : null,
       goalValue: Number.isFinite(+r.goalValue) && +r.goalValue > 0 ? +r.goalValue : 0,
       archived: !!r.archived,
+      // «personal»: only its owner (and its assignee) may read it, not an admin; «work»: the usual institutional task
+      scope: r.scope === "personal" ? "personal" : "work",
       mit: typeof r.mit === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.mit) ? r.mit : null,
       tags: list(r.tags).map(String).filter(Boolean),
       startDate: isDay(r.startDate) ? r.startDate : null,
@@ -189,7 +191,7 @@
   }
 
   /* ---------- what changed, for the activity log ---------- */
-  const LABELS = { title: "العنوان", description: "الوصف", status: "الحالة", priority: "الأولوية", assignee: "المسؤول", projectId: "المشروع", area: "مجال الحياة", goalId: "الهدف", goalValue: "قيمة المهمة في الهدف", tags: "الوسوم",
+  const LABELS = { title: "العنوان", description: "الوصف", status: "الحالة", priority: "الأولوية", assignee: "المسؤول", projectId: "المشروع", area: "مجال الحياة", goalId: "الهدف", scope: "الخصوصية", goalValue: "قيمة المهمة في الهدف", tags: "الوسوم",
     startDate: "تاريخ البدء", due: "تاريخ الاستحقاق", time: "الوقت", estimate: "الوقت المقدّر", spent: "الوقت الفعلي", progressMode: "طريقة حساب النسبة",
     progressManual: "النسبة اليدوية", dependsOn: "الاعتماديات", recurrence: "التكرار", checklist: "قائمة التحقق", attachments: "المرفقات", parentId: "المهمة الأم" };
   function changes(before, after){

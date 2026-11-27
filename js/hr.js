@@ -990,6 +990,8 @@ ${HELLO}
     // approved=false (a request still under review): no signature or stamp yet
     finalize(L0, approved = true){
       const L = JSON.parse(JSON.stringify(L0 || {}));
+      // people without access to the stamp itself see it on their own approved letter, from the copy saved at the final approval
+      if (approved && L.sealSnap && !seal.sig && !seal.stamp) seal = { ...seal, ...L.sealSnap };
       const sh = signShared || {};
       if (!(L.signName || "").trim() && !(L.signRole || "").trim() && (sh.signName || sh.signRole)){ L.signName = sh.signName || ""; L.signRole = sh.signRole || ""; }
       if (!L.headId && sh.defaultHead && heads.some(h => h.id === sh.defaultHead)) L.headId = sh.defaultHead;
@@ -1000,6 +1002,8 @@ ${HELLO}
     preview: (L, opts) => { const head = heads.find(h => h.id === L.headId) || null; preview(L, head, partsOf(L, head), opts); },
     pdf: L => { const head = heads.find(h => h.id === L.headId) || null; return savePdf(L, head, partsOf(L, head)); },
     fit: () => fit(), place: el => placeSeal(el),
+    // the signature and stamp as they are now, saved with a letter at its final approval (empty for people who cannot read them)
+    sealSnapshot: () => seal.sig || seal.stamp ? { sig: seal.sig || "", stamp: seal.stamp || "", sigH: seal.sigH, stampW: seal.stampW, sigDX: seal.sigDX || 0, sigDY: seal.sigDY || 0, stampDX: seal.stampDX || 0, stampDY: seal.stampDY || 0 } : null,
     setCanIssue(v){ canIssue = !!v; setEditing(editingLetter); },
     setPerms(p){ P = { ...P, ...p }; canIssue = !!P.issue; submitOn = !!P.submit; applyPerms(); },
     enableSubmit(v){ submitOn = !!v; setEditing(editingLetter); },

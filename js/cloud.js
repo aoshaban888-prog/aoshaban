@@ -17,15 +17,32 @@
   const SKIP = new Set(["tdFile", "anPick", "hrSigFile", "hrStampFile", "fFiles", "asLogoFile", "asLhFile", "asAttFile"]);
 
   const ready = () => !!(cfg.cloudName && cfg.preset);
+  window.addEventListener("app:db", () => { signedOff = /^(localhost|127\.)/.test(location.hostname) || location.protocol === "file:"; });
+  // signed uploads: the server signs each upload (api/cloud-sign) once its keys are set in Vercel; until then the unsigned preset
+  let signedOff = /^(localhost|127\.)/.test(location.hostname) || location.protocol === "file:";
+  async function signFor(dir){
+    if (signedOff || !window.appUser || !window.appUser.getIdToken) return null;
+    try {
+      const r = await fetch("/api/cloud-sign", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + await window.appUser.getIdToken() }, body: JSON.stringify({ folder: dir }) });
+      if (r.status === 501 || r.status === 404){ signedOff = true; return null; }
+      return r.ok ? await r.json() : null;
+    } catch { return null; }
+  }
+  // the kinds of files the site accepts (anything else is refused before it leaves the device)
+  const BLOCKED = /\.(exe|bat|cmd|com|msi|scr|js|vbs|ps1|sh|jar|apk|dll|html?|svgz?)$/i;
   function upload(file, { folder = "", onProgress } = {}){
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (!ready()) return reject(new Error("not_configured"));
       if (file.size > MAX) return reject(new Error("too_big"));
+      if (BLOCKED.test(file.name || "")) return reject(new Error("bad_type"));
       const fd = new FormData();
-      fd.append("file", file); fd.append("upload_preset", cfg.preset);
-      const dir = [cfg.folder, folder].filter(Boolean).join("/"); if (dir) fd.append("folder", dir);
+      const dir = [cfg.folder, folder].filter(Boolean).join("/");
+      const sig = await signFor(dir);
+      fd.append("file", file);
+      if (sig){ fd.append("api_key", sig.apiKey); fd.append("timestamp", sig.timestamp); fd.append("signature", sig.signature); if (sig.folder) fd.append("folder", sig.folder); }
+      else { fd.append("upload_preset", cfg.preset); if (dir) fd.append("folder", dir); }
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", `https://api.cloudinary.com/v1_1/${encodeURIComponent(cfg.cloudName)}/auto/upload`);
+      xhr.open("POST", `https://api.cloudinary.com/v1_1/${encodeURIComponent(sig ? sig.cloudName : cfg.cloudName)}/auto/upload`);
       xhr.upload.onprogress = e => { if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded / e.total * 100)); };
       xhr.onload = () => {
         let j = {}; try { j = JSON.parse(xhr.responseText); } catch {}
@@ -40,7 +57,7 @@
       xhr.send(fd);
     });
   }
-  const errText = e => ({ not_configured: "رفع الملفات غير مفعّل: اضبط حساب Cloudinary من التمكين التقني › الربط.", too_big: "حجم الملف أكبر من 10 ميجابايت.", network: "انقطع الاتصال أثناء الرفع." })[e && e.message] || ("تعذّر رفع الملف: " + ((e && e.message) || ""));
+  const errText = e => ({ not_configured: "رفع الملفات غير مفعّل: اضبط حساب Cloudinary من التمكين التقني › الربط.", too_big: "حجم الملف أكبر من 10 ميجابايت.", bad_type: "نوع الملف غير مسموح لأسباب أمنية (ملفات التشغيل والسكربتات وصفحات الويب).", network: "انقطع الاتصال أثناء الرفع." })[e && e.message] || ("تعذّر رفع الملف: " + ((e && e.message) || ""));
   // what a public page needs to upload (the survey page copies it into the form)
   const config = () => ready() ? { cloudName: cfg.cloudName, preset: cfg.preset, folder: cfg.folder || "" } : null;
   window.Cloud = { ready, upload, errText, MAX, config };

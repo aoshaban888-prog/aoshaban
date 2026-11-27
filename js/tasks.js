@@ -65,6 +65,7 @@
     loaded = true; render();
     window.dispatchEvent(new CustomEvent("app:tasks", { detail: { tasks, byId, me, admin } }));
     if (admin) migrate(all);
+    if (admin) markScope(all);
   }
   function listen(name, ref){
     unsubs.push(ref.onSnapshot(s => { sources[name] = new Map(s.docs.map(d => [d.id, d.data()])); rebuild(); },
@@ -73,7 +74,8 @@
   function subscribe(){
     unsubs.forEach(u => u && u()); unsubs = []; sources = {};
     const col = db.collection("tasks");
-    if (admin) listen("all", col);
+    if (admin && window.TASKS_PRIVATE_RULE){ listen("own", col.where("owner", "==", me)); listen("assigned", col.where("assignee", "==", me)); listen("work", col.where("scope", "==", "work")); }
+    else if (admin) listen("all", col);
     else { listen("own", col.where("owner", "==", me)); listen("assigned", col.where("assignee", "==", me)); }
   }
 
@@ -93,6 +95,16 @@
     finally { migrating = false; }
   }
 
+  // once, by an admin: every older task gets scope "work" so the privacy rule can be switched on without hiding anything
+  let scoping = false;
+  async function markScope(all){
+    const old = [...all.entries()].filter(([, d]) => !d.scope);
+    if (!old.length || scoping) return; scoping = true;
+    try { for (let i = 0; i < old.length; i += 400){ const b = db.batch(); old.slice(i, i + 400).forEach(([id]) => b.update(db.collection("tasks").doc(id), { scope: "work" })); await b.commit(); } console.info(`scope: ${old.length} tasks marked work`); }
+    catch (e){ console.error(e); }
+    finally { scoping = false; }
+  }
+
   /* ---------- writing ---------- */
   const actRef = id => db.collection("tasks").doc(id).collection("activity");
   function log(id, entries){
@@ -101,7 +113,7 @@
   }
   async function create(data, opts = {}){
     if (!db) throw new Error("signed_out");
-    const t = C.normalize({ ...data, owner: me, title: (data.title || "").trim() });
+    const t = C.normalize({ ...data, owner: me, title: (data.title || "").trim(), scope: data.scope || (data.area ? "personal" : "work") });
     const errs = C.validate(t); if (errs.length){ UI.toast(errs[0], "err"); throw new Error(errs[0]); }
     if (t.dependsOn.some(d => !byId.has(d))) t.dependsOn = t.dependsOn.filter(d => byId.has(d));
     const now = new Date().toISOString();
