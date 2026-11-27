@@ -122,6 +122,14 @@
   }
   const titleOf = text => { const m = /^#{1,3}\s*(.+)$/m.exec(text || ""); return m ? m[1].replace(/[*_#]/g, "").replace(/^(صفحة الغلاف|اسم المبادرة)\s*[:：]?\s*/, "").trim().slice(0, 150) : ""; };
 
+  // content the person doesn't want in the document (each becomes an instruction in the prompt)
+  const AVOID = {
+    religious: ["عدم التطرق للجانب الشرعي أو الديني", "لا تتطرق للجانب الشرعي أو الديني، ولا تستشهد بآيات أو أحاديث أو مسوّغات دينية."],
+    guests: ["عدم ذكر استضافة أشخاص أو ضيوف", "لا تذكر استضافة أشخاص أو ضيوف أو متحدثين أو مدربين من خارج الجمعية."],
+    courses: ["عدم ذكر دورات تدريبية", "لا تذكر دورات تدريبية ولا تجعلها من أنشطة البرنامج أو مخرجاته."],
+    books: ["عدم ذكر كتب أو مراجع مطبوعة", "لا تذكر كتباً أو مراجع أو مطبوعات أو أدلة ورقية."],
+    slides: ["عدم ذكر ملفات عرض أو عروض تقديمية", "لا تذكر ملفات عرض أو عروضاً تقديمية ضمن الأنشطة أو المخرجات."],
+  };
   /* ---------- building the prompt from the form ---------- */
   const v = id => ($(id).value || "").trim();
   const dash = s => s || "غير محدد";
@@ -132,6 +140,7 @@
     const pref = [
       len === "short" ? "• اجعل الوثيقة موجزة: فقرات قصيرة وجداول مركّزة، في حدود ست صفحات تقريباً." : len === "long" ? "• اجعل الوثيقة مفصّلة: توسّع في الشرح والجداول والأمثلة دون حشو." : "",
       tone === "donor" ? "• اكتب بأسلوب مقنع موجّه للداعمين يبرز القيمة والأثر والعائد من الدعم، مع الحفاظ على الدقة." : tone === "formal" ? "• اكتب بأسلوب رسمي إداري مناسب للعرض على مجلس الإدارة والجهات الحكومية." : "",
+      ...[...document.querySelectorAll("#inAvoid input:checked")].map(c => "• " + AVOID[c.value][1]),
       excluded.length ? `• لا تكتب المحاور التالية ولا تذكرها، وأعد ترقيم بقية المحاور تبعاً لذلك: ${excluded.join("، ")}.` : "",
     ].filter(Boolean);
     let budget = "";
@@ -151,11 +160,12 @@
     return (tool.createPrompt || CREATE_PROMPT).replace(/\{\{(\w+)\}\}/g, (m, k) => fill[k] ?? "").replace(/\n{3,}/g, "\n\n");
   }
   const analyzePrompt = () => (tool.analyzePrompt || ANALYZE_PROMPT).replace("{{documentText}}", pdf && !v("anText") ? "الوثيقة مرفقة أعلاه كملف PDF بعنوان «" + pdf.name + "»." : (pdf ? "الوثيقة مرفقة أعلاه كملف PDF، وهذه ملاحظات أو نص إضافي منها:\n" : "") + v("anText"));
-  const formInput = () => Object.fromEntries(["inAssoc", "inVision", "inMission", "inGoals", "inField", "inCity", "inName", "inIdea", "inBenef", "inDur", "inTarget", "inStart", "inEnd", "inLen", "inTone", "inBudget", "inDirect"].map(id => [id, $(id).value]).concat([["inBudgetOn", $("inBudgetOn").checked], ["inReserve", $("inReserve").checked], ["axes", [...document.querySelectorAll("#inAxes input:checked")].map(c => c.value)]]));
+  const formInput = () => Object.fromEntries(["inAssoc", "inVision", "inMission", "inGoals", "inField", "inCity", "inName", "inIdea", "inBenef", "inDur", "inTarget", "inStart", "inEnd", "inLen", "inTone", "inBudget", "inDirect"].map(id => [id, $(id).value]).concat([["inBudgetOn", $("inBudgetOn").checked], ["inReserve", $("inReserve").checked], ["axes", [...document.querySelectorAll("#inAxes input:checked")].map(c => c.value)], ["avoid", [...document.querySelectorAll("#inAvoid input:checked")].map(c => c.value)]]));
   function fillForm(inp){
     if (!inp) return;
     Object.entries(inp).forEach(([k, x]) => { const el = $(k); if (!el) return; if (el.type === "checkbox") el.checked = !!x; else el.value = x ?? ""; });
     document.querySelectorAll("#inAxes input").forEach(c => { c.checked = (inp.axes || []).includes(c.value); });
+    document.querySelectorAll("#inAvoid input").forEach(c => { c.checked = (inp.avoid || []).includes(c.value); });
     syncBudget();
   }
   // the association's details come back from its latest document
@@ -376,6 +386,7 @@
   document.querySelectorAll("[data-igtab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.igtab)));
   $("igCreate").addEventListener("submit", e => { e.preventDefault(); generate("create"); });
   $("igAnalyze").addEventListener("submit", e => { e.preventDefault(); generate("analyze"); });
+  $("inAvoid").innerHTML = Object.entries(AVOID).map(([k, [l]]) => `<label class="s-check"><input type="checkbox" value="${k}"> <span>${esc(l)}</span></label>`).join("");
   $("inAxes").innerHTML = AXES.map(a => `<label class="s-check"><input type="checkbox" value="${esc(a)}"> <span>${esc(a)}</span></label>`).join("");
   window.addEventListener("beforeunload", e => { if (running){ e.preventDefault(); } });
 
