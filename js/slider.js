@@ -17,11 +17,16 @@
   const shown = () => { const own = slides.filter(s => s.active !== false); return own.length || slides.length ? own : READY; };
 
   /* ---------- home ---------- */
+  // the person's own choice: paused, or hidden (a small button brings it back)
+  let pref = {}; try { pref = JSON.parse(localStorage.getItem("app-slider-pref") || "{}"); } catch {}
+  const savePref = () => { try { localStorage.setItem("app-slider-pref", JSON.stringify(pref)); } catch {} };
   function renderHome(){
     const box = $("slider"); if (!box) return;
     const list = shown();
     const enabled = !window.siteSettings || window.siteSettings.home.slider !== false;
-    box.hidden = !enabled || !list.length;
+    box.hidden = !enabled || !list.length || !!pref.hidden;
+    if ($("slShow")) $("slShow").hidden = !(enabled && list.length && pref.hidden);
+    if ($("slPause")){ $("slPause").textContent = pref.paused ? "▶" : "❚❚"; $("slPause").title = pref.paused ? "تشغيل التنقل التلقائي" : "إيقاف التنقل التلقائي"; $("slPause").setAttribute("aria-label", $("slPause").title); $("slPause").hidden = list.length < 2 || reduce.matches; }
     $("sliderEmpty").hidden = true;
     const track = $("slTrack"), dots = $("slDots");
     track.innerHTML = ""; dots.innerHTML = "";
@@ -61,10 +66,13 @@
   function stop(){ clearInterval(timer); timer = null; }
   function restart(){
     stop();
-    if (reduce.matches || shown().length < 2) return;
+    if (reduce.matches || shown().length < 2 || pref.paused) return;
     timer = setInterval(() => { if (!paused && !document.hidden) go(idx + 1); }, seconds() * 1000);
   }
   $("slPrev").addEventListener("click", () => { go(idx - 1); restart(); });
+  if ($("slPause")) $("slPause").addEventListener("click", () => { pref.paused = !pref.paused; savePref(); renderHome(); });
+  if ($("slHide")) $("slHide").addEventListener("click", () => { pref.hidden = true; savePref(); renderHome(); UI.toast("أُخفي السلايدر. تقدر ترجعه من زر «إظهار السلايدر»"); });
+  if ($("slShow")) $("slShow").addEventListener("click", () => { pref.hidden = false; savePref(); renderHome(); });
   $("slNext").addEventListener("click", () => { go(idx + 1); restart(); });
   const box = $("slider");
   box.addEventListener("mouseenter", () => { paused = true; });

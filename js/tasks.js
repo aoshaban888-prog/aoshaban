@@ -606,7 +606,7 @@
   window.Tasks = {
     get list(){ return tasks; }, get byId(){ return byId; }, get projects(){ return projects; }, get people(){ return people; },
     get policies(){ return policies; }, get letters(){ return letters; }, get me(){ return me; }, get myName(){ return myName; }, get admin(){ return !!admin; },
-    get db(){ return db; }, childrenOf, pct, canEdit, personName, projectOf, ring, bar, dueLabel, showList: l => { list = LIST[l] ? l : "all"; saveUi(); render(); },
+    get db(){ return db; }, childrenOf, pct, canEdit, personName, projectOf, ring, bar, dueLabel, showList: l => { list = LIST[l] ? l : "all"; saveUi(); render(); }, actionMenu: (anchor, t) => actionMenu(anchor, t),
     create, update, remove, log, openLink,
   };
   if (window.appDb) connect({ db: window.appDb, user: window.appUser });

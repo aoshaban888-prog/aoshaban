@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261128f"></script>
-<link rel="stylesheet" href="css/library.css?v=20261128f">
-<link rel="stylesheet" href="css/app.css?v=20261128f">
+<script src="js/boot.js?v=20261128h"></script>
+<link rel="stylesheet" href="css/library.css?v=20261128h">
+<link rel="stylesheet" href="css/app.css?v=20261128h">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -121,46 +121,41 @@
     </div>
     <main class="main">
     <section class="view home" data-view="home" hidden>
-      <header class="home-h">
-        <div><p class="home-greet" id="hGreet"></p><h1 id="hDate"></h1><p class="crumb" id="hHijri"></p></div>
-        <div class="clock" aria-label="الوقت الآن"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div>
+      <header class="dh-welcome">
+        <div class="dh-w1"><p class="home-greet" id="hGreet"></p><p class="dh-summary" id="dhSummary"></p></div>
+        <div class="dh-w2"><div class="dh-date"><b id="hDate"></b><span id="hHijri"></span></div><div class="clock" aria-label="الوقت الآن (توقيت الرياض)"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div>
+          <button class="tk-ib" type="button" id="dhPrivacy" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
       </header>
       <section class="slider" id="slider" aria-roledescription="سلايدر" aria-label="الشرائح" tabindex="0" hidden>
         <div class="sl-viewport"><div class="sl-track" id="slTrack" aria-live="off"></div></div>
         <button class="sl-nav prev" id="slPrev" type="button" aria-label="الشريحة السابقة"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         <button class="sl-nav next" id="slNext" type="button" aria-label="الشريحة التالية"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
         <div class="sl-dots" id="slDots"></div>
+        <div class="sl-ctl"><button type="button" id="slPause" aria-label="إيقاف التنقل التلقائي" title="إيقاف التنقل التلقائي">❚❚</button><button type="button" id="slHide" aria-label="إخفاء السلايدر" title="إخفاء السلايدر">×</button></div>
       </section>
       <p class="muted-text sl-empty" id="sliderEmpty" hidden>السلايدر فارغ. أضف شرائح من <a class="link" href="#/admin">التمكين التقني</a></p>
-      <nav class="qa" aria-label="اختصارات">
-        <a class="qa-i" href="#/hr/letters" data-sec="hr"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="qa-t"><b>خطاب جديد</b><small>من القوالب الجاهزة</small></span></a>
-        <a class="qa-i" href="#/hr/requests" data-sec="hr" data-qa="inbox"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z"/></svg></span><span class="qa-t"><b>الطلبات والاعتماد</b><small>تابع طلباتك واعتمد المعلّق</small></span></a>
-        <a class="qa-i" href="#/tasks" data-sec="tasks" data-qa="task"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></span><span class="qa-t"><b>مهمة جديدة</b><small>أضفها وحدد موعدها</small></span></a>
-        <a class="qa-i" href="#/governance/library" data-sec="governance"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span><span class="qa-t"><b>اللوائح والسياسات</b><small>راجع وحدّث المكتبة</small></span></a>
-      </nav>
-      <div class="stats loading" id="hStats">
-        <a class="stat" data-stat="today" href="#/tasks"><span class="st-l">مهام اليوم</span><span class="st-n">0</span><span class="st-sub"></span></a>
-        <a class="stat" data-stat="late" href="#/tasks"><span class="st-l">متأخرة</span><span class="st-n">0</span><span class="st-sub"></span></a>
-        <a class="stat" data-stat="letters" href="#/hr/letters"><span class="st-l">خطابات هذا الشهر</span><span class="st-n">0</span><span class="st-sub"></span></a>
-        <a class="stat" data-stat="reviews" href="#/governance/library"><span class="st-l">مراجعات لوائح قريبة</span><span class="st-n">0</span><span class="st-sub"></span></a>
-      </div>
-      <div class="home-grid">
-        <section class="card tasks-card" aria-labelledby="tH">
-          <div class="card-h"><h2 id="tH">المهام</h2><span class="meta" id="tCount"></span><a href="#/tasks" class="link">كل المهام</a></div>
+      <button type="button" class="sl-show" id="slShow" hidden>إظهار السلايدر</button>
+      <div class="dh-kpis" id="dhKpis"></div>
+      <div class="dh-grid">
+        <div class="dh-main">
+          <section class="card dh-card dh-o1" id="dhTasks" aria-labelledby="dhTH">
+            <div class="card-h"><h2 id="dhTH">مهامي</h2><span class="dh-ring" id="dhTaskRing"></span><a href="#/tasks" class="link">صفحة المهام</a></div>
           <form id="tAdd" class="t-add" hidden>
             <input class="input" id="tTitle" placeholder="اكتب بكلامك: ذكرني الخميس 9 الصبح بإعداد محضر اجتماع" aria-label="مهمة جديدة" autocomplete="off" required>
             <input class="input" type="date" id="tDue" aria-label="تاريخ الاستحقاق">
             <button class="btn primary" type="submit">إضافة</button>
             <p class="smart-hint" id="tSmart" hidden></p>
           </form>
-          <div class="skel-rows" id="tSkel" aria-hidden="true"><i></i><i></i><i></i></div>
-          <p id="tSignin" class="muted-text" hidden>سجّل الدخول من القائمة الجانبية لعرض مهامك</p>
-          <ul id="tList" class="t-list"></ul>
-          <p id="tEmpty" class="muted-text" hidden>لا توجد مهام مفتوحة</p>
-          <a id="tMore" href="#/tasks" class="link" hidden></a>
-        </section>
-        <div class="home-side">
-          <section class="card rh-card" data-sec="hr" aria-labelledby="rhH" hidden>
+            <p id="tSignin" hidden></p>
+            <div id="dhTaskBody"></div>
+          </section>
+          <section class="card dh-card dh-o3" id="dhAgendaCard" aria-labelledby="dhAH">
+            <div class="card-h"><h2 id="dhAH">المواعيد والاستحقاقات القادمة</h2><button type="button" class="linkbtn" id="dhAddEvent">+ موعد</button></div>
+            <ul class="dh-agenda" id="dhAgenda"></ul>
+          </section>
+          <div class="dh-two dh-o5">
+            <section class="card dh-card" id="dhProjCard" aria-labelledby="dhPH" hidden><div class="card-h"><h2 id="dhPH">متابعة المشاريع</h2><a href="#/tasks" class="link">المهام</a></div><ul class="dh-projects" id="dhProjects"></ul></section>
+          <section class="card rh-card dh-card" data-sec="hr" aria-labelledby="rhH" hidden>
             <div class="card-h"><h2 id="rhH">الطلبات</h2><a href="#/hr/requests" class="link">كل الطلبات</a></div>
             <div class="rh-n">
               <a class="rh-box" href="#/hr/requests" data-qa="inbox"><span class="rh-num" id="rhInbox">0</span><span>بانتظار اعتمادك</span></a>
@@ -169,13 +164,27 @@
             <ul class="rh-list" id="rhList"></ul>
             <p class="muted-text" id="rhEmpty" hidden>ما فيه طلبات حتى الآن</p>
           </section>
-        <section class="card prayer-card" aria-labelledby="pH">
+          </div>
+        </div>
+        <aside class="dh-side">
+          <section class="card dh-card dh-attn dh-o2" id="dhAttnCard" aria-labelledby="dhNH"><div class="card-h"><h2 id="dhNH">تحتاج إلى انتباهك</h2><span class="dh-badge" id="dhAttnN"></span></div><ul class="dh-attnl" id="dhAttn"></ul></section>
+          <section class="card dh-card dh-o4" aria-labelledby="dhQH"><div class="card-h"><h2 id="dhQH">إجراءات سريعة</h2></div>
+      <nav class="qa" aria-label="اختصارات">
+        <a class="qa-i" href="#/hr/letters" data-sec="hr"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="qa-t"><b>خطاب جديد</b><small>من القوالب الجاهزة</small></span></a>
+        <a class="qa-i" href="#/hr/requests" data-sec="hr" data-qa="inbox"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z"/></svg></span><span class="qa-t"><b>الطلبات والاعتماد</b><small>تابع طلباتك واعتمد المعلّق</small></span></a>
+        <a class="qa-i" href="#/tasks" data-sec="tasks" data-qa="task"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></span><span class="qa-t"><b>مهمة جديدة</b><small>أضفها وحدد موعدها</small></span></a>
+        <a class="qa-i" href="#/governance/library" data-sec="governance"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span><span class="qa-t"><b>اللوائح والسياسات</b><small>راجع وحدّث المكتبة</small></span></a>
+      </nav>
+          </section>
+          <section class="card dh-card dh-o6" id="dhLifeCard" aria-labelledby="dhLH" hidden><div class="card-h"><h2 id="dhLH">ملخص حياتي الشخصية</h2><a href="#/life/dashboard" class="link">اللوحة الشخصية</a></div><div id="dhPersonal"></div></section>
+        <section class="card prayer-card dh-card dh-o7" aria-labelledby="pH">
           <div class="card-h"><h2 id="pH">أوقات الصلاة</h2></div>
           <div class="p-next"><span class="muted-text">الصلاة القادمة</span><strong id="pNext"></strong><span id="pLeft"></span></div>
           <ul id="pList" class="p-list"></ul>
           <p class="p-note"><span id="pNote"></span><button id="pLocBtn" class="linkbtn" type="button" hidden>استخدام موقعي</button></p>
         </section>
-        </div>
+          <section class="card dh-card dh-o8" id="dhActCard" aria-labelledby="dhRH"><div class="card-h"><h2 id="dhRH">النشاطات الأخيرة</h2></div><ul class="dh-act" id="dhActivity"></ul></section>
+        </aside>
       </div>
     </section>
     <section class="view tasks" data-view="tasks" hidden>
@@ -1190,28 +1199,29 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261128f"></script>
-<script src="js/library.js?v=20261128f"></script>
+<script src="js/ui.js?v=20261128h"></script>
+<script src="js/library.js?v=20261128h"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/cloud.js?v=20261128f"></script>
-<script src="js/task-core.js?v=20261128f"></script>
-<script src="js/smart-task.js?v=20261128f"></script>
-<script src="js/reminders.js?v=20261128f"></script>
-<script src="js/life.js?v=20261128f"></script>
-<script src="js/home.js?v=20261128f"></script>
-<script src="js/tasks.js?v=20261128f"></script>
-<script src="js/task-detail.js?v=20261128f"></script>
-<script src="js/slider.js?v=20261128f"></script>
-<script src="js/settings.js?v=20261128f"></script>
-<script src="js/fonts.js?v=20261128f"></script>
-<script src="js/hr.js?v=20261128f"></script>
-<script src="js/assocs.js?v=20261128f"></script>
-<script src="js/forms.js?v=20261128f"></script>
-<script src="js/initiatives.js?v=20261128f"></script>
-<script src="js/requests.js?v=20261128f"></script>
-<script src="js/table-tools.js?v=20261128f"></script>
-<script src="js/login.js?v=20261128f"></script>
-<script src="js/nav.js?v=20261128f"></script>
-<script src="js/shell.js?v=20261128f"></script>
+<script src="js/cloud.js?v=20261128h"></script>
+<script src="js/task-core.js?v=20261128h"></script>
+<script src="js/smart-task.js?v=20261128h"></script>
+<script src="js/reminders.js?v=20261128h"></script>
+<script src="js/life.js?v=20261128h"></script>
+<script src="js/dash.js?v=20261128h" defer></script>
+<script src="js/home.js?v=20261128h"></script>
+<script src="js/tasks.js?v=20261128h"></script>
+<script src="js/task-detail.js?v=20261128h"></script>
+<script src="js/slider.js?v=20261128h"></script>
+<script src="js/settings.js?v=20261128h"></script>
+<script src="js/fonts.js?v=20261128h"></script>
+<script src="js/hr.js?v=20261128h"></script>
+<script src="js/assocs.js?v=20261128h"></script>
+<script src="js/forms.js?v=20261128h"></script>
+<script src="js/initiatives.js?v=20261128h"></script>
+<script src="js/requests.js?v=20261128h"></script>
+<script src="js/table-tools.js?v=20261128h"></script>
+<script src="js/login.js?v=20261128h"></script>
+<script src="js/nav.js?v=20261128h"></script>
+<script src="js/shell.js?v=20261128h"></script>
 </body>
 </html>

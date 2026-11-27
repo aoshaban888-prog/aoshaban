@@ -203,12 +203,12 @@
   function connect({ db: d, user }){
     unsubs.forEach(f => f()); unsubs = []; db = d; me = user ? user.email : ""; goals = []; habits = []; notes = []; reviews = [];
     if (!db){ draw(); return; }
-    const watch = (col, set) => unsubs.push(db.collection(col).where("owner", "==", me).onSnapshot(s => { set(s.docs.map(x => ({ id: x.id, ...x.data() }))); if (route) draw(); }, err => console.error(col, err)));
+    const watch = (col, set) => unsubs.push(db.collection(col).where("owner", "==", me).onSnapshot(s => { set(s.docs.map(x => ({ id: x.id, ...x.data() }))); if (route) draw(); window.dispatchEvent(new CustomEvent("app:life")); }, err => console.error(col, err)));
     watch("lifeGoals", v => { goals = v; }); watch("lifeHabits", v => { habits = v; }); watch("lifeNotes", v => { notes = v; }); watch("lifeReviews", v => { reviews = v; });
     if (window.Tasks && window.Tasks.list) tasks = window.Tasks.list;
     draw();
   }
-  window.Life = { goals: () => goals.slice(), AREAS, ROUTES, newGoal: area => goalForm(null, area || ""),
+  window.Life = { goals: () => goals.slice(), habits: () => habits.slice(), AREAS, ROUTES, newGoal: area => goalForm(null, area || ""),
     addNote: async text => { if (!db || !String(text || "").trim()) return; try { await db.collection("lifeNotes").add({ owner: me, text: String(text).trim().slice(0, 5000), area: "", pinned: false, at: new Date().toISOString() }); UI.toast("حُفظت الملاحظة في «الأفكار والملاحظات»"); } catch (e){ console.error(e); UI.toast("تعذّر الحفظ", "err"); } } };
   window.addEventListener("app:db", e => connect(e.detail));
   if (window.appDb) connect({ db: window.appDb, user: window.appUser });

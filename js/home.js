@@ -5,9 +5,12 @@
   const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
   /* ---------- date and clock ---------- */
-  const fmtG = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  const fmtH = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn", { day: "numeric", month: "long", year: "numeric" });
-  const fmtT = new Intl.DateTimeFormat("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit", hour12: true });
+  // the dashboard keeps Saudi time (Asia/Riyadh) whatever the device's own zone
+  const TZ = "Asia/Riyadh";
+  const fmtG = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: TZ });
+  const fmtH = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: TZ });
+  const fmtT = new Intl.DateTimeFormat("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: TZ });
+  const riyadhHour = () => +new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: TZ }).format(new Date()) % 24;
   const timeParts = d => {
     const p = fmtT.formatToParts(d);
     const v = t => (p.find(x => x.type === t) || {}).value || "";
@@ -31,8 +34,8 @@
   /* ---------- greeting ---------- */
   let who = "";
   function greet(){
-    const h = new Date().getHours();
-    const part = h < 12 ? "صباح الخير" : "مساء الخير";
+    const h = riyadhHour();
+    const part = h >= 4 && h < 12 ? "صباح الخير" : h < 17 && h >= 12 ? "مساء الخير" : "مساء الخير";
     $("hGreet").textContent = who ? `${part}، ${who}` : part;
   }
   window.addEventListener("app:auth", e => { const u = e.detail && e.detail.user; who = u ? (u.displayName || "").split(" ")[0] || u.email.split("@")[0] : ""; greet(); });
