@@ -16,7 +16,8 @@
     inbox.forEach(r => out.push({ key: `rq:${r.id}:${r.stageIndex || 0}`, kind: "requests", title: r.title || "طلب", sub: `بانتظار اعتمادك · من ${r.submitterName || r.submittedBy || ""}`, href: "#/hr/requests", tab: "inbox", warn: true }));
     tasks.filter(t => !t.parentId && !t.archived && t.due && t.due <= td && !["done", "cancelled", "deferred"].includes(t.status) && (t.assignee ? t.assignee === me : t.owner === me))
       .forEach(t => out.push({ key: `tk:${t.id}:${t.due}`, kind: "tasks", title: t.title, sub: t.due < td ? `متأخرة منذ ${-days(t.due)} ${-days(t.due) === 1 ? "يوم" : "أيام"}` : "مستحقة اليوم" + (t.time && window.SmartTask ? " · " + SmartTask.timeLabel(t.time) : ""), task: t.id, warn: t.due < td }));
-    (window.Assocs ? Assocs.list() : []).forEach(a => Object.entries(a.approvals || {}).forEach(([pid, ap]) => { if (ap && ap.review){ const d = days(ap.review); if (d <= 14) out.push({ key: `rv:${a.id || a.name}:${pid}:${ap.review}`, kind: "dues", title: `مراجعة لائحة · ${a.name}`, sub: d < 0 ? "فات موعد المراجعة" : d === 0 ? "موعدها اليوم" : `بعد ${d} يوماً`, href: "#/governance/library", warn: d < 0 }); } }));
+    (window.Orgs ? Orgs.deadlines() : []).filter(x => x.band !== "later" && x.days >= -30).forEach(x => out.push({ key: `dl:${x.key}:${x.date}:${x.band}`, kind: "dues", title: `${x.title} · ${x.assoc}`,
+      sub: `${x.kindLabel} · ${x.days < 0 ? `فات موعدها منذ ${-x.days} يوماً` : x.days === 0 ? "اليوم" : `بعد ${x.days} يوماً`}`, href: x.kind === "decision" ? "#/orgs/meetings" : "#/orgs/deadlines", warn: x.days <= 7 }));
     (window.Life ? Life.goals() : []).filter(g => g.due && g.status !== "done").forEach(g => { const d = days(g.due); if (d >= 0 && d <= 7) out.push({ key: `gl:${g.id}:${g.due}`, kind: "dues", title: `موعد هدف: ${g.title}`, sub: d === 0 ? "اليوم" : `بعد ${d} أيام`, href: "#/life/goals" }); });
     if ("Notification" in window && Notification.permission === "default" && tasks.some(t => t.time && t.due >= td)) out.push({ key: "sys:notif-permission", kind: "system", title: "فعّل تنبيهات المتصفح", sub: "لتصلك تذكيرات المهام في وقتها وأنت على صفحة أخرى", action: "perm" });
     return out;
@@ -61,7 +62,7 @@
   window.Notif = { quiet(){ const q = window.UserPrefs ? UserPrefs.get("quiet", null) : null; if (!q || !q.on) return false; const n = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Riyadh" }).format(new Date()); return q.from <= q.to ? n >= q.from && n < q.to : n >= q.from || n < q.to; } };
   window.addEventListener("app:requests", e => { inbox = e.detail.inbox || []; paint(); });
   window.addEventListener("app:tasks", e => { tasks = e.detail.tasks || []; me = e.detail.me || me; paint(); });
-  ["app:prefs", "app:assocs", "app:life"].forEach(ev => window.addEventListener(ev, paint));
+  ["app:prefs", "app:assocs", "app:life", "app:orgs"].forEach(ev => window.addEventListener(ev, paint));
   window.addEventListener("app:auth", () => { bell.hidden = !(window.appAuth && window.appAuth.allowed && window.appAuth.user); });
   paint();
 })();

@@ -170,6 +170,18 @@ service cloud.firestore {
       allow read: if allowed();
       allow write: if section("governance");
     }
+    // إدارة الجمعيات: documents with expiry dates, and meeting minutes with their decisions
+    match /assocDocs/{id} {
+      allow read, delete: if section("governance");
+      allow create, update: if section("governance") && request.resource.data.assocId is string && request.resource.data.assocId.size() > 0
+                            && (resource == null || request.resource.data.get("createdBy", "") == resource.data.get("createdBy", ""));
+    }
+    match /meetings/{id} {
+      allow read, delete: if section("governance");
+      allow create, update: if section("governance") && request.resource.data.assocId is string && request.resource.data.assocId.size() > 0
+                            && request.resource.data.get("decisions", []) is list && request.resource.data.get("decisions", []).size() <= 200
+                            && (resource == null || request.resource.data.get("createdBy", "") == resource.data.get("createdBy", ""));
+    }
     match /letterheads/{id} {
       allow read, write: if section("governance");
     }

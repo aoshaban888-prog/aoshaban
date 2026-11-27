@@ -248,6 +248,7 @@
   }
   function openLink(l){
     if (l.type === "policy"){ location.hash = "#/governance/library"; window.dispatchEvent(new CustomEvent("app:open-policy", { detail: l.id })); }
+    else if (l.type === "meeting"){ if (window.Orgs) Orgs.openMeeting(l.id); }
     else location.hash = "#/hr/letters";
   }
 

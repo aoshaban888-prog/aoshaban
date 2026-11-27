@@ -60,9 +60,9 @@
   }
 
   /* ---------- the unified calendar page ---------- */
-  const KINDS = { task: ["المهام", "#7c3aed"], goal: ["الأهداف", "#16a34a"], review: ["مراجعات اللوائح", "#b45309"], board: ["دورات المجالس", "#0f766e"], form: ["الاستبيانات", "#2563eb"] };
+  const KINDS = { task: ["المهام", "#7c3aed"], goal: ["الأهداف", "#16a34a"], review: ["مراجعات اللوائح", "#b45309"], board: ["دورات المجالس", "#0f766e"], form: ["الاستبيانات", "#2563eb"], doc: ["وثائق الجمعيات", "#dc2626"], meeting: ["الاجتماعات", "#0891b2"] };
   let filt = { kinds: Object.keys(KINDS), assoc: "" };
-  try { const s = JSON.parse(localStorage.getItem("app-cal-filt") || "null"); if (s) filt = { ...filt, ...s }; } catch {}
+  try { const s = JSON.parse(localStorage.getItem("app-cal-filt") || "null"); if (s){ if (!s.v4 && Array.isArray(s.kinds)) s.kinds = [...new Set([...s.kinds, "doc", "meeting"])]; filt = { ...filt, ...s, v4: true }; } } catch {}
   function events(){
     const out = [], T = window.Tasks;
     if (T && T.list) T.list.filter(t => !t.parentId && !t.archived && t.due && t.status !== "cancelled").forEach(t => out.push({ key: "t:" + t.id, date: t.due, time: t.time, title: t.title, kind: "task", kindLabel: "مهمة", color: window.TaskCore ? TaskCore.PR[t.priority].color : KINDS.task[1], drag: T.canEdit(t) && t.status !== "done", done: t.status === "done", task: t.id }));
@@ -71,6 +71,10 @@
       Object.entries(a.approvals || {}).forEach(([pid, ap]) => { if (ap && ap.review) out.push({ key: `r:${a.id}:${pid}`, date: ap.review, title: `مراجعة لائحة · ${a.name}`, kind: "review", kindLabel: "مراجعة لائحة", color: KINDS.review[1], assoc: a.name, href: "#/governance/library" }); });
       if (a.boardEnd) out.push({ key: "b:" + a.id, date: a.boardEnd, title: `نهاية دورة المجلس · ${a.name}`, kind: "board", kindLabel: "دورة مجلس", color: KINDS.board[1], assoc: a.name, href: "#/orgs/associations" });
     });
+    if (window.Orgs){
+      Orgs.docs().filter(x => x.expires).forEach(x => out.push({ key: "d:" + x.id, date: x.expires, title: `انتهاء ${x.title || x.kind} · ${(Assocs.byId(x.assocId) || {}).name || ""}`, kind: "doc", kindLabel: "وثيقة", color: KINDS.doc[1], assoc: (Assocs.byId(x.assocId) || {}).name, href: "#/orgs/deadlines" }));
+      Orgs.meetings().filter(m => m.date).forEach(m => out.push({ key: "m:" + m.id, date: m.date, time: m.time || null, title: `${m.type}${m.number ? " " + m.number : ""} · ${(Assocs.byId(m.assocId) || {}).name || ""}`, kind: "meeting", kindLabel: "اجتماع", color: KINDS.meeting[1], assoc: (Assocs.byId(m.assocId) || {}).name, href: "#/orgs/meetings" }));
+    }
     (window.FormsList ? FormsList() : []).filter(f => f.settings && f.settings.closeAt).forEach(f => out.push({ key: "f:" + f.id, date: f.settings.closeAt, title: `إغلاق استبيان: ${f.title}`, kind: "form", kindLabel: "استبيان", color: KINDS.form[1], href: "#/projects/forms" }));
     return out.filter(e => filt.kinds.includes(e.kind) && (!filt.assoc || e.assoc === filt.assoc));
   }
@@ -90,7 +94,7 @@
     save(); page();
   });
   $("calAdd") && $("calAdd").addEventListener("click", () => { location.hash = "#/tasks"; setTimeout(() => { const i = $("tkQuickIn"); if (i){ i.focus(); i.value = "موعد "; } }, 200); });
-  ["app:tasks", "app:life", "app:assocs", "app:forms"].forEach(ev => window.addEventListener(ev, () => { clearTimeout(page._t); page._t = setTimeout(page, 60); }));
+  ["app:tasks", "app:life", "app:assocs", "app:forms", "app:orgs"].forEach(ev => window.addEventListener(ev, () => { clearTimeout(page._t); page._t = setTimeout(page, 60); }));
   window.addEventListener("app:view", e => { if (e.detail === "calendar") setTimeout(page, 30); });
 
   window.Calendar = { render, today };

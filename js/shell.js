@@ -16,7 +16,7 @@
     "admin": "التمكين التقني",
     "admin/requests": "إدارة الطلبات الإدارية",
     "admin/permissions": "صلاحيات المستخدمين",
-    "orgs/associations": "الجمعيات",
+    "orgs/associations": "الجمعيات", "orgs/deadlines": "مركز الوثائق والاستحقاقات", "orgs/meetings": "الاجتماعات والقرارات",
   };
   const DEFAULT = () => (window.siteSettings && ROUTES[window.siteSettings.startPage]) ? window.siteSettings.startPage : "home";
   const app = document.querySelector(".app");

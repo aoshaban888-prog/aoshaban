@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261128r"></script>
-<link rel="stylesheet" href="css/library.css?v=20261128r">
-<link rel="stylesheet" href="css/app.css?v=20261128r">
+<script src="js/boot.js?v=20261128s"></script>
+<link rel="stylesheet" href="css/library.css?v=20261128s">
+<link rel="stylesheet" href="css/app.css?v=20261128s">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -90,6 +90,8 @@
       <button class="nav-group" type="button" id="orgBtn" data-group="orgs" data-sec="admin" aria-expanded="false" aria-controls="orgSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 21v-5h6v5"/><path d="M9 11h.01M15 11h.01"/></svg><span>إدارة الجمعيات</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="nav-sub" id="orgSub" data-sec="admin" hidden>
         <a class="sub" href="#/orgs/associations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 21v-5h6v5"/><path d="M9 11h.01M15 11h.01"/></svg>الجمعيات</a>
+        <a class="sub" href="#/orgs/deadlines"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><circle cx="12" cy="14" r="3"/><path d="M12 13v1.2l.8.6"/></svg>مركز الاستحقاقات</a>
+        <a class="sub" href="#/orgs/meetings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15 14.5c.6-.3 1.3-.5 2-.5 2.2 0 4 1.8 4 4"/></svg>الاجتماعات والقرارات</a>
       </div>
       <button class="nav-group" type="button" id="admBtn" data-group="admin" data-sec="admin" aria-expanded="false" aria-controls="admSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>التمكين التقني</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="nav-sub" id="admSub" data-sec="admin" hidden>
@@ -671,6 +673,7 @@
         <div class="as-cards" id="asList"></div>
         <p class="ig-empty" id="asEmpty" hidden></p>
       </div>
+      <div id="asProfile" hidden></div>
       <p class="muted-text" id="asSignin">سجّل الدخول لعرض الجمعيات</p>
       <div id="asEditor" hidden>
         <header class="ig-rbar">
@@ -682,6 +685,14 @@
         <p class="muted-text as-hint">الخانة الإجبارية الوحيدة اسم الجمعية، وبقية البيانات اختيارية ويمكن استكمالها لاحقاً.</p>
         <div class="as-form" id="asForm"></div>
       </div>
+    </section>
+    <section class="view" data-view="orgs/deadlines" hidden>
+      <header class="page-h"><div><p class="crumb">إدارة الجمعيات</p><h1>مركز الوثائق والاستحقاقات</h1><p class="rq-subh">تراخيص الجمعيات وشهاداتها، ونهاية دورات المجالس، ومراجعات اللوائح، وقرارات الاجتماعات، مرتبة بالأقرب. يصلك تنبيه في الجرس قبل الموعد بـ 90 و60 و30 و15 و7 أيام.</p></div><div class="actions"><button class="btn primary" type="button" id="dlNew" hidden>+ وثيقة</button></div></header>
+      <div id="dlView"></div>
+    </section>
+    <section class="view" data-view="orgs/meetings" hidden>
+      <header class="page-h"><div><p class="crumb">إدارة الجمعيات</p><h1>الاجتماعات والقرارات</h1><p class="rq-subh">محاضر اجتماعات المجالس والجمعيات العمومية واللجان، وكل قرار يتحول إلى مهمة لها مسؤول وموعد وتتحدث حالته منها.</p></div><div class="actions"><button class="btn primary" type="button" id="mtNew" hidden>+ اجتماع جديد</button></div></header>
+      <div id="mtView"></div>
     </section>
     <section class="view" data-view="projects/initiatives" hidden>
       <div id="iniHome">
@@ -1237,35 +1248,36 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/prefs.js?v=20261128r"></script>
-<script src="js/ui.js?v=20261128r"></script>
-<script src="js/library.js?v=20261128r"></script>
+<script src="js/prefs.js?v=20261128s"></script>
+<script src="js/ui.js?v=20261128s"></script>
+<script src="js/library.js?v=20261128s"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/cloud.js?v=20261128r"></script>
-<script src="js/task-core.js?v=20261128r"></script>
-<script src="js/smart-task.js?v=20261128r"></script>
-<script src="js/reminders.js?v=20261128r"></script>
-<script src="js/life.js?v=20261128r"></script>
-<script src="js/dash.js?v=20261128r" defer></script>
-<script src="js/home.js?v=20261128r"></script>
-<script src="js/calendar.js?v=20261128r"></script>
-<script src="js/focus.js?v=20261128r"></script>
-<script src="js/followups.js?v=20261128r" defer></script>
-<script src="js/tasks.js?v=20261128r"></script>
-<script src="js/task-detail.js?v=20261128r"></script>
-<script src="js/slider.js?v=20261128r"></script>
-<script src="js/settings.js?v=20261128r"></script>
-<script src="js/fonts.js?v=20261128r"></script>
-<script src="js/hr.js?v=20261128r"></script>
-<script src="js/assocs.js?v=20261128r"></script>
-<script src="js/forms.js?v=20261128r"></script>
-<script src="js/initiatives.js?v=20261128r"></script>
-<script src="js/requests.js?v=20261128r"></script>
-<script src="js/table-tools.js?v=20261128r"></script>
-<script src="js/login.js?v=20261128r"></script>
-<script src="js/backup.js?v=20261128r"></script>
-<script src="js/notif.js?v=20261128r"></script>
-<script src="js/nav.js?v=20261128r"></script>
-<script src="js/shell.js?v=20261128r"></script>
+<script src="js/cloud.js?v=20261128s"></script>
+<script src="js/task-core.js?v=20261128s"></script>
+<script src="js/smart-task.js?v=20261128s"></script>
+<script src="js/reminders.js?v=20261128s"></script>
+<script src="js/life.js?v=20261128s"></script>
+<script src="js/dash.js?v=20261128s" defer></script>
+<script src="js/home.js?v=20261128s"></script>
+<script src="js/calendar.js?v=20261128s"></script>
+<script src="js/focus.js?v=20261128s"></script>
+<script src="js/followups.js?v=20261128s" defer></script>
+<script src="js/tasks.js?v=20261128s"></script>
+<script src="js/task-detail.js?v=20261128s"></script>
+<script src="js/slider.js?v=20261128s"></script>
+<script src="js/settings.js?v=20261128s"></script>
+<script src="js/fonts.js?v=20261128s"></script>
+<script src="js/hr.js?v=20261128s"></script>
+<script src="js/assocs.js?v=20261128s"></script>
+<script src="js/orgs.js?v=20261128s"></script>
+<script src="js/forms.js?v=20261128s"></script>
+<script src="js/initiatives.js?v=20261128s"></script>
+<script src="js/requests.js?v=20261128s"></script>
+<script src="js/table-tools.js?v=20261128s"></script>
+<script src="js/login.js?v=20261128s"></script>
+<script src="js/backup.js?v=20261128s"></script>
+<script src="js/notif.js?v=20261128s"></script>
+<script src="js/nav.js?v=20261128s"></script>
+<script src="js/shell.js?v=20261128s"></script>
 </body>
 </html>

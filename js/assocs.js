@@ -53,12 +53,14 @@
   let cur = null, curId = null, dirty = false;
   const byId = id => items.find(a => a.id === id) || null;
   const byName = n => { const t = String(n || "").trim(); return t ? items.find(a => (a.name || "").trim() === t || (a.shortName || "").trim() === t) || null : null; };
-  window.Assocs = { list: () => items.slice(), byId, byName };
+  window.Assocs = { list: () => items.slice(), byId, byName, edit: id => open(id), editing: () => !!cur, refresh: () => renderList() };
+  const profileOpen = () => !!(window.Orgs && Orgs.profileId() && byId(Orgs.profileId()));
 
   /* ---------- the list ---------- */
   function renderList(){
     const box = $("asList"); if (!box) return;
-    $("asSignin").hidden = !!db; $("asHome").hidden = !db || !!cur; $("asEditor").hidden = !cur;
+    $("asSignin").hidden = !!db; $("asHome").hidden = !db || !!cur || profileOpen(); $("asEditor").hidden = !cur;
+    if (window.Orgs) Orgs.redraw();
     $("asNew").hidden = !canWrite;
     if (!db || cur) return;
     const q = ($("asQ").value || "").trim(), reg = $("asFRegion").value;
@@ -79,8 +81,9 @@
       el.querySelector("p").textContent = [a.field, a.city || a.region].filter(Boolean).join(" · ") || "—";
       const dl = el.querySelector(".as-dl");
       [["الترخيص", a.license], ["رئيس المجلس", a.chairman], ["المدير التنفيذي", a.ceo]].filter(x => x[1]).forEach(([k, v]) => { const d = document.createElement("div"); d.innerHTML = "<dt></dt><dd></dd>"; d.firstChild.textContent = k; d.lastChild.textContent = v; dl.append(d); });
-      el.addEventListener("click", () => open(a.id));
-      el.addEventListener("keydown", e => { if (e.key === "Enter" && e.target === el) open(a.id); });
+      const go = () => window.Orgs ? Orgs.openProfile(a.id) : open(a.id);
+      el.addEventListener("click", go);
+      el.addEventListener("keydown", e => { if (e.key === "Enter" && e.target === el) go(); });
       box.append(el);
     });
   }
