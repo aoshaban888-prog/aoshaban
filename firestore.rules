@@ -64,7 +64,7 @@ service cloud.firestore {
     // tasks
     // tasks: each person sees what they created or what is assigned to them; an admin sees all
     function taskSees(d) {
-      return isAdmin() || d.get("owner", "") == myEmail() || d.get("assignee", "") == myEmail();
+      return (isAdmin() && d.get("scope", "work") != "personal") || d.get("owner", "") == myEmail() || d.get("assignee", "") == myEmail();
     }
     function validTask(d) {
       return d.title is string && d.title.size() > 0 && d.title.size() <= 300
@@ -89,7 +89,7 @@ service cloud.firestore {
       allow update: if section("tasks") && validTask(request.resource.data) && (taskSees(resource.data) || resource.data.get("owner", null) == null)
                     && (isAdmin() || request.resource.data.get("owner", null) == resource.data.get("owner", null)
                         || (resource.data.get("owner", null) == null && request.resource.data.owner == myEmail()));
-      allow delete: if section("tasks") && (isAdmin() || resource.data.get("owner", "") == myEmail());
+      allow delete: if section("tasks") && ((isAdmin() && resource.data.get("scope", "work") != "personal") || resource.data.get("owner", "") == myEmail());
       // the log is only added to; it goes when the task goes
       match /activity/{a} {
         allow read: if section("tasks") && taskSees(taskAt(id));

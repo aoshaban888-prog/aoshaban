@@ -19,9 +19,16 @@
     try {
       for (const col of SHARED){
         st.textContent = `جارٍ قراءة ${col}…`;
-        let snap; try { snap = await db.collection(col).get(); } catch { out.skipped.push(col); continue; }
+        let list = [];
+        try {
+          if (col === "tasks"){ // personal tasks of others are not readable, so the task queries are the allowed ones
+            const c = db.collection("tasks"), seen = new Map();
+            for (const q of [c.where("owner", "==", me), c.where("assignee", "==", me), c.where("scope", "==", "work")]){ try { (await q.get()).docs.forEach(d => seen.set(d.id, d)); } catch {} }
+            list = [...seen.values()];
+          } else list = (await db.collection(col).get()).docs;
+        } catch { out.skipped.push(col); continue; }
         const docs = {};
-        for (const d of snap.docs){
+        for (const d of list){
           docs[d.id] = plain(d.data()); n++;
           for (const sub of SUBS[col] || []){ try { const s = await db.collection(col).doc(d.id).collection(sub).get(); if (s.docs.length){ docs[d.id]["__" + sub] = Object.fromEntries(s.docs.map(x => [x.id, plain(x.data())])); n += s.docs.length; } } catch {} }
         }
