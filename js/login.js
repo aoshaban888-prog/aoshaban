@@ -14,7 +14,7 @@
     const dark = (root.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) !== "light";
     const src = (dark && s.logoDark) || s.logo || "";
     $("lgLogo").hidden = !src; if (src) $("lgLogo").src = src;
-    $("lgName").textContent = s.siteName || "مكتب الحوكمة";
+    $("lgName").textContent = s.siteName || "نظام أحمد التفاعلي";
   }
   window.addEventListener("app:settings", brand);
   function msg(t, kind){ const m = $("lgMsg"); m.textContent = t || ""; m.className = "lg-msg" + (kind ? " " + kind : ""); m.hidden = !t; }

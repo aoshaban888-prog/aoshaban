@@ -3,18 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>مكتب الحوكمة</title>
+<title>نظام أحمد التفاعلي</title>
+<meta name="application-name" content="نظام أحمد التفاعلي">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261128h"></script>
-<link rel="stylesheet" href="css/library.css?v=20261128h">
-<link rel="stylesheet" href="css/app.css?v=20261128h">
+<script src="js/boot.js?v=20261128i"></script>
+<link rel="stylesheet" href="css/library.css?v=20261128i">
+<link rel="stylesheet" href="css/app.css?v=20261128i">
 </head>
 <body>
 <div class="login" id="login" hidden>
   <div class="lg-card" role="main" aria-labelledby="lgName">
-    <div class="lg-brand"><img id="lgLogo" alt="" hidden><h1 id="lgName">مكتب الحوكمة</h1></div>
+    <div class="lg-brand"><img id="lgLogo" alt="" hidden><h1 id="lgName">نظام أحمد التفاعلي</h1></div>
 
     <form id="lgForm" novalidate>
       <p class="lg-sub">بوابة الدخول لمنسوبي الجهة</p>
@@ -50,7 +51,7 @@
 <div class="app">
   <aside class="side" id="side" aria-label="القائمة">
     <div class="side-top">
-      <a class="brand" href="#/home"><img class="logo-img" alt="" hidden><span class="brand-name">مكتب الحوكمة</span></a>
+      <a class="brand" href="#/home"><img class="logo-img" alt="" hidden><span class="brand-name">نظام أحمد التفاعلي</span></a>
       <button class="pin-btn" id="pinBtn" type="button" aria-pressed="true" title="إخفاء القائمة" aria-label="إخفاء القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M15 3v18"/></svg></button>
     </div>
     <nav class="nav">
@@ -105,6 +106,8 @@
           <button class="top-ic" id="bellBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="bellMenu" aria-label="التنبيهات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bell-dot" id="bellDot" hidden></span></button>
           <div class="bell-menu" id="bellMenu" hidden></div>
         </div>
+        <div class="fav-wrap"><button class="top-ic" id="favBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="الصفحات المفضلة" title="الصفحات المفضلة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></button></div>
+        <button class="top-ic" id="privBtn" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
         <button class="top-ic" id="themeBtn" type="button" aria-label="المظهر"></button>
         <div class="account" id="account" hidden>
           <button class="acct-btn" id="acctBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="acctMenu">
@@ -123,8 +126,7 @@
     <section class="view home" data-view="home" hidden>
       <header class="dh-welcome">
         <div class="dh-w1"><p class="home-greet" id="hGreet"></p><p class="dh-summary" id="dhSummary"></p></div>
-        <div class="dh-w2"><div class="dh-date"><b id="hDate"></b><span id="hHijri"></span></div><div class="clock" aria-label="الوقت الآن (توقيت الرياض)"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div>
-          <button class="tk-ib" type="button" id="dhPrivacy" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+        <div class="dh-w2"><div class="dh-date"><b id="hDate"></b><span id="hHijri"></span></div><div class="clock" aria-label="الوقت الآن (توقيت الرياض)"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div></div>
       </header>
       <section class="slider" id="slider" aria-roledescription="سلايدر" aria-label="الشرائح" tabindex="0" hidden>
         <div class="sl-viewport"><div class="sl-track" id="slTrack" aria-live="off"></div></div>
@@ -839,6 +841,7 @@
         <button type="button" role="tab" data-atab="slider" aria-selected="false">السلايدر</button>
         <button type="button" role="tab" data-atab="users" aria-selected="false">المستخدمون</button>
         <button type="button" role="tab" data-atab="links" aria-selected="false">الربط</button>
+        <button type="button" role="tab" data-atab="backup" aria-selected="false">النسخ الاحتياطي</button>
       </div>
       <p class="s-msg" id="sMsg" role="status"></p>
       <p class="muted-text s-signin" id="sSignin">سجّل الدخول لحفظ الإعدادات. التغييرات هنا تظهر فوراً لكنها لا تُحفظ قبل تسجيل الدخول</p>
@@ -913,6 +916,11 @@
           </div>
         </section>
 
+        <section class="card wide" data-atab="backup" aria-labelledby="sBk" hidden><div class="card-h"><h2 id="sBk">النسخ الاحتياطي الشامل</h2></div>
+          <p class="muted-text">ملف JSON واحد فيه كل بيانات الموقع التي يقرأها حسابك: الإعدادات والمستخدمون واللوائح والجمعيات والكليشات والخطابات وسجلاتها والطلبات والمهام بتعليقاتها وسجلها والمشاريع ووثائق المبادرات والاستبيانات بردودها وقائمة الملفات. بياناتك الشخصية في «إدارة حياتي الشخصية» تُضمَّن لك وحدك، ولا تُضمَّن بيانات غيرك الشخصية. ملفات الخطوط لا تُضمَّن لحجمها وترخيصها.</p>
+          <div class="hr-actions"><button class="btn primary" type="button" id="bkAll">تنزيل نسخة احتياطية شاملة</button><span class="muted-text" id="bkAllState"></span></div>
+          <p class="muted-text">احفظ الملف في مكان آمن: فيه بيانات الجمعيات والموظفين. الاستعادة من الملف تحتاج موافقتك قبل تفعيلها.</p>
+        </section>
         <section class="card wide" data-atab="links" aria-labelledby="sCd" hidden><div class="card-h"><h2 id="sCd">Cloudinary: رفع الملفات</h2></div>
           <p class="muted-text">الملفات المرفقة في المهام وملفات PDF في تحليل الوثائق تُرفع إلى حسابك في Cloudinary. من لوحة Cloudinary: Settings › Upload › Upload presets › Add upload preset، واجعل Signing mode = Unsigned.</p>
           <div class="s-row"><label for="cdName">اسم الحساب (Cloud name)</label><input class="input" id="cdName" dir="ltr" placeholder="my-cloud" autocomplete="off"></div>
@@ -1199,29 +1207,30 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261128h"></script>
-<script src="js/library.js?v=20261128h"></script>
+<script src="js/ui.js?v=20261128i"></script>
+<script src="js/library.js?v=20261128i"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/cloud.js?v=20261128h"></script>
-<script src="js/task-core.js?v=20261128h"></script>
-<script src="js/smart-task.js?v=20261128h"></script>
-<script src="js/reminders.js?v=20261128h"></script>
-<script src="js/life.js?v=20261128h"></script>
-<script src="js/dash.js?v=20261128h" defer></script>
-<script src="js/home.js?v=20261128h"></script>
-<script src="js/tasks.js?v=20261128h"></script>
-<script src="js/task-detail.js?v=20261128h"></script>
-<script src="js/slider.js?v=20261128h"></script>
-<script src="js/settings.js?v=20261128h"></script>
-<script src="js/fonts.js?v=20261128h"></script>
-<script src="js/hr.js?v=20261128h"></script>
-<script src="js/assocs.js?v=20261128h"></script>
-<script src="js/forms.js?v=20261128h"></script>
-<script src="js/initiatives.js?v=20261128h"></script>
-<script src="js/requests.js?v=20261128h"></script>
-<script src="js/table-tools.js?v=20261128h"></script>
-<script src="js/login.js?v=20261128h"></script>
-<script src="js/nav.js?v=20261128h"></script>
-<script src="js/shell.js?v=20261128h"></script>
+<script src="js/cloud.js?v=20261128i"></script>
+<script src="js/task-core.js?v=20261128i"></script>
+<script src="js/smart-task.js?v=20261128i"></script>
+<script src="js/reminders.js?v=20261128i"></script>
+<script src="js/life.js?v=20261128i"></script>
+<script src="js/dash.js?v=20261128i" defer></script>
+<script src="js/home.js?v=20261128i"></script>
+<script src="js/tasks.js?v=20261128i"></script>
+<script src="js/task-detail.js?v=20261128i"></script>
+<script src="js/slider.js?v=20261128i"></script>
+<script src="js/settings.js?v=20261128i"></script>
+<script src="js/fonts.js?v=20261128i"></script>
+<script src="js/hr.js?v=20261128i"></script>
+<script src="js/assocs.js?v=20261128i"></script>
+<script src="js/forms.js?v=20261128i"></script>
+<script src="js/initiatives.js?v=20261128i"></script>
+<script src="js/requests.js?v=20261128i"></script>
+<script src="js/table-tools.js?v=20261128i"></script>
+<script src="js/login.js?v=20261128i"></script>
+<script src="js/backup.js?v=20261128i"></script>
+<script src="js/nav.js?v=20261128i"></script>
+<script src="js/shell.js?v=20261128i"></script>
 </body>
 </html>

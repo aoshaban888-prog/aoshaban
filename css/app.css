@@ -1808,3 +1808,10 @@ html.privacy .sensitive:hover{filter:blur(7px)}
 @media (max-width:560px){.view.home .t-add{grid-template-columns:minmax(0,1fr) auto}.view.home .t-add #tDue{display:none}}
 .view.home .qa{grid-template-columns:minmax(0,1fr);gap:6px}
 .view.home .qa-i{min-width:0;padding:8px 10px}
+
+.fav-wrap{position:relative}
+.qa-menu a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px}
+.qa-menu a:hover{background:var(--line-soft)}.qa-menu a svg{width:17px;height:17px;color:var(--muted)}
+.fav-empty{margin:4px 8px 8px;font-size:13px}
+#privBtn[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+@media (max-width:640px){.fav-wrap{display:none}}

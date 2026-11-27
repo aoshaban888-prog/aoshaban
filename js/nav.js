@@ -176,6 +176,19 @@
   $("searchBtn").addEventListener("click", openPalette);
   const mac = /Mac|iPhone|iPad/.test(navigator.platform || ""); const k = $("searchKbd"); if (k) k.textContent = mac ? "⌘K" : "Ctrl K";
 
+  /* ---------- favourites in the header ---------- */
+  let fm = null;
+  const closeFm = () => { if (fm){ fm.remove(); fm = null; $("favBtn").setAttribute("aria-expanded", "false"); } };
+  $("favBtn").addEventListener("click", e => {
+    e.stopPropagation(); if (fm){ closeFm(); return; }
+    const all = pages(), list = (store("favs") || []).map(h => all.find(p => p.href === h)).filter(Boolean);
+    fm = document.createElement("div"); fm.className = "qa-menu"; fm.setAttribute("role", "menu");
+    fm.innerHTML = `<p class="nav-cap">الصفحات المفضلة</p>` + (list.map(p => `<a role="menuitem" href="${p.href}">${p.icon}<span>${esc(p.name)}</span></a>`).join("") || '<p class="muted-text fav-empty">لا توجد صفحات مفضلة بعد. مرّر على أي صفحة في القائمة الجانبية واضغط ☆ لتثبيتها.</p>');
+    $("favBtn").parentElement.append(fm); $("favBtn").setAttribute("aria-expanded", "true");
+    fm.addEventListener("click", ev => { if (ev.target.closest("a")) closeFm(); });
+  });
+  document.addEventListener("pointerdown", e => { if (fm && !fm.contains(e.target) && !e.target.closest("#favBtn")) closeFm(); });
+
   /* ---------- start ---------- */
   function refresh(){ tips(); drawFavs(); crumbs(); }
   window.addEventListener("app:auth", () => setTimeout(refresh, 50));

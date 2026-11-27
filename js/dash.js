@@ -184,8 +184,8 @@
   $("dhActCard").addEventListener("click", e => { const o = e.target.closest("[data-open]"); if (o){ TaskDetail.open(o.dataset.open); return; } const h = e.target.closest("[data-href]"); if (h) location.hash = h.dataset.href; });
 
   /* ---------- privacy: blur personal numbers (sharing the screen, a public place) ---------- */
-  function paintPrivacy(){ document.documentElement.classList.toggle("privacy", privacy); const b = $("dhPrivacy"); b.setAttribute("aria-pressed", String(privacy)); b.title = privacy ? "إظهار المعلومات الشخصية" : "إخفاء المعلومات الشخصية"; b.setAttribute("aria-label", b.title); }
-  $("dhPrivacy").addEventListener("click", () => { privacy = !privacy; try { localStorage.setItem("app-privacy", privacy ? "1" : "0"); } catch {} paintPrivacy(); });
+  function paintPrivacy(){ document.documentElement.classList.toggle("privacy", privacy); const b = $("privBtn"); b.setAttribute("aria-pressed", String(privacy)); b.title = privacy ? "إظهار المعلومات الشخصية" : "إخفاء المعلومات الشخصية"; b.setAttribute("aria-label", b.title); }
+  $("privBtn").addEventListener("click", () => { privacy = !privacy; try { localStorage.setItem("app-privacy", privacy ? "1" : "0"); } catch {} paintPrivacy(); });
   paintPrivacy();
 
   /* ---------- drawing ---------- */

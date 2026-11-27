@@ -29,6 +29,9 @@
     img.style.height = logoPx(s) + "px";
     name.textContent = s.siteName;
     name.hidden = !!src && !s.showName;
+    // the browser tab's icon and the installed app's name follow the settings too
+    let ic = document.querySelector('link[rel="icon"]'); if (s.logo){ if (!ic){ ic = document.createElement("link"); ic.rel = "icon"; document.head.append(ic); } ic.href = s.logo; }
+    const an = document.querySelector('meta[name="application-name"]'); if (an) an.content = s.siteName;
     document.querySelectorAll(".prayer-card").forEach(c => { c.hidden = !s.home.prayer; });
     document.querySelectorAll(".tasks-card").forEach(c => { c.hidden = !s.home.tasks; });
   }

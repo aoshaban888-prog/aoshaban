@@ -49,7 +49,7 @@
     });
     groups.forEach(g => { if (inGroup(g)) setGroup(g, true, false); });
     document.querySelector(".topbar .t").textContent = ROUTES[r];
-    document.title = ROUTES[r] + " · " + ((window.siteSettings && window.siteSettings.siteName) || "مكتب الحوكمة");
+    document.title = ROUTES[r] + " · " + ((window.siteSettings && window.siteSettings.siteName) || "نظام أحمد التفاعلي");
     app.classList.remove("nav-open");
     if (r !== current){ const first = current === null; current = r; window.scrollTo(0, 0); if (!first) loading(); window.dispatchEvent(new CustomEvent("app:view", { detail: r })); }
   }
