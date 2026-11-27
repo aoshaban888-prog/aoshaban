@@ -376,7 +376,7 @@
     if (action === "approve" && last) words[0] = "اعتماد نهائي؟ يأخذ الخطاب رقمه الصادر ويُضاف إلى السجل.";
     if (action === "return" || action === "reject"){
       // the reason is always asked, so the causes of rework can be counted
-      const v = await UI.prompt(words[0], { title: action === "return" ? "إرجاع للتعديل" : "رفض الطلب", ok: words[1], danger: action === "reject", choices: REASONS, note, noteRequired: opts.noteRequired !== false, placeholder: "التفاصيل: وش المطلوب تعديله؟" });
+      const v = await UI.prompt(words[0], { title: action === "return" ? "إرجاع للتعديل" : "رفض الطلب", ok: words[1], danger: action === "reject", choices: REASONS, note, noteRequired: opts.noteRequired !== false, placeholder: "التفاصيل: ما المطلوب تعديله؟" });
       if (!v) return; reason = v.choice; note = v.note;
     } else if (!(await UI.confirm(words[0], { ok: words[1], danger: false }))) return;
     const now = new Date().toISOString(), stage = stageOf(r) ? stageOf(r).name : "";
@@ -502,7 +502,7 @@
     $("pmEmpty").hidden = users.length > 0;
   }
   async function setPerm(email, patch){
-    try { await db.collection("allowed").doc(email).update(patch); UI.toast("حُفظت الصلاحية"); }
+    try { await db.collection("allowed").doc(email).update(patch); UI.toast("تم حفظ التغييرات بنجاح."); }
     catch (e){ console.error(e); UI.toast("تعذّر حفظ الصلاحية (تحتاج دور مدير)", "err"); }
   }
   async function saveWorkflows(list, done){

@@ -10,7 +10,8 @@
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const app = document.querySelector(".app"), nav = document.querySelector(".nav");
   const me = () => ((window.appUser && window.appUser.email) || "guest").toLowerCase();
-  const store = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage.getItem(`app-${k}-${me()}`) || "null"); localStorage.setItem(`app-${k}-${me()}`, JSON.stringify(v)); } catch { return null; } };
+  // favourites live in the account (UserPrefs) so they follow the person to any device; recent pages stay on this device
+  const store = (k, v) => { if (k === "favs" && window.UserPrefs){ if (v === undefined) return UserPrefs.get("favs", null) ?? (JSON.parse(localStorage.getItem(`app-favs-${me()}`) || "null")); UserPrefs.set("favs", v); return; } try { if (v === undefined) return JSON.parse(localStorage.getItem(`app-${k}-${me()}`) || "null"); localStorage.setItem(`app-${k}-${me()}`, JSON.stringify(v)); } catch { return null; } };
   const label = a => (a.textContent || "").replace(/\s+/g, " ").trim();
   const visible = el => el && !el.classList.contains("sec-off") && !(el.closest(".nav-sub") || el).classList.contains("sec-off");
 
@@ -193,6 +194,7 @@
   function refresh(){ tips(); drawFavs(); crumbs(); }
   window.addEventListener("app:auth", () => setTimeout(refresh, 50));
   window.addEventListener("app:me", () => setTimeout(refresh, 50));
+  window.addEventListener("app:prefs", () => drawFavs());
   refresh();
   window.Nav = { openPalette, refresh };
 })();

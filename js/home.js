@@ -226,7 +226,7 @@
       const due = $("tDue").value || r.date || null, time = due ? r.time || null : null;
       if (time) Reminders.ask();
       await Tasks.create({ title: r.title || text, status: "todo", due, time, priority: ["low", "medium", "high", "urgent"].includes(r.priority) ? r.priority : "medium", tags: r.tags || [] });
-      if (due) UI.toast(`أُضيفت «${r.title || text}» · ${SmartTask.describe({ date: due, time })}` + (time ? "، وبيجيك تنبيه" : ""));
+      if (due) UI.toast(`أُضيفت «${r.title || text}» · ${SmartTask.describe({ date: due, time })}` + (time ? "، وسيصلك تذكير في موعدها" : ""));
       $("tTitle").value = ""; $("tDue").value = ""; $("tSmart").hidden = true; $("tTitle").focus();
     } catch (err){ console.error(err); UI.toast("تعذّر حفظ المهمة", "err"); }
     finally { btn.disabled = false; }

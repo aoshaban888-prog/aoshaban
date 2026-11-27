@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261128l"></script>
-<link rel="stylesheet" href="css/library.css?v=20261128l">
-<link rel="stylesheet" href="css/app.css?v=20261128l">
+<script src="js/boot.js?v=20261128n"></script>
+<link rel="stylesheet" href="css/library.css?v=20261128n">
+<link rel="stylesheet" href="css/app.css?v=20261128n">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -129,9 +129,10 @@
     <section class="view home" data-view="home" hidden>
       <header class="dh-welcome">
         <div class="dh-w1"><p class="home-greet" id="hGreet"></p><p class="dh-summary" id="dhSummary"></p></div>
+        <div class="dh-wtools"><div class="dh-modes" role="radiogroup" aria-label="وضع لوحة التحكم"><button type="button" role="radio" data-mode="all">الشامل</button><button type="button" role="radio" data-mode="work">العمل</button><button type="button" role="radio" data-mode="personal">الشخصي</button></div><button type="button" class="btn small" id="dhCustomize">تخصيص لوحة التحكم</button></div>
         <div class="dh-w2"><div class="dh-date"><b id="hDate"></b><span id="hHijri"></span></div><div class="clock" aria-label="الوقت الآن (توقيت الرياض)"><span id="hClock" class="mono"></span><span id="hAmPm"></span></div></div>
       </header>
-      <section class="slider" id="slider" aria-roledescription="سلايدر" aria-label="الشرائح" tabindex="0" hidden>
+      <section class="slider" data-card="slider" id="slider" aria-roledescription="سلايدر" aria-label="الشرائح" tabindex="0" hidden>
         <div class="sl-viewport"><div class="sl-track" id="slTrack" aria-live="off"></div></div>
         <button class="sl-nav prev" id="slPrev" type="button" aria-label="الشريحة السابقة"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         <button class="sl-nav next" id="slNext" type="button" aria-label="الشريحة التالية"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
@@ -140,10 +141,10 @@
       </section>
       <p class="muted-text sl-empty" id="sliderEmpty" hidden>السلايدر فارغ. أضف شرائح من <a class="link" href="#/admin">التمكين التقني</a></p>
       <button type="button" class="sl-show" id="slShow" hidden>إظهار السلايدر</button>
-      <div class="dh-kpis" id="dhKpis"></div>
+      <div class="dh-kpis" data-card="kpis" id="dhKpis"></div>
       <div class="dh-grid">
         <div class="dh-main">
-          <section class="card dh-card dh-o1" id="dhTasks" aria-labelledby="dhTH">
+          <section class="card dh-card dh-o1" data-card="tasks" id="dhTasks" aria-labelledby="dhTH">
             <div class="card-h"><h2 id="dhTH">مهامي</h2><span class="dh-ring" id="dhTaskRing"></span><a href="#/tasks" class="link">صفحة المهام</a></div>
           <form id="tAdd" class="t-add" hidden>
             <input class="input" id="tTitle" placeholder="اكتب بكلامك: ذكرني الخميس 9 الصبح بإعداد محضر اجتماع" aria-label="مهمة جديدة" autocomplete="off" required>
@@ -154,11 +155,11 @@
             <p id="tSignin" hidden></p>
             <div id="dhTaskBody"></div>
           </section>
-          <section class="card dh-card dh-o3" id="dhAgendaCard" aria-labelledby="dhAH">
+          <section class="card dh-card dh-o3" data-card="agenda" id="dhAgendaCard" aria-labelledby="dhAH">
             <div class="card-h"><h2 id="dhAH">المواعيد والاستحقاقات القادمة</h2><button type="button" class="linkbtn" id="dhAddEvent">+ موعد</button></div>
             <ul class="dh-agenda" id="dhAgenda"></ul>
           </section>
-          <div class="dh-two dh-o5">
+          <div class="dh-two dh-o5" data-card="work">
             <section class="card dh-card" id="dhProjCard" aria-labelledby="dhPH" hidden><div class="card-h"><h2 id="dhPH">متابعة المشاريع</h2><a href="#/tasks" class="link">المهام</a></div><ul class="dh-projects" id="dhProjects"></ul></section>
           <section class="card rh-card dh-card" data-sec="hr" aria-labelledby="rhH" hidden>
             <div class="card-h"><h2 id="rhH">الطلبات</h2><a href="#/hr/requests" class="link">كل الطلبات</a></div>
@@ -167,13 +168,13 @@
               <a class="rh-box" href="#/hr/requests" data-qa="mine"><span class="rh-num" id="rhMine">0</span><span>طلباتي قيد الاعتماد</span></a>
             </div>
             <ul class="rh-list" id="rhList"></ul>
-            <p class="muted-text" id="rhEmpty" hidden>ما فيه طلبات حتى الآن</p>
+            <p class="muted-text" id="rhEmpty" hidden>لا توجد طلبات حالياً.</p>
           </section>
           </div>
         </div>
         <aside class="dh-side">
-          <section class="card dh-card dh-attn dh-o2" id="dhAttnCard" aria-labelledby="dhNH"><div class="card-h"><h2 id="dhNH">تحتاج إلى انتباهك</h2><span class="dh-badge" id="dhAttnN"></span></div><ul class="dh-attnl" id="dhAttn"></ul></section>
-          <section class="card dh-card dh-o4" aria-labelledby="dhQH"><div class="card-h"><h2 id="dhQH">إجراءات سريعة</h2></div>
+          <section class="card dh-card dh-attn dh-o2" data-card="attention" id="dhAttnCard" aria-labelledby="dhNH"><div class="card-h"><h2 id="dhNH">تحتاج إلى انتباهك</h2><span class="dh-badge" id="dhAttnN"></span></div><ul class="dh-attnl" id="dhAttn"></ul></section>
+          <section class="card dh-card dh-o4" data-card="quick" aria-labelledby="dhQH"><div class="card-h"><h2 id="dhQH">إجراءات سريعة</h2></div>
       <nav class="qa" aria-label="اختصارات">
         <a class="qa-i" href="#/hr/letters" data-sec="hr"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="qa-t"><b>خطاب جديد</b><small>من القوالب الجاهزة</small></span></a>
         <a class="qa-i" href="#/hr/requests" data-sec="hr" data-qa="inbox"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z"/></svg></span><span class="qa-t"><b>الطلبات والاعتماد</b><small>تابع طلباتك واعتمد المعلّق</small></span></a>
@@ -181,14 +182,14 @@
         <a class="qa-i" href="#/governance/library" data-sec="governance"><span class="qa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span><span class="qa-t"><b>اللوائح والسياسات</b><small>راجع وحدّث المكتبة</small></span></a>
       </nav>
           </section>
-          <section class="card dh-card dh-o6" id="dhLifeCard" aria-labelledby="dhLH" hidden><div class="card-h"><h2 id="dhLH">ملخص حياتي الشخصية</h2><a href="#/life/dashboard" class="link">اللوحة الشخصية</a></div><div id="dhPersonal"></div></section>
-        <section class="card prayer-card dh-card dh-o7" aria-labelledby="pH">
+          <section class="card dh-card dh-o6" data-card="life" id="dhLifeCard" aria-labelledby="dhLH" hidden><div class="card-h"><h2 id="dhLH">ملخص حياتي الشخصية</h2><a href="#/life/dashboard" class="link">اللوحة الشخصية</a></div><div id="dhPersonal"></div></section>
+        <section class="card prayer-card dh-card dh-o7" data-card="prayer" aria-labelledby="pH">
           <div class="card-h"><h2 id="pH">أوقات الصلاة</h2></div>
           <div class="p-next"><span class="muted-text">الصلاة القادمة</span><strong id="pNext"></strong><span id="pLeft"></span></div>
           <ul id="pList" class="p-list"></ul>
           <p class="p-note"><span id="pNote"></span><button id="pLocBtn" class="linkbtn" type="button" hidden>استخدام موقعي</button></p>
         </section>
-          <section class="card dh-card dh-o8" id="dhActCard" aria-labelledby="dhRH"><div class="card-h"><h2 id="dhRH">النشاطات الأخيرة</h2></div><ul class="dh-act" id="dhActivity"></ul></section>
+          <section class="card dh-card dh-o8" data-card="activity" id="dhActCard" aria-labelledby="dhRH"><div class="card-h"><h2 id="dhRH">النشاطات الأخيرة</h2></div><ul class="dh-act" id="dhActivity"></ul></section>
         </aside>
       </div>
     </section>
@@ -440,7 +441,7 @@
           <button type="button" role="tab" data-hrtab="heads" aria-selected="false">الكليشات</button>
         </div></div>
       </header>
-      <p class="muted-text s-signin" id="hrSignin">سجّل الدخول لحفظ الخطابات وترقيمها. تقدر تعاين وتطبع قبل تسجيل الدخول</p>
+      <p class="muted-text s-signin" id="hrSignin">سجّل الدخول لحفظ الخطابات وترقيمها. يمكنك المعاينة والطباعة قبل تسجيل الدخول.</p>
 
       <div class="hr-new" id="hrNew">
         <section class="card hr-form" aria-label="بيانات الخطاب">
@@ -656,8 +657,8 @@
           <div class="ig-rt"><h1 id="asTitle"></h1><span class="muted-text" id="asState"></span></div>
           <div class="actions"><button class="btn small ghost danger-text" type="button" id="asDel" hidden>حذف</button><button class="btn small primary" type="button" id="asSave">حفظ</button></div>
         </header>
-        <p class="muted-text" id="asRO" hidden>تقدر تطّلع على البيانات، والتعديل لمن عنده صلاحية قسم الحوكمة.</p>
-        <p class="muted-text as-hint">الخانة الإجبارية الوحيدة اسم الجمعية، وكل البيانات الأخرى اختيارية وتقدر تكمّلها لاحقاً.</p>
+        <p class="muted-text" id="asRO" hidden>يمكنك الاطلاع على البيانات، والتعديل متاح لمن يملك صلاحية التعديل.</p>
+        <p class="muted-text as-hint">الخانة الإجبارية الوحيدة اسم الجمعية، وبقية البيانات اختيارية ويمكن استكمالها لاحقاً.</p>
         <div class="as-form" id="asForm"></div>
       </div>
     </section>
@@ -670,7 +671,7 @@
         </header>
         <section class="ig-card ig-set" id="igSet" hidden aria-label="إعدادات الأداة">
           <h2>إعدادات الأداة</h2>
-          <p class="muted-text">البرومت اللي تُكتب به الوثائق. الخانات بين قوسين مزدوجين مثل {{programIdea}} تتعبّأ من النموذج.</p>
+          <p class="muted-text">نص التوجيه الذي تُكتب به الوثائق. الخانات بين قوسين مزدوجين مثل {{programIdea}} تتعبّأ من النموذج.</p>
           <label class="ig-f"><span>برومت إنشاء الوثيقة</span><textarea class="input" id="igSetCreate" rows="12" placeholder=""></textarea></label>
           <label class="ig-f"><span>برومت تحليل الوثيقة</span><textarea class="input" id="igSetAnalyze" rows="10" placeholder=""></textarea></label>
           <div class="hr-actions"><button class="btn primary" type="button" id="igSetSave">حفظ</button><button class="btn" type="button" id="igSetReset">استرجاع البرومت الأصلي</button><button class="btn ghost" type="button" id="igSetClose">إغلاق</button></div>
@@ -779,7 +780,7 @@
             <button class="btn small" type="button" id="fmPreview">معاينة</button><button class="btn small" type="button" id="fmCopy">نسخ الرابط</button><button class="btn small" type="button" id="fmPrint">طباعة</button>
           </div>
         </header>
-        <p class="muted-text" id="fmRO" hidden>هذا الاستبيان لغيرك: تقدر تطّلع عليه وعلى ردوده، والتعديل لصاحبه.</p>
+        <p class="muted-text" id="fmRO" hidden>هذا الاستبيان لمستخدم آخر: يمكنك الاطلاع عليه وعلى ردوده، والتعديل متاح لصاحبه.</p>
         <div class="fm-tabs" role="tablist"><button type="button" role="tab" data-fmtab="q" aria-selected="true">الأسئلة</button><button type="button" role="tab" data-fmtab="r" aria-selected="false">الردود <span class="rq-count" id="fmRN">0</span></button><button type="button" role="tab" data-fmtab="a" aria-selected="false">المظهر</button><button type="button" role="tab" data-fmtab="s" aria-selected="false">الإعدادات</button></div>
         <div class="fm-pane" id="fmBody"></div>
         <div class="fm-pane" id="fmResults" hidden></div>
@@ -814,7 +815,7 @@
             <div class="hr-sep">المراحل</div>
             <div class="ra-stages" id="raStages"></div>
             <button class="btn small" type="button" id="raStageAdd">+ مرحلة</button>
-            <div class="hr-sep">الخطابات التي تمشي على هذا المسار</div>
+            <div class="hr-sep">الخطابات التي تتبع هذا المسار</div>
             <div class="ra-tpls" id="raWfTpls"></div>
             <div class="hr-actions" style="margin-top:16px"><button class="btn primary" type="button" id="raWfSave">حفظ المسار</button><button class="btn" type="button" id="raWfCancel">إلغاء</button></div>
           </div>
@@ -1206,38 +1207,40 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.2/dist/docx-preview.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.2/dist/docx-preview.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>
 <!-- Firebase (Firestore + Google sign-in). If these fail to load (e.g. inside a Claude artifact), the page falls back to Claude's store or the browser. -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/ui.js?v=20261128l"></script>
-<script src="js/library.js?v=20261128l"></script>
+<script src="js/prefs.js?v=20261128n"></script>
+<script src="js/ui.js?v=20261128n"></script>
+<script src="js/library.js?v=20261128n"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/cloud.js?v=20261128l"></script>
-<script src="js/task-core.js?v=20261128l"></script>
-<script src="js/smart-task.js?v=20261128l"></script>
-<script src="js/reminders.js?v=20261128l"></script>
-<script src="js/life.js?v=20261128l"></script>
-<script src="js/dash.js?v=20261128l" defer></script>
-<script src="js/home.js?v=20261128l"></script>
-<script src="js/tasks.js?v=20261128l"></script>
-<script src="js/task-detail.js?v=20261128l"></script>
-<script src="js/slider.js?v=20261128l"></script>
-<script src="js/settings.js?v=20261128l"></script>
-<script src="js/fonts.js?v=20261128l"></script>
-<script src="js/hr.js?v=20261128l"></script>
-<script src="js/assocs.js?v=20261128l"></script>
-<script src="js/forms.js?v=20261128l"></script>
-<script src="js/initiatives.js?v=20261128l"></script>
-<script src="js/requests.js?v=20261128l"></script>
-<script src="js/table-tools.js?v=20261128l"></script>
-<script src="js/login.js?v=20261128l"></script>
-<script src="js/backup.js?v=20261128l"></script>
-<script src="js/nav.js?v=20261128l"></script>
-<script src="js/shell.js?v=20261128l"></script>
+<script src="js/cloud.js?v=20261128n"></script>
+<script src="js/task-core.js?v=20261128n"></script>
+<script src="js/smart-task.js?v=20261128n"></script>
+<script src="js/reminders.js?v=20261128n"></script>
+<script src="js/life.js?v=20261128n"></script>
+<script src="js/dash.js?v=20261128n" defer></script>
+<script src="js/home.js?v=20261128n"></script>
+<script src="js/tasks.js?v=20261128n"></script>
+<script src="js/task-detail.js?v=20261128n"></script>
+<script src="js/slider.js?v=20261128n"></script>
+<script src="js/settings.js?v=20261128n"></script>
+<script src="js/fonts.js?v=20261128n"></script>
+<script src="js/hr.js?v=20261128n"></script>
+<script src="js/assocs.js?v=20261128n"></script>
+<script src="js/forms.js?v=20261128n"></script>
+<script src="js/initiatives.js?v=20261128n"></script>
+<script src="js/requests.js?v=20261128n"></script>
+<script src="js/table-tools.js?v=20261128n"></script>
+<script src="js/login.js?v=20261128n"></script>
+<script src="js/backup.js?v=20261128n"></script>
+<script src="js/notif.js?v=20261128n"></script>
+<script src="js/nav.js?v=20261128n"></script>
+<script src="js/shell.js?v=20261128n"></script>
 </body>
 </html>

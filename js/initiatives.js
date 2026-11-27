@@ -210,7 +210,7 @@
   }
   function showFile(name, isPdf){
     $("anFile").hidden = false; $("anDrop").hidden = true; $("anFileName").textContent = name;
-    $("anFileNote").textContent = isPdf ? "يُرسل الملف كما هو للتحليل. تقدر تضيف ملاحظات في الخانة تحت (اختياري)." : "استُخرج نص الملف في الخانة تحت، راجعه قبل التحليل.";
+    $("anFileNote").textContent = isPdf ? "يُرسل الملف كما هو للتحليل. يمكنك إضافة ملاحظات في الخانة أدناه (اختياري)." : "استُخرج نص الملف في الخانة تحت، راجعه قبل التحليل.";
     $("anText").placeholder = isPdf ? "ملاحظات أو تعليمات إضافية عن الوثيقة (اختياري)…" : "الصق هنا نصّ الوثيقة الحالية…";
   }
   function clearFile(){ pdf = null; src = null; $("anFile").hidden = true; $("anDrop").hidden = false; $("anPick").value = ""; $("anText").placeholder = "الصق هنا نصّ الوثيقة الحالية…"; syncAn(); }

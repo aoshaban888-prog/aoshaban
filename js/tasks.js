@@ -69,7 +69,7 @@
   }
   function listen(name, ref){
     unsubs.push(ref.onSnapshot(s => { sources[name] = new Map(s.docs.map(d => [d.id, d.data()])); rebuild(); },
-      e => { console.error(e); if (e && e.code !== "permission-denied") UI.toast("تعذّر تحميل المهام", "err"); }));
+      e => { console.error(e); if (e && e.code !== "permission-denied") UI.toast("تعذّر تحميل البيانات. أعد المحاولة.", "err"); }));
   }
   function subscribe(){
     unsubs.forEach(u => u && u()); unsubs = []; sources = {};
@@ -140,7 +140,7 @@
     // optimistic: the page changes now, Firestore confirms (or the change is rolled back with a message)
     Object.assign(before, after); render();
     try { await db.collection("tasks").doc(id).update(write); }
-    catch (e){ console.error(e); UI.toast(e && e.code === "permission-denied" ? "لا تملك صلاحية تعديل هذه المهمة" : "تعذّر حفظ التغيير", "err"); rebuild(); return false; }
+    catch (e){ console.error(e); UI.toast(e && e.code === "permission-denied" ? "لا تملك صلاحية تعديل هذه المهمة" : "تعذّر حفظ التغيير. أعد المحاولة.", "err"); rebuild(); return false; }
     if (opts.log !== false){ const ch = C.changes(prev, after); if (ch.length) log(id, ch.map(c => ({ action: "change", ...c }))); }
     if (patch.status === "done" && prev.status !== "done"){ if (after.recurrence && !prev.nextSpawned) spawnNext(after); celebrate(); }
     return true;
@@ -312,7 +312,7 @@
     const box = $("tkList"); box.innerHTML = "";
     const top = tasks.filter(t => !t.parentId && matches(t));
     if (list !== "all" || sortBy !== "smart"){
-      if (!top.length){ const p = document.createElement("div"); p.className = "tk-blank"; p.innerHTML = q() ? "<b>لا نتائج</b><span>جرّب كلمة أخرى</span>" : `<b>لا مهام في «${LIST[list][1]}»</b><span>${list === "inbox" ? "صندوق الوارد فارغ: كل مهامك منظمة 👌" : "اختر تصنيفاً آخر أو أضف مهمة"}</span>`; box.append(p); return; }
+      if (!top.length){ const p = document.createElement("div"); p.className = "tk-blank"; p.innerHTML = q() ? "<b>لا نتائج</b><span>جرّب كلمة أخرى</span>" : `<b>لا مهام في «${LIST[list][1]}»</b><span>${list === "inbox" ? "صندوق الوارد فارغ." : "اختر تصنيفاً آخر أو أضف مهمة"}</span>`; box.append(p); return; }
       const items = list === "done" || list === "archived" ? top.slice().sort((a, b) => String(b.doneAt || b.updatedAt || "").localeCompare(String(a.doneAt || a.updatedAt || ""))) : sorted(top);
       box.append(group(LIST[list][1], items, list === "overdue")); return;
     }

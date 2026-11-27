@@ -71,7 +71,7 @@
   }
   $("slPrev").addEventListener("click", () => { go(idx - 1); restart(); });
   if ($("slPause")) $("slPause").addEventListener("click", () => { pref.paused = !pref.paused; savePref(); renderHome(); });
-  if ($("slHide")) $("slHide").addEventListener("click", () => { pref.hidden = true; savePref(); renderHome(); UI.toast("أُخفي السلايدر. تقدر ترجعه من زر «إظهار السلايدر»"); });
+  if ($("slHide")) $("slHide").addEventListener("click", () => { pref.hidden = true; savePref(); renderHome(); UI.toast("أُخفي السلايدر. يمكنك إظهاره من زر «إظهار السلايدر»."); });
   if ($("slShow")) $("slShow").addEventListener("click", () => { pref.hidden = false; savePref(); renderHome(); });
   $("slNext").addEventListener("click", () => { go(idx + 1); restart(); });
   const box = $("slider");

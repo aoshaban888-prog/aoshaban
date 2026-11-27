@@ -156,6 +156,11 @@ service cloud.firestore {
       allow update: if col in ["lifeGoals", "lifeHabits", "lifeNotes", "lifeReviews"] && allowed() && resource.data.owner == myEmail() && request.resource.data.owner == myEmail();
     }
 
+    // per-person preferences: dashboard layout, favourites, notifications read and quiet hours
+    match /userPrefs/{email} {
+      allow read, write: if allowed() && email == myEmail();
+    }
+
     // governance library (policies and associations are also read by the letters and the home page)
     match /policies/{id} {
       allow read: if allowed();

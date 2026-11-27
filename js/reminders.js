@@ -53,7 +53,8 @@
     });
     box.append(el);
   }
-  function ring(t){ card(t); notify(t); beep(); }
+  // during the person's quiet hours the card still shows, without a sound or a notification
+  function ring(t){ card(t); if (window.Notif && Notif.quiet()) return; notify(t); beep(); }
 
   /* ---------- the clock ---------- */
   function check(){

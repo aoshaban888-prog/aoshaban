@@ -122,32 +122,7 @@
   window.addEventListener("app:auth", renderAccount);
   window.addEventListener("app:auth", () => { document.getElementById("bell").hidden = !(window.appAuth && window.appAuth.allowed && window.appAuth.user); });
 
-  /* the bell: requests waiting for my approval and my tasks that are late or due today */
-  const bell = document.getElementById("bell"), bellBtn = document.getElementById("bellBtn"), bellMenu = document.getElementById("bellMenu");
-  let inbox = [], rqLabel = null, dueTasks = [];
-  const escH = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  function paintBell(){
-    const n = inbox.length + dueTasks.length;
-    document.getElementById("bellDot").hidden = !n;
-    bellBtn.setAttribute("aria-label", n ? `التنبيهات (${n})` : "التنبيهات");
-    const item = (href, title, sub, cls) => `<a class="bell-i ${cls}" href="${href}"><b>${escH(title)}</b><small>${escH(sub)}</small></a>`;
-    bellMenu.innerHTML = `<p class="bell-h">التنبيهات</p>` + (n ? "" : `<p class="bell-empty">لا شيء بانتظارك</p>`) +
-      (inbox.length ? `<p class="bell-g">بانتظار اعتمادك (${inbox.length})</p>` + inbox.slice(0, 6).map(r => item("#/hr/requests", r.title || "طلب", (r.submitterName || r.submittedBy || "") + (rqLabel ? " · " + rqLabel(r) : ""), "rq")).join("") : "") +
-      (dueTasks.length ? `<p class="bell-g">مهام اليوم والمتأخرة (${dueTasks.length})</p>` + dueTasks.slice(0, 6).map(t => item("#/tasks", t.title, t.late ? "متأخرة" : "اليوم", t.late ? "late" : "")).join("") : "");
-  }
-  window.addEventListener("app:requests", e => { inbox = e.detail.inbox || []; rqLabel = e.detail.label; paintBell(); });
-  window.addEventListener("app:tasks", e => {
-    const { tasks, me } = e.detail, today = new Date().toLocaleDateString("en-CA");
-    dueTasks = (tasks || []).filter(t => !t.parentId && t.due && t.due <= today && !["done", "cancelled", "deferred"].includes(t.status) && (t.assignee ? t.assignee === me : t.owner === me))
-      .map(t => ({ title: t.title, late: t.due < today })).sort((a, b) => b.late - a.late);
-    paintBell();
-  });
-  function setBell(open){ bellMenu.hidden = !open; bellBtn.setAttribute("aria-expanded", open ? "true" : "false"); }
-  bellBtn.addEventListener("click", e => { e.stopPropagation(); setMenu(false); setBell(bellMenu.hidden); });
-  bellMenu.addEventListener("click", e => { if (e.target.closest("a")) setBell(false); });
-  document.addEventListener("click", e => { if (!bell.contains(e.target)) setBell(false); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") setBell(false); });
-  paintBell();
+  // the bell is drawn by js/notif.js
   renderAccount();
 
   /* theme: light, dark or neon; with nothing chosen the page follows the system */
