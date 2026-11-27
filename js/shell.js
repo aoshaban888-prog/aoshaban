@@ -7,6 +7,7 @@
     "life/finance": "المجال المالي", "life/family": "المجال الشخصي والأسري", "life/faith": "المجال الروحاني والإيماني", "life/health": "المجال الصحي والبدني",
     "life/habits": "العادات اليومية", "life/notes": "الأفكار والملاحظات", "life/reviews": "المراجعات والتقييم",
     "life": "لوحة التحكم الشخصية",
+    "calendar": "التقويم الموحد", "followups": "المتابعات",
     "governance/library": "اللوائح والسياسات",
     "hr/letters": "الخطابات",
     "hr/requests": "الطلبات",

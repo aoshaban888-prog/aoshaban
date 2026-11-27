@@ -37,6 +37,7 @@
   panel.innerHTML = `
   <header class="td-h">
     <select class="select td-status" id="tdStatus" aria-label="الحالة">${OPT(C.STATUSES)}</select>
+    <button type="button" class="btn small td-focus" id="tdFocus" title="وضع التركيز">◎ تركيز</button>
     <span class="td-saved" id="tdSaved" aria-live="polite"></span>
     <button class="btn small ghost danger-text" type="button" id="tdDelete">حذف</button>
     <button class="td-x" type="button" id="tdClose" aria-label="إغلاق">✕</button>
@@ -57,8 +58,10 @@
       <label id="tdGVw" hidden>قيمتها في الهدف<input class="input" id="tdGV" inputmode="decimal" placeholder="مثال: 500"></label>
       <label>تاريخ البدء<input class="input" type="date" id="tdStart"></label>
       <label>الاستحقاق<span class="td-when"><input class="input" type="date" id="tdDue"><input class="input" type="time" id="tdTime" aria-label="الوقت"></span></label>
-      <label>التكرار<select class="select" id="tdRec"><option value="">بدون</option><option value="daily">يومية</option><option value="weekly">أسبوعية</option><option value="monthly">شهرية</option></select></label>
-      <div class="td-recx" id="tdRecX" hidden><label>كل<input class="input" type="number" id="tdRecN" min="1" max="99" value="1"></label><span class="td-recu" id="tdRecU"></span><span class="td-days" id="tdDays">${DAYS.map((d, i) => `<label title="${DAYN[i]}"><input type="checkbox" value="${i}"><span>${d}</span></label>`).join("")}</span></div>
+      <label>التكرار<select class="select" id="tdRec"><option value="">بدون</option><option value="daily">يومية</option><option value="weekly">أسبوعية</option><option value="monthly">شهرية</option><option value="yearly">سنوية</option></select></label>
+      <div class="td-recx" id="tdRecX" hidden><label>كل<input class="input" type="number" id="tdRecN" min="1" max="99" value="1"></label><span class="td-recu" id="tdRecU"></span><span class="td-days" id="tdDays">${DAYS.map((d, i) => `<label title="${DAYN[i]}"><input type="checkbox" value="${i}"><span>${d}</span></label>`).join("")}</span>
+        <select class="select td-mday" id="tdMDay" aria-label="يوم التكرار في الشهر"><option value="">نفس اليوم من الشهر</option><option value="first">أول يوم من الشهر</option><option value="last">آخر يوم من الشهر</option></select>
+        <label class="s-check td-fromdone"><input type="checkbox" id="tdFromDone"> <span>احسب الموعد التالي من تاريخ الإكمال</span></label></div>
       <label>الوقت المقدّر<input class="input" id="tdEst" placeholder="مثل 1.5 أو 90د" inputmode="decimal"></label>
       <label>الوقت الفعلي<input class="input" id="tdSpent" placeholder="مثل 45د" inputmode="decimal"></label>
       <label class="td-wide">الوسوم<span class="td-tags" id="tdTags"><input class="td-tagin" id="tdTagIn" placeholder="اكتب وسماً واضغط Enter" list="tdTagList"></span><datalist id="tdTagList"></datalist></label>
@@ -132,7 +135,8 @@
     const gg = gs.find(g => g.id === t.goalId); $("tdGVw").hidden = !(gg && gg.measure === "number"); $("tdGV").value = t.goalValue || "";
     $("tdStart").value = t.startDate || ""; $("tdDue").value = t.due || ""; $("tdTime").value = t.time || "";
     $("tdRec").value = t.recurrence ? t.recurrence.freq : ""; $("tdRecX").hidden = !t.recurrence;
-    if (t.recurrence){ $("tdRecN").value = t.recurrence.interval; $("tdRecU").textContent = { daily: "يوم", weekly: "أسبوع", monthly: "شهر" }[t.recurrence.freq];
+    if (t.recurrence){ $("tdRecN").value = t.recurrence.interval; $("tdRecU").textContent = { daily: "يوم", weekly: "أسبوع", monthly: "شهر", yearly: "سنة" }[t.recurrence.freq];
+      $("tdMDay").hidden = t.recurrence.freq !== "monthly"; $("tdMDay").value = t.recurrence.monthDay || ""; $("tdFromDone").checked = !!t.recurrence.fromDone;
       $("tdDays").hidden = t.recurrence.freq !== "weekly"; $("tdDays").querySelectorAll("input").forEach(c => { c.checked = (t.recurrence.days || []).includes(+c.value); }); }
     if (document.activeElement !== $("tdEst")) $("tdEst").value = t.estimate ? C.fmtMinutes(t.estimate) : "";
     if (document.activeElement !== $("tdSpent")) $("tdSpent").value = t.spent ? C.fmtMinutes(t.spent) : "";
@@ -277,6 +281,7 @@
   on("tdStatus", "change", () => set({ status: $("tdStatus").value }));
   on("tdPriority", "change", () => set({ priority: $("tdPriority").value }));
   on("tdAssignee", "change", () => set({ assignee: $("tdAssignee").value || null }));
+  on("tdFocus", "click", () => { if (id && window.Focus){ const x = id; close && close(); Focus.open(x); } });
   on("tdScope", "change", () => set({ scope: $("tdScope").value }));
   on("tdArea", "change", () => { set({ area: $("tdArea").value || null }); fill && fill(); });
   on("tdGoal", "change", () => { const g = (window.Life ? Life.goals() : []).find(x => x.id === $("tdGoal").value); set({ goalId: $("tdGoal").value || null, ...(g && g.area && !cur().area ? { area: g.area } : {}) }); fill && fill(); });
@@ -295,7 +300,9 @@
   on("tdStart", "change", () => set({ startDate: $("tdStart").value || null }));
   on("tdDue", "change", () => set({ due: $("tdDue").value || null, ...($("tdDue").value ? {} : { time: null }), remindedFor: null }));
   on("tdTime", "change", () => { if ($("tdTime").value && !$("tdDue").value) $("tdDue").value = C.ymd(new Date()); set({ due: $("tdDue").value || null, time: $("tdTime").value || null, remindedFor: null }); if ($("tdTime").value && window.Reminders) Reminders.ask(); });
-  const recNow = () => { const f = $("tdRec").value; if (!f) return null; return { freq: f, interval: Math.max(1, +$("tdRecN").value || 1), days: f === "weekly" ? [...$("tdDays").querySelectorAll("input:checked")].map(c => +c.value) : [] }; };
+  const recNow = () => { const f = $("tdRec").value; if (!f) return null; return { freq: f, interval: Math.max(1, +$("tdRecN").value || 1), days: f === "weekly" ? [...$("tdDays").querySelectorAll("input:checked")].map(c => +c.value) : [], monthDay: f === "monthly" ? $("tdMDay").value || null : null, fromDone: $("tdFromDone").checked }; };
+  on("tdMDay", "change", () => set({ recurrence: recNow() }));
+  on("tdFromDone", "change", () => set({ recurrence: recNow() }));
   on("tdRec", "change", () => set({ recurrence: recNow() }));
   on("tdRecN", "change", () => set({ recurrence: recNow() }));
   $("tdDays").addEventListener("change", () => set({ recurrence: recNow() }));

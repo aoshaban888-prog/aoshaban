@@ -87,3 +87,13 @@ test("time input", () => {
   assert.ok(Number.isNaN(C.parseMinutes("abc")));
   assert.equal(C.fmtMinutes(90), "1س 30د");
 });
+
+test("flexible recurrence: yearly, first and last day of the month, from the finish date", () => {
+  assert.equal(C.nextDate("2026-03-15", { freq: "yearly", interval: 1 }), "2027-03-15");
+  assert.equal(C.nextDate("2026-01-20", { freq: "monthly", interval: 1, monthDay: "first" }), "2026-02-01");
+  assert.equal(C.nextDate("2026-01-20", { freq: "monthly", interval: 1, monthDay: "last" }), "2026-02-28");
+  assert.equal(C.nextDate("2026-02-28", { freq: "monthly", interval: 1, monthDay: "last" }), "2026-03-31");
+  const t = C.normalize({ title: "x", due: "2026-01-01", recurrence: { freq: "daily", interval: 3, fromDone: true } });
+  assert.equal(C.nextOccurrence(t, "2026-01-10").due, "2026-01-13");
+  assert.match(C.recurrenceLabel({ freq: "monthly", interval: 1, monthDay: "last" }), /آخر يوم/);
+});

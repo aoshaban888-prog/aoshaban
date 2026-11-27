@@ -23,7 +23,7 @@
     { id: "high", label: "عالية", color: "#ea580c" },
     { id: "urgent", label: "عاجلة", color: "#dc2626" },
   ];
-  const FREQS = { daily: "يومية", weekly: "أسبوعية", monthly: "شهرية" };
+  const FREQS = { daily: "يومية", weekly: "أسبوعية", monthly: "شهرية", yearly: "سنوية" };
   const ST = Object.fromEntries(STATUSES.map(s => [s.id, s])), PR = Object.fromEntries(PRIORITIES.map(p => [p.id, p]));
   const CLOSED = new Set(["done", "cancelled"]);
   const pad = n => String(n).padStart(2, "0");
@@ -52,6 +52,11 @@
       archived: !!r.archived,
       // «personal»: only its owner (and its assignee) may read it, not an admin; «work»: the usual institutional task
       scope: r.scope === "personal" ? "personal" : "work",
+      // follow-up details (الشؤون الإدارية › المتابعات) and the Eisenhower quadrant a person chose
+      party: typeof r.party === "string" ? r.party : "", contact: typeof r.contact === "string" ? r.contact : "",
+      followUp: isDay(r.followUp) ? r.followUp : null, followNote: typeof r.followNote === "string" ? r.followNote : "",
+      waitingSince: r.waitingSince || null, repliedAt: r.repliedAt || null,
+      eisen: ["do", "plan", "delegate", "drop"].includes(r.eisen) ? r.eisen : null,
       mit: typeof r.mit === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.mit) ? r.mit : null,
       tags: list(r.tags).map(String).filter(Boolean),
       startDate: isDay(r.startDate) ? r.startDate : null,
@@ -64,7 +69,9 @@
       checklist: list(r.checklist).map(c => ({ id: c.id || uid(), text: String(c.text || ""), done: !!c.done })),
       parentId: r.parentId || null,
       dependsOn: list(r.dependsOn).filter(x => typeof x === "string"),
-      recurrence: r.recurrence && FREQS[r.recurrence.freq] ? { freq: r.recurrence.freq, interval: Math.max(1, Math.round(+r.recurrence.interval || 1)), days: list(r.recurrence.days).filter(d => d >= 0 && d <= 6) } : null,
+      // monthDay: "first" | "last" for a monthly task on the month's first or last day; fromDone: the next date counts from the day it was finished
+      recurrence: r.recurrence && FREQS[r.recurrence.freq] ? { freq: r.recurrence.freq, interval: Math.max(1, Math.round(+r.recurrence.interval || 1)), days: list(r.recurrence.days).filter(d => d >= 0 && d <= 6),
+        monthDay: ["first", "last"].includes(r.recurrence.monthDay) ? r.recurrence.monthDay : null, fromDone: !!r.recurrence.fromDone } : null,
       attachments: list(r.attachments),
       link: r.link || null,
       order: Number.isFinite(+r.order) ? +r.order : 0,
@@ -146,7 +153,12 @@
     if (!rec || !isDay(from)) return null;
     const d = new Date(from + "T12:00:00"), n = Math.max(1, rec.interval || 1);
     if (rec.freq === "daily"){ d.setDate(d.getDate() + n); return ymd(d); }
-    if (rec.freq === "monthly") return ymd(addMonths(d, n));
+    if (rec.freq === "yearly") return ymd(addMonths(d, 12 * n));
+    if (rec.freq === "monthly"){
+      if (rec.monthDay === "first"){ const x = new Date(d.getFullYear(), d.getMonth() + n, 1, 12); return ymd(x); }
+      if (rec.monthDay === "last"){ const x = new Date(d.getFullYear(), d.getMonth() + n + 1, 0, 12); return ymd(x); }
+      return ymd(addMonths(d, n));
+    }
     if (rec.freq === "weekly"){
       const days = (rec.days || []).slice().sort((a, b) => a - b);
       if (!days.length){ d.setDate(d.getDate() + 7 * n); return ymd(d); }
@@ -159,7 +171,8 @@
   // the copy made when a recurring task is completed: same work, next date, nothing ticked
   function nextOccurrence(task, today = ymd(new Date())){
     if (!task.recurrence) return null;
-    const base = task.due || today;
+    // counting from the day it was finished, or from its own date
+    const base = task.recurrence.fromDone ? today : task.due || today;
     let due = nextDate(base, task.recurrence);
     while (due && due < today) due = nextDate(due, task.recurrence); // a late finish does not create a task already overdue
     if (!due) return null;
@@ -170,10 +183,12 @@
   }
   function recurrenceLabel(rec){
     if (!rec) return "";
-    const n = rec.interval || 1, unit = { daily: ["يوم", "يومين", "أيام"], weekly: ["أسبوع", "أسبوعين", "أسابيع"], monthly: ["شهر", "شهرين", "أشهر"] }[rec.freq];
+    const n = rec.interval || 1, unit = { daily: ["يوم", "يومين", "أيام"], weekly: ["أسبوع", "أسبوعين", "أسابيع"], monthly: ["شهر", "شهرين", "أشهر"], yearly: ["سنة", "سنتين", "سنوات"] }[rec.freq];
     const every = n === 1 ? FREQS[rec.freq] : n === 2 ? `كل ${unit[1]}` : `كل ${n} ${unit[2]}`;
     const DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-    return rec.freq === "weekly" && rec.days && rec.days.length ? `${every}: ${rec.days.map(d => DAYS[d]).join("، ")}` : every;
+    const tail = rec.fromDone ? " (من تاريخ الإكمال)" : "";
+    if (rec.freq === "monthly" && rec.monthDay) return `${every}: ${rec.monthDay === "first" ? "أول يوم" : "آخر يوم"} من الشهر${tail}`;
+    return (rec.freq === "weekly" && rec.days && rec.days.length ? `${every}: ${rec.days.map(d => DAYS[d]).join("، ")}` : every) + tail;
   }
 
   /* ---------- checking input (the database rules check the same limits) ---------- */

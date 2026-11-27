@@ -419,10 +419,12 @@
       forms = s.docs.map(x => ({ id: x.id, ...x.data() })); loaded = true;
       if (cur && !forms.some(f => f.id === curId)){ cur = null; curId = null; }
       renderList(); if (first){ first = false; loadCounts(); }
+      window.dispatchEvent(new CustomEvent("app:forms"));
     }, e => { console.error(e); loaded = true; renderList(); });
     renderList();
   }
   window.addEventListener("app:view", e => { if (e.detail === "projects/forms" && db && !cur) loadCounts(); });
+  window.FormsList = () => forms.slice();
   window.addEventListener("app:db", e => connect(e.detail));
   if (window.appDb) connect({ db: window.appDb, user: window.appUser });
   renderList();

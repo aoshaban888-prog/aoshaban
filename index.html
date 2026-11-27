@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261128o"></script>
-<link rel="stylesheet" href="css/library.css?v=20261128o">
-<link rel="stylesheet" href="css/app.css?v=20261128o">
+<script src="js/boot.js?v=20261128q"></script>
+<link rel="stylesheet" href="css/library.css?v=20261128q">
+<link rel="stylesheet" href="css/app.css?v=20261128q">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -60,6 +60,7 @@
       <div class="nav-sub" id="lifeSub" hidden>
         <a class="sub" href="#/life/dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>لوحة التحكم الشخصية</a>
         <a class="sub" href="#/tasks" data-sec="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>المهام</a>
+        <a class="sub" href="#/calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h2M14 14h2M8 18h2"/></svg>التقويم الموحد</a>
         <a class="sub" href="#/life/goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>التخطيط والأهداف</a>
         <a class="sub" href="#/life/career"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>المجال المهني</a>
         <a class="sub" href="#/life/learning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>المجال التعليمي والمعرفي</a>
@@ -79,6 +80,7 @@
       <div class="nav-sub" data-sec="hr" id="hrSub" hidden>
         <a class="sub" href="#/hr/letters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>الخطابات</a>
         <a class="sub" href="#/hr/requests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>الطلبات<span class="nav-badge" id="rqBadge" hidden></span></a>
+        <a class="sub" href="#/followups" data-sec="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/><path d="M16 3.5l2 2"/></svg>المتابعات</a>
       </div>
       <button class="nav-group" data-sec="projects" type="button" id="prjBtn" data-group="projects" aria-expanded="false" aria-controls="prjSub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 14h8M8 11h4"/></svg><span>إدارة المشاريع</span><svg class="nav-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="nav-sub" data-sec="projects" id="prjSub" hidden>
@@ -203,6 +205,10 @@
           <div class="tk-views" role="tablist" aria-label="طريقة العرض">
             <button type="button" role="tab" data-tkview="list" aria-selected="false" title="قائمة" aria-label="قائمة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
             <button type="button" role="tab" data-tkview="board" aria-selected="true" title="لوحة كانبان" aria-label="لوحة كانبان"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="5" height="18" rx="1.5"/><rect x="10" y="3" width="5" height="12" rx="1.5"/><rect x="17" y="3" width="4" height="8" rx="1.5"/></svg></button>
+            <button type="button" role="tab" data-tkview="table" aria-selected="false" title="جدول" aria-label="جدول"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg></button>
+            <button type="button" role="tab" data-tkview="cal" aria-selected="false" title="تقويم" aria-label="تقويم"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button>
+            <button type="button" role="tab" data-tkview="matrix" aria-selected="false" title="مصفوفة أيزنهاور" aria-label="مصفوفة أيزنهاور"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></button>
+            <button type="button" role="tab" data-tkview="reports" aria-selected="false" title="التقارير" aria-label="التقارير"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></button>
           </div>
           <div class="tk-more"><button class="tk-ib" type="button" id="tkMoreBtn" title="المزيد" aria-label="المزيد" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></button>
             <div class="tk-pop tk-moremenu" id="tkMoreMenu" hidden><button type="button" id="tkToggleStats">إخفاء المؤشرات</button><button type="button" id="tkExport">تصدير نسخة احتياطية (JSON)</button></div></div>
@@ -222,8 +228,23 @@
           <section class="tk-sum" id="tkSum" hidden aria-label="نسب الإنجاز"></section>
           <div class="tk-board" id="tkBoard" hidden></div>
           <div class="tk-list" id="tkList" hidden></div>
+          <div class="tk-table" id="tkTable" hidden></div>
+          <div class="tk-cal" id="tkCal" hidden></div>
+          <div class="tk-matrix" id="tkMatrix" hidden></div>
+          <div class="tk-reports" id="tkReports" hidden></div>
         </div>
       </div>
+    </section>
+    <section class="view" data-view="calendar" hidden>
+      <header class="page-h"><div><p class="crumb">إدارة حياتي الشخصية</p><h1>التقويم الموحد</h1><p class="rq-subh">كل المواعيد والاستحقاقات من الأقسام المتاحة لك، بالتاريخين الهجري والميلادي وتوقيت الرياض. اسحب المهمة إلى يوم آخر لتغيير موعدها.</p></div><div class="actions"><button class="btn primary" type="button" id="calAdd">+ موعد</button></div></header>
+      <div class="cal-filters" id="calFilters"></div>
+      <div id="calView"><div class="card cal-card" id="calPage"></div></div>
+    </section>
+    <section class="view" data-view="followups" hidden>
+      <header class="page-h"><div><p class="crumb">الشؤون الإدارية</p><h1>المتابعات</h1><p class="rq-subh">المعاملات التي تنتظر إجراءً من جهة أخرى: من المهام «بانتظار طرف آخر» وطلباتك قيد الاعتماد، دون نسخ.</p></div><div class="actions"><button class="btn primary" type="button" id="fuNew">+ متابعة جديدة</button></div></header>
+      <div class="rq-filters"><div class="rq-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="input" id="fuQ" type="search" placeholder="ابحث بالموضوع أو الجهة أو المسؤول" aria-label="بحث في المتابعات"></div></div>
+      <div class="fu-tabs" id="fuTabs"></div>
+      <div class="card fu-card" id="fuList"></div>
     </section>
     <section class="view" data-view="life" data-prefix="life/" hidden><div id="lifeView"></div></section>
     <section class="view" data-view="governance/library" hidden>
@@ -1215,32 +1236,35 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/prefs.js?v=20261128o"></script>
-<script src="js/ui.js?v=20261128o"></script>
-<script src="js/library.js?v=20261128o"></script>
+<script src="js/prefs.js?v=20261128q"></script>
+<script src="js/ui.js?v=20261128q"></script>
+<script src="js/library.js?v=20261128q"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/cloud.js?v=20261128o"></script>
-<script src="js/task-core.js?v=20261128o"></script>
-<script src="js/smart-task.js?v=20261128o"></script>
-<script src="js/reminders.js?v=20261128o"></script>
-<script src="js/life.js?v=20261128o"></script>
-<script src="js/dash.js?v=20261128o" defer></script>
-<script src="js/home.js?v=20261128o"></script>
-<script src="js/tasks.js?v=20261128o"></script>
-<script src="js/task-detail.js?v=20261128o"></script>
-<script src="js/slider.js?v=20261128o"></script>
-<script src="js/settings.js?v=20261128o"></script>
-<script src="js/fonts.js?v=20261128o"></script>
-<script src="js/hr.js?v=20261128o"></script>
-<script src="js/assocs.js?v=20261128o"></script>
-<script src="js/forms.js?v=20261128o"></script>
-<script src="js/initiatives.js?v=20261128o"></script>
-<script src="js/requests.js?v=20261128o"></script>
-<script src="js/table-tools.js?v=20261128o"></script>
-<script src="js/login.js?v=20261128o"></script>
-<script src="js/backup.js?v=20261128o"></script>
-<script src="js/notif.js?v=20261128o"></script>
-<script src="js/nav.js?v=20261128o"></script>
-<script src="js/shell.js?v=20261128o"></script>
+<script src="js/cloud.js?v=20261128q"></script>
+<script src="js/task-core.js?v=20261128q"></script>
+<script src="js/smart-task.js?v=20261128q"></script>
+<script src="js/reminders.js?v=20261128q"></script>
+<script src="js/life.js?v=20261128q"></script>
+<script src="js/dash.js?v=20261128q" defer></script>
+<script src="js/home.js?v=20261128q"></script>
+<script src="js/calendar.js?v=20261128q"></script>
+<script src="js/focus.js?v=20261128q"></script>
+<script src="js/followups.js?v=20261128q" defer></script>
+<script src="js/tasks.js?v=20261128q"></script>
+<script src="js/task-detail.js?v=20261128q"></script>
+<script src="js/slider.js?v=20261128q"></script>
+<script src="js/settings.js?v=20261128q"></script>
+<script src="js/fonts.js?v=20261128q"></script>
+<script src="js/hr.js?v=20261128q"></script>
+<script src="js/assocs.js?v=20261128q"></script>
+<script src="js/forms.js?v=20261128q"></script>
+<script src="js/initiatives.js?v=20261128q"></script>
+<script src="js/requests.js?v=20261128q"></script>
+<script src="js/table-tools.js?v=20261128q"></script>
+<script src="js/login.js?v=20261128q"></script>
+<script src="js/backup.js?v=20261128q"></script>
+<script src="js/notif.js?v=20261128q"></script>
+<script src="js/nav.js?v=20261128q"></script>
+<script src="js/shell.js?v=20261128q"></script>
 </body>
 </html>

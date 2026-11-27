@@ -9,7 +9,7 @@
   let db = null, me = "", myName = "", admin = null, unsubs = [];
   let sources = {}, tasks = [], byId = new Map(), kids = new Map(), projects = [], people = [], policies = [], letters = [];
   let view = "board", dragId = null, loaded = false, hidden = new Set();
-  try { view = localStorage.getItem("app-tasks-view") === "list" ? "list" : "board"; } catch {}
+  try { const v = localStorage.getItem("app-tasks-view"); view = ["list", "board", "table", "cal", "matrix", "reports"].includes(v) ? v : "board"; } catch {}
 
   const today = () => C.ymd(new Date());
   const dayDiff = s => s ? Math.round((new Date(s + "T00:00:00") - new Date(today() + "T00:00:00")) / 86400000) : null;
@@ -135,6 +135,7 @@
     const now = new Date().toISOString(), write = { ...patch, updatedAt: now };
     if (patch.status === "done" && prev.status !== "done") write.doneAt = now;
     if (patch.status && patch.status !== "done") write.doneAt = null;
+    if (patch.status === "waiting" && prev.status !== "waiting" && !patch.waitingSince) write.waitingSince = now;
     if (prev.schema !== C.SCHEMA || !prev.owner) Object.assign(write, C.migrationPatch({ ...prev, ...patch }, prev.owner || me), { ...patch, updatedAt: now });
     // optimistic: the page changes now, Firestore confirms (or the change is rolled back with a message)
     Object.assign(before, after); render();
@@ -406,6 +407,85 @@
   }
   window.addEventListener("hashchange", closeMenu);
 
+  /* ---------- the table view: columns with inline editing ---------- */
+  let tSort = { k: "due", dir: 1 };
+  function renderTable(){
+    const box = $("tkTable"), top = tasks.filter(t => !t.parentId && matches(t));
+    const val = { title: t => t.title, area: t => areaName(t.area), project: t => (projectOf(t.projectId) || {}).name || "", status: t => C.ST[t.status].label, priority: t => RANK[t.priority], due: t => t.due || "9999", pct: t => pct(t) };
+    const items = top.slice().sort((a, b) => { const x = val[tSort.k](a), y = val[tSort.k](b); return (x > y ? 1 : x < y ? -1 : 0) * tSort.dir; });
+    const th = (k, l) => `<th><button type="button" data-sort="${k}" aria-sort="${tSort.k === k ? (tSort.dir > 0 ? "ascending" : "descending") : "none"}">${l}${tSort.k === k ? (tSort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`;
+    const opt = (list, v) => list.map(([k, l]) => `<option value="${k}"${k === v ? " selected" : ""}>${escH(l)}</option>`).join("");
+    box.innerHTML = items.length ? `<div class="tt-wrap"><table class="tt"><thead><tr>${th("title", "المهمة")}${th("area", "المجال")}${th("project", "المشروع")}${th("status", "الحالة")}${th("priority", "الأولوية")}${th("due", "الاستحقاق")}${th("pct", "الإنجاز")}<th></th></tr></thead><tbody>${items.map(t => { const ed = db && canEdit(t) ? "" : " disabled", late = t.due && t.due < today() && isOpen(t);
+      return `<tr data-id="${t.id}"${t.status === "done" ? ' class="done"' : ""}><td><button type="button" class="tt-title" data-open="${t.id}">${escH(t.title)}</button></td>
+        <td><select class="tt-in" data-f="area"${ed}><option value="">—</option>${opt((window.LifeAreas || []).map(a => [a.id, a.short]), t.area)}</select></td>
+        <td><select class="tt-in" data-f="projectId"${ed}><option value="">—</option>${opt(projects.map(p => [p.id, p.name]), t.projectId)}</select></td>
+        <td><select class="tt-in" data-f="status"${ed} style="color:${C.ST[t.status].color}">${opt(C.STATUSES.map(s => [s.id, s.label]), t.status)}</select></td>
+        <td><select class="tt-in" data-f="priority"${ed} style="color:${C.PR[t.priority].color}">${opt(C.PRIORITIES.slice().reverse().map(p => [p.id, p.label]), t.priority)}</select></td>
+        <td><input type="date" class="tt-in${late ? " late" : ""}" data-f="due" value="${t.due || ""}"${ed}></td>
+        <td>${childrenOf(t.id).length || t.checklist.length || t.progressMode === "manual" ? `<span class="tt-pct">${bar(pct(t), C.progressTone(pct(t), C.dueState(t)))}<i>${pct(t)}%</i></span>` : "—"}</td>
+        <td><button type="button" class="tk-kebab" data-menu="${t.id}" aria-label="خيارات المهمة"${ed}>⋯</button></td></tr>`; }).join("")}</tbody></table></div>` : `<div class="tk-blank"><b>لا مهام في «${LIST[list][1]}»</b></div>`;
+  }
+  $("tkTable").addEventListener("click", e => {
+    const s = e.target.closest("[data-sort]"); if (s){ tSort = { k: s.dataset.sort, dir: tSort.k === s.dataset.sort ? -tSort.dir : 1 }; renderTable(); return; }
+    const o = e.target.closest("[data-open]"); if (o){ TaskDetail.open(o.dataset.open); return; }
+    const m = e.target.closest("[data-menu]"); if (m){ actionMenu(m, byId.get(m.dataset.menu)); }
+  });
+  $("tkTable").addEventListener("change", e => { const f = e.target.dataset.f; if (!f) return; const id = e.target.closest("tr").dataset.id; update(id, { [f]: e.target.value || null }); });
+
+  /* ---------- the calendar view (tasks only; the unified calendar has every section) ---------- */
+  function renderCal(){
+    const evs = tasks.filter(t => !t.parentId && matches(t) && t.due).map(t => ({ key: "t:" + t.id, date: t.due, time: t.time, title: t.title, color: C.PR[t.priority].color, drag: db && canEdit(t) && t.status !== "done", done: t.status === "done", task: t.id }));
+    window.Calendar.render($("tkCal"), { events: evs, onMove: (ev, date) => update(ev.task, { due: date }), onOpen: ev => TaskDetail.open(ev.task) });
+  }
+
+  /* ---------- the Eisenhower matrix: important (high or urgent priority) × urgent (due within two days); a move is remembered ---------- */
+  const QUADS = [["do", "مهم وعاجل", "نفّذ الآن", "#dc2626"], ["plan", "مهم وغير عاجل", "خطّط له", "#2563eb"], ["delegate", "عاجل وغير مهم", "فوّضه عند الإمكان", "#d97706"], ["drop", "غير عاجل وغير مهم", "راجع ضرورته", "#64748b"]];
+  const quadOf = t => { if (t.eisen) return t.eisen; const imp = t.priority === "high" || t.priority === "urgent", urg = !!t.due && t.due <= (() => { const d = new Date(); d.setDate(d.getDate() + 2); return C.ymd(d); })(); return imp && urg ? "do" : imp ? "plan" : urg ? "delegate" : "drop"; };
+  function renderMatrix(){
+    const box = $("tkMatrix"), open = tasks.filter(t => !t.parentId && matches(t) && isOpen(t));
+    box.innerHTML = QUADS.map(([k, l, hint, c]) => { const items = sorted(open.filter(t => quadOf(t) === k));
+      return `<section class="mx-q" data-q="${k}" style="--c:${c}"><header><b>${l}</b><span>${hint}</span><i>${items.length}</i></header><ul>${items.map(t => `<li draggable="${db && canEdit(t)}" data-id="${t.id}"><span class="tk-pdot" style="--pc:${C.PR[t.priority].color}"></span><button type="button" data-open="${t.id}">${escH(t.title)}</button><small>${t.due ? dueLabel(t.due) : ""}</small></li>`).join("") || '<li class="mx-empty">اسحب مهمة إلى هنا</li>'}</ul></section>`; }).join("");
+  }
+  let mxDrag = null;
+  $("tkMatrix").addEventListener("click", e => { const o = e.target.closest("[data-open]"); if (o) TaskDetail.open(o.dataset.open); });
+  $("tkMatrix").addEventListener("dragstart", e => { const li = e.target.closest("li[data-id]"); if (li){ mxDrag = li.dataset.id; e.dataTransfer.effectAllowed = "move"; } });
+  $("tkMatrix").addEventListener("dragover", e => { if (mxDrag && e.target.closest(".mx-q")) e.preventDefault(); });
+  $("tkMatrix").addEventListener("drop", e => { const q = e.target.closest(".mx-q"); if (!q || !mxDrag) return; e.preventDefault(); const id = mxDrag; mxDrag = null; const t = byId.get(id); const patch = { eisen: q.dataset.q };
+    if ((q.dataset.q === "do" || q.dataset.q === "plan") && !(t.priority === "high" || t.priority === "urgent")) patch.priority = "high";
+    update(id, patch); });
+
+  /* ---------- reports: honest numbers, with a note when there is too little data ---------- */
+  let rp = { days: 30 };
+  function renderReports(){
+    const box = $("tkReports"), since = Date.now() - rp.days * 864e5, top = tasks.filter(t => !t.parentId && (!filt.area || t.area === filt.area));
+    const done = top.filter(t => t.status === "done" && t.doneAt && Date.parse(t.doneAt) >= since);
+    const dueIn = top.filter(t => t.due && Date.parse(t.due + "T12:00:00") >= since && t.due <= today() && t.status !== "cancelled");
+    const dueDone = dueIn.filter(t => t.status === "done"), onTime = dueDone.filter(t => t.doneAt && t.doneAt.slice(0, 10) <= t.due);
+    const lateNow = top.filter(t => isOpen(t) && t.due && t.due < today());
+    const durs = done.filter(t => t.createdAt).map(t => (Date.parse(t.doneAt) - Date.parse(t.createdAt)) / 864e5).filter(x => x >= 0);
+    const est = done.filter(t => t.estimate && t.spent), estSum = est.reduce((s, t) => s + t.estimate, 0), spentSum = est.reduce((s, t) => s + t.spent, 0);
+    const pctOf = (a, b) => b ? Math.round(a / b * 100) + "%" : "—";
+    const few = n => n < 3 ? '<small class="rp-few">بيانات غير كافية</small>' : "";
+    const weeks = [...Array(8)].map((_, i) => { const end = Date.now() - i * 7 * 864e5, start = end - 7 * 864e5; return { label: i === 0 ? "هذا الأسبوع" : `قبل ${i}`, n: top.filter(t => t.status === "done" && t.doneAt && Date.parse(t.doneAt) >= start && Date.parse(t.doneAt) < end).length }; }).reverse();
+    const maxW = Math.max(1, ...weeks.map(w => w.n));
+    const byArea = (window.LifeAreas || []).map(a => ({ a, n: done.filter(t => t.area === a.id).length })).filter(x => x.n).concat([{ a: { short: "بدون مجال", color: "var(--muted)" }, n: done.filter(t => !t.area).length }]).filter(x => x.n);
+    const focusMin = top.reduce((s, t) => s + (t.spent || 0), 0);
+    box.innerHTML = `<div class="rp-bar"><div class="fm-seg" role="radiogroup">${[[7, "7 أيام"], [30, "30 يوماً"], [90, "90 يوماً"], [365, "سنة"]].map(([d, l]) => `<button type="button" role="radio" data-days="${d}" aria-checked="${rp.days === d}">${l}</button>`).join("")}</div><span class="muted-text">المجال يتبع تصفية الصفحة</span></div>
+      <div class="rp-kpis">
+        <div><b>${done.length}</b><span>مهمة أُنجزت</span></div>
+        <div><b>${pctOf(dueDone.length, dueIn.length)}</b><span>معدل إكمال المستحق</span>${few(dueIn.length)}</div>
+        <div><b>${pctOf(onTime.length, dueDone.length)}</b><span>أُنجزت في موعدها</span>${few(dueDone.length)}</div>
+        <div class="${lateNow.length ? "warn" : ""}"><b>${lateNow.length}</b><span>متأخرة الآن</span></div>
+        <div><b>${durs.length ? (durs.reduce((s, x) => s + x, 0) / durs.length).toFixed(1) : "—"}</b><span>متوسط أيام الإنجاز</span>${few(durs.length)}</div>
+        <div><b>${est.length ? `${C.fmtMinutes(spentSum)} / ${C.fmtMinutes(estSum)}` : "—"}</b><span>الفعلي مقابل المخطط</span>${few(est.length)}</div>
+      </div>
+      <div class="rp-two"><section class="card"><h3>الإنجاز الأسبوعي (آخر 8 أسابيع)</h3><div class="rp-weeks">${weeks.map(w => `<div><i style="height:${Math.round(w.n / maxW * 100)}%" title="${w.n}"></i><b>${w.n}</b><small>${w.label}</small></div>`).join("")}</div></section>
+        <section class="card"><h3>توزيع المنجز حسب المجال</h3>${byArea.length ? `<ul class="rp-areas">${byArea.map(x => `<li><span style="background:${x.a.color}"></span>${escH(x.a.short)}<em>${bar(Math.round(x.n / done.length * 100), "good")}</em><b>${x.n}</b></li>`).join("")}</ul>` : '<p class="muted-text">لا مهام منجزة في الفترة.</p>'}
+          <p class="muted-text rp-note">إجمالي الوقت المسجّل على المهام (منه جلسات التركيز): <b>${C.fmtMinutes(focusMin) || "0د"}</b>. أسباب التأجيل لا تُسجَّل حالياً، فلا تقرير لها.</p></section></div>
+      <section class="card"><h3>سجل الإنجازات</h3><ul class="rp-log">${done.slice().sort((a, b) => String(b.doneAt).localeCompare(String(a.doneAt))).slice(0, 15).map(t => `<li><span>✓</span><button type="button" data-open="${t.id}">${escH(t.title)}</button><small>${fmtShort(t.doneAt.slice(0, 10))}</small></li>`).join("") || '<li class="muted-text">لا إنجازات في الفترة.</li>'}</ul></section>`;
+  }
+  $("tkReports").addEventListener("click", e => { const d = e.target.closest("[data-days]"); if (d){ rp.days = +d.dataset.days; renderReports(); return; } const o = e.target.closest("[data-open]"); if (o) TaskDetail.open(o.dataset.open); });
+
   /* ---------- wiring ---------- */
   function setView(v){
     view = v; try { localStorage.setItem("app-tasks-view", v); } catch {}
@@ -416,13 +496,14 @@
   // several changes in a row draw once (a timer, so it also runs while the tab is in the background)
   function render(){ clearTimeout(raf); raf = setTimeout(draw, 0); }
   function draw(){
-    $("tkBoard").hidden = view !== "board"; $("tkList").hidden = view !== "list";
+    ["board", "list", "table", "cal", "matrix", "reports"].forEach(v => { const el = $("tk" + { board: "Board", list: "List", table: "Table", cal: "Cal", matrix: "Matrix", reports: "Reports" }[v]); if (el) el.hidden = view !== v; });
     const loading = (!db || !loaded) && !(window.appAuth && window.appAuth.user === null);
     $("tkSkel").hidden = !loading; $("tkSignin").hidden = !!db || loading;
     $("tkLayout").hidden = !db || !loaded; $("tkStats").hidden = !db || !loaded || statsHidden; $("tkQuick").hidden = !db;
-    if (!db || !loaded){ $("tkBoard").hidden = $("tkList").hidden = true; $("tkSum").hidden = true; return; }
+    if (!db || !loaded){ ["tkBoard", "tkList", "tkTable", "tkCal", "tkMatrix", "tkReports", "tkSum"].forEach(i => { if ($(i)) $(i).hidden = true; }); return; }
     renderStats(); renderLists(); renderCtx(); renderMit();
-    if (view === "board") renderBoard(); else renderList();
+    ({ board: renderBoard, list: renderList, table: renderTable, cal: renderCal, matrix: renderMatrix, reports: renderReports }[view] || renderList)();
+    $("tkMit").hidden = $("tkMit").hidden || view === "reports";
     if (window.TaskDetail) TaskDetail.refresh();
   }
   document.querySelectorAll("[data-tkview]").forEach(b => b.addEventListener("click", () => setView(b.dataset.tkview)));
@@ -546,7 +627,7 @@
       `<div class="tk-actg"><span>الأولوية</span>${C.PRIORITIES.slice().reverse().map(p => `<button type="button" data-pri="${p.id}" class="tk-prib${t.priority === p.id ? " on" : ""}" style="--pc:${p.color}" title="${p.label}" aria-label="${p.label}"></button>`).join("")}</div>` +
       `<div class="tk-actg"><span>المجال</span><select class="select" data-area><option value="">بدون</option>${(window.LifeAreas || []).map(a => `<option value="${a.id}"${t.area === a.id ? " selected" : ""}>${escH(a.name)}</option>`).join("")}</select></div>` +
       (t.mit === today() ? it("unmit", "☆ إزالة من أهم مهام اليوم") : it("mit", "★ تثبيت من أهم مهام اليوم", mitN >= 3 ? 'disabled title="ثلاث مهام كحد أعلى"' : "")) +
-      it("sub", "+ إضافة مهمة فرعية") + it("dup", "⧉ نسخ المهمة") + (t.archived ? it("unarchive", "⤴ إخراج من الأرشيف") : it("archive", "▣ أرشفة")) + it("del", "🗑 حذف", 'class="danger"');
+      (isOpen(t) ? it("focus", "◎ وضع التركيز") : "") + it("sub", "+ إضافة مهمة فرعية") + it("dup", "⧉ نسخ المهمة") + (t.archived ? it("unarchive", "⤴ إخراج من الأرشيف") : it("archive", "▣ أرشفة")) + it("del", "🗑 حذف", 'class="danger"');
     document.body.append(m); actEl = m;
     const r = anchor.getBoundingClientRect(), w = m.offsetWidth, hgt = m.offsetHeight;
     m.style.left = Math.min(Math.max(8, r.left), innerWidth - w - 8) + "px";
@@ -565,6 +646,7 @@
         case "date": { const v = await UI.prompt("الموعد الجديد للمهمة (YYYY-MM-DD)", { title: "تغيير الموعد", ok: "حفظ", note: t.due || today(), noteRequired: true, placeholder: "2026-12-01" }); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v.note.trim())) update(t.id, { due: v.note.trim() }); else if (v) UI.toast("اكتب التاريخ بصيغة YYYY-MM-DD", "err"); break; }
         case "mit": update(t.id, { mit: today() }, { log: false }); break;
         case "unmit": update(t.id, { mit: null }, { log: false }); break;
+        case "focus": window.Focus && Focus.open(t.id); break;
         case "sub": TaskDetail.open(t.id); setTimeout(() => { const i = document.querySelector("#tdSubAdd input"); if (i) i.focus(); }, 300); break;
         case "dup": { const c = JSON.parse(JSON.stringify(t)); ["id", "doneAt", "nextSpawned", "remindedFor", "mit"].forEach(k => delete c[k]); c.title = t.title + " (نسخة)"; c.status = "todo"; c.archived = false; try { await create(c); UI.toast("نُسخت المهمة"); } catch {} break; }
         case "archive": update(t.id, { archived: true }).then(ok => ok && undoBar("أُرشفت المهمة", () => update(t.id, { archived: false }))); break;
