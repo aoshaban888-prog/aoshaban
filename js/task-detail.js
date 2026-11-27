@@ -51,6 +51,9 @@
       <label>الأولوية<select class="select" id="tdPriority">${OPT(C.PRIORITIES)}</select></label>
       <label>المسؤول<select class="select" id="tdAssignee"></select></label>
       <label>المشروع<select class="select" id="tdProject"></select></label>
+      <label>مجال الحياة<select class="select" id="tdArea"></select></label>
+      <label>الهدف<select class="select" id="tdGoal"></select></label>
+      <label id="tdGVw" hidden>قيمتها في الهدف<input class="input" id="tdGV" inputmode="decimal" placeholder="مثال: 500"></label>
       <label>تاريخ البدء<input class="input" type="date" id="tdStart"></label>
       <label>الاستحقاق<span class="td-when"><input class="input" type="date" id="tdDue"><input class="input" type="time" id="tdTime" aria-label="الوقت"></span></label>
       <label>التكرار<select class="select" id="tdRec"><option value="">بدون</option><option value="daily">يومية</option><option value="weekly">أسبوعية</option><option value="monthly">شهرية</option></select></label>
@@ -121,6 +124,10 @@
     if (t.assignee && !ppl.some(p => p.email === t.assignee)) ppl.push({ email: t.assignee, name: t.assignee });
     ppl.forEach(p => pe.append(new Option(p.email === T().me ? `${p.name || p.email} (أنا)` : p.name || p.email, p.email))); pe.value = t.assignee || "";
     const pj = $("tdProject"); pj.innerHTML = `<option value="">بدون مشروع</option>`; T().projects.forEach(p => pj.append(new Option(p.name, p.id))); pj.append(new Option("+ مشروع جديد…", "__new")); pj.value = t.projectId || "";
+    // life area and goal (إدارة حياتي الشخصية)
+    const ar = $("tdArea"); ar.innerHTML = '<option value="">بدون</option>' + (window.LifeAreas || []).map(a => `<option value="${a.id}">${a.name}</option>`).join(""); ar.value = t.area || "";
+    const goalSel = $("tdGoal"), gs = window.Life ? Life.goals() : []; goalSel.innerHTML = '<option value="">بدون هدف</option>' + gs.filter(g => !t.area || !g.area || g.area === t.area || g.id === t.goalId).map(g => `<option value="${g.id}">${String(g.title).replace(/</g, "&lt;")}</option>`).join(""); goalSel.value = t.goalId || "";
+    const gg = gs.find(g => g.id === t.goalId); $("tdGVw").hidden = !(gg && gg.measure === "number"); $("tdGV").value = t.goalValue || "";
     $("tdStart").value = t.startDate || ""; $("tdDue").value = t.due || ""; $("tdTime").value = t.time || "";
     $("tdRec").value = t.recurrence ? t.recurrence.freq : ""; $("tdRecX").hidden = !t.recurrence;
     if (t.recurrence){ $("tdRecN").value = t.recurrence.interval; $("tdRecU").textContent = { daily: "يوم", weekly: "أسبوع", monthly: "شهر" }[t.recurrence.freq];
@@ -268,6 +275,9 @@
   on("tdStatus", "change", () => set({ status: $("tdStatus").value }));
   on("tdPriority", "change", () => set({ priority: $("tdPriority").value }));
   on("tdAssignee", "change", () => set({ assignee: $("tdAssignee").value || null }));
+  on("tdArea", "change", () => { set({ area: $("tdArea").value || null }); fill && fill(); });
+  on("tdGoal", "change", () => { const g = (window.Life ? Life.goals() : []).find(x => x.id === $("tdGoal").value); set({ goalId: $("tdGoal").value || null, ...(g && g.area && !cur().area ? { area: g.area } : {}) }); fill && fill(); });
+  on("tdGV", "input", () => set({ goalValue: +String($("tdGV").value).replace(/[^\d.]/g, "") || 0 }, 700));
   on("tdProject", "change", async () => {
     if ($("tdProject").value !== "__new") return set({ projectId: $("tdProject").value || null });
     const v = await UI.prompt("اسم المشروع أو التصنيف", { title: "مشروع جديد", ok: "إنشاء", placeholder: "مثل: برنامج مسارات" });

@@ -3,6 +3,10 @@
   const ROUTES = {
     "home": "الرئيسية",
     "tasks": "المهام",
+    "life/dashboard": "لوحة التحكم الشخصية", "life/goals": "التخطيط والأهداف", "life/career": "المجال المهني", "life/learning": "المجال التعليمي والمعرفي",
+    "life/finance": "المجال المالي", "life/family": "المجال الشخصي والأسري", "life/faith": "المجال الروحاني والإيماني", "life/health": "المجال الصحي والبدني",
+    "life/habits": "العادات اليومية", "life/notes": "الأفكار والملاحظات", "life/reviews": "المراجعات والتقييم",
+    "life": "لوحة التحكم الشخصية",
     "governance/library": "اللوائح والسياسات",
     "hr/letters": "الخطابات",
     "hr/requests": "الطلبات",
@@ -35,12 +39,15 @@
     let r = location.hash.replace(/^#\/?/, "");
     if (MOVED[r]){ r = MOVED[r]; history.replaceState(null, "", "#/" + r); }
     if (!ROUTES[r]) r = DEFAULT();
-    document.querySelectorAll(".view").forEach(v => { v.hidden = v.dataset.view !== r; });
-    groups.forEach(g => g.btn.classList.toggle("has-current", r === g.key || r.startsWith(g.key + "/")));
+    if (r === "life"){ r = "life/dashboard"; history.replaceState(null, "", "#/" + r); }
+    document.querySelectorAll(".view").forEach(v => { v.hidden = v.dataset.view !== r && !(v.dataset.prefix && r.startsWith(v.dataset.prefix)); });
+    // a group is current for its own routes and for any page linked inside it (المهام sits inside إدارة حياتي الشخصية)
+    const inGroup = g => r === g.key || r.startsWith(g.key + "/") || !!g.sub.querySelector(`a[href="#/${r}"]`);
+    groups.forEach(g => g.btn.classList.toggle("has-current", inGroup(g)));
     document.querySelectorAll(".nav a").forEach(a => {
       if (a.getAttribute("href") === "#/" + r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    groups.forEach(g => { if (r === g.key || r.startsWith(g.key + "/")) setGroup(g, true, false); });
+    groups.forEach(g => { if (inGroup(g)) setGroup(g, true, false); });
     document.querySelector(".topbar .t").textContent = ROUTES[r];
     document.title = ROUTES[r] + " · " + ((window.siteSettings && window.siteSettings.siteName) || "مكتب الحوكمة");
     app.classList.remove("nav-open");

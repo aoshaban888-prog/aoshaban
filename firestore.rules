@@ -148,6 +148,13 @@ service cloud.firestore {
       }
     }
 
+    // إدارة حياتي الشخصية: goals, habits, notes and reviews belong to one person only
+    match /{col}/{id} {
+      allow read, delete: if col in ["lifeGoals", "lifeHabits", "lifeNotes", "lifeReviews"] && allowed() && resource.data.owner == myEmail();
+      allow create: if col in ["lifeGoals", "lifeHabits", "lifeNotes", "lifeReviews"] && allowed() && request.resource.data.owner == myEmail();
+      allow update: if col in ["lifeGoals", "lifeHabits", "lifeNotes", "lifeReviews"] && allowed() && resource.data.owner == myEmail() && request.resource.data.owner == myEmail();
+    }
+
     // governance library (policies and associations are also read by the letters and the home page)
     match /policies/{id} {
       allow read: if allowed();

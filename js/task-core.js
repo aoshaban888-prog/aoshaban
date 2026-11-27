@@ -44,6 +44,9 @@
       owner: r.owner || r.createdBy || null,
       assignee: r.assignee || null,
       projectId: r.projectId || null,
+      area: typeof r.area === "string" && r.area ? r.area : null,
+      goalId: typeof r.goalId === "string" && r.goalId ? r.goalId : null,
+      goalValue: Number.isFinite(+r.goalValue) && +r.goalValue > 0 ? +r.goalValue : 0,
       tags: list(r.tags).map(String).filter(Boolean),
       startDate: isDay(r.startDate) ? r.startDate : null,
       due: isDay(r.due) ? r.due : null,
@@ -182,7 +185,7 @@
   }
 
   /* ---------- what changed, for the activity log ---------- */
-  const LABELS = { title: "العنوان", description: "الوصف", status: "الحالة", priority: "الأولوية", assignee: "المسؤول", projectId: "المشروع", tags: "الوسوم",
+  const LABELS = { title: "العنوان", description: "الوصف", status: "الحالة", priority: "الأولوية", assignee: "المسؤول", projectId: "المشروع", area: "مجال الحياة", goalId: "الهدف", goalValue: "قيمة المهمة في الهدف", tags: "الوسوم",
     startDate: "تاريخ البدء", due: "تاريخ الاستحقاق", time: "الوقت", estimate: "الوقت المقدّر", spent: "الوقت الفعلي", progressMode: "طريقة حساب النسبة",
     progressManual: "النسبة اليدوية", dependsOn: "الاعتماديات", recurrence: "التكرار", checklist: "قائمة التحقق", attachments: "المرفقات", parentId: "المهمة الأم" };
   function changes(before, after){
