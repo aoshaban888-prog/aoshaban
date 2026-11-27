@@ -362,6 +362,8 @@
     if (isAdmin()) add("حذف الطلب", "ghost danger-text", () => deleteRequests([r.id]));
     $("rqNoteWrap").hidden = !amApprover(r);
     // preview
+    // requests approved before the stamp copy existed get one the first time an admin opens them
+    if (r.status === "approved" && !r.sealSnap && isAdmin() && HRLetters.sealSnapshot){ const snap = HRLetters.sealSnapshot(); if (snap) db.collection("requests").doc(r.id).update({ sealSnap: snap }).catch(e => console.error(e)); }
     const pv = HRLetters.paper({ ...HRLetters.finalize({ ...r.letter, sealSnap: r.sealSnap || null }, r.status === "approved"), ref: r.ref });
     const paper = $("rqPaper"); paper.setAttribute("style", pv.style); paper.innerHTML = pv.html;
     setTimeout(() => { HRLetters.fit(); HRLetters.place(paper); }, 30);
