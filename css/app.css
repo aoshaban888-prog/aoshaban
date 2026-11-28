@@ -2167,3 +2167,16 @@ html.gate-wait .gate-loader{display:grid;place-items:center;position:fixed;inset
 /* phones: the home quick-add wraps instead of widening the page */
 @media (max-width:560px){.view.home .t-add{grid-template-columns:minmax(0,1fr) auto}.view.home .t-add #tDue,.view.home .t-add .dt-pick{grid-column:1/-1;grid-row:2;width:100%}.view.home .t-add #tTitle{min-width:0}.dh-card{min-width:0}}
 @media (max-width:900px){.dh-grid{align-items:stretch}.dh-grid .dh-card{min-width:0;max-width:100%}.dh-tabs{overflow-x:auto;scrollbar-width:none}}
+
+/* slider pictures: never cropped — the whole picture fits the slide, a soft blurred copy fills the sides */
+.sl-slide{overflow:hidden}
+.sl-slide.has-img{background:var(--a2)}
+.sl-slide.has-img::before{content:"";position:absolute;inset:-30px;background:var(--sl-img) center/cover no-repeat;filter:blur(26px) saturate(1.1) brightness(.75);transform:scale(1.08)}
+.sl-slide.has-img::after{content:"";position:absolute;inset:0;background:var(--sl-img) left center/contain no-repeat}
+.sl-slide .sl-text{z-index:1}
+.sl-slide.has-img::after{-webkit-mask-image:linear-gradient(to right,#000 0,#000 82%,transparent 100%);mask-image:linear-gradient(to right,#000 0,#000 82%,transparent 100%)}
+.sl-slide.has-img::before{inset:-60px;background:var(--sl-img) left top/cover no-repeat;filter:blur(48px) saturate(1.15) brightness(.42);transform:scale(1.25)}
+.sl-slide{--sl-h:clamp(200px,26vw,320px);height:var(--sl-h)}
+.view.home .sl-slide{--sl-h:clamp(140px,11vw,170px)}
+.sl-slide.has-img::after{-webkit-mask-image:linear-gradient(to right,#000 calc(var(--sl-h) * var(--sl-r,3.333) * .78),transparent calc(var(--sl-h) * var(--sl-r,3.333)));mask-image:linear-gradient(to right,#000 calc(var(--sl-h) * var(--sl-r,3.333) * .78),transparent calc(var(--sl-h) * var(--sl-r,3.333)))}
+.sl-slide.has-img::before{filter:blur(48px) saturate(1.2) brightness(.55)}

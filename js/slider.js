@@ -36,7 +36,10 @@
       const el = document.createElement("div");
       el.className = "sl-slide"; el.setAttribute("role", "group"); el.setAttribute("aria-roledescription", "شريحة");
       el.setAttribute("aria-label", `${i + 1} من ${list.length}`);
-      if (s.image) el.style.backgroundImage = `url("${s.image}")`;
+      // the whole picture is shown (contain); a blurred copy of it fills the rest of the slide
+      if (s.image){ el.style.setProperty("--sl-img", `url("${/^data:/.test(s.image) ? s.image : new URL(s.image, document.baseURI).href}")`); el.classList.add("has-img");
+        // the picture's own width/height ratio: the soft edge falls exactly where the picture ends
+        const im = new Image(); im.onload = () => { if (im.naturalWidth && im.naturalHeight) el.style.setProperty("--sl-r", (im.naturalWidth / im.naturalHeight).toFixed(3)); }; im.src = s.image; }
       el.innerHTML = `<div class="sl-text"><h2></h2><p></p><a class="sl-btn" hidden></a></div>`;
       el.querySelector("h2").textContent = s.title || "";
       el.querySelector("p").textContent = s.text || "";
