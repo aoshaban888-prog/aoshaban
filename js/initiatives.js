@@ -270,6 +270,7 @@
 
   /* ---------- result view ---------- */
   function showResult(){
+    if ($("resToProj")) $("resToProj").hidden = !(cur && cur.kind === "doc" && window.Projects);
     $("iniForms").hidden = true; $("iniResult").hidden = false;
     $("resName").textContent = cur.title || (cur.kind === "doc" ? "وثيقة جديدة" : "تحليل الوثيقة");
     $("resEditor").hidden = true; $("resEdit").setAttribute("aria-pressed", "false");
@@ -396,6 +397,12 @@
     $("inAssocList").innerHTML = [...new Set([...assocs, ...items.map(d => d.assocName)].filter(Boolean))].map(n => `<option value="${esc(n)}">`).join("");
     if (tab === "log") renderLog();
   }
+  window.Initiatives = { list: () => items.slice(), open: id => openSaved(id) };
+  $("resToProj") && $("resToProj").addEventListener("click", async () => {
+    if (!cur || cur.kind !== "doc" || !window.Projects) return;
+    if (!curId) await save(false);
+    if (curId) Projects.fromInitiative({ ...cur, id: curId });
+  });
   function connect({ db: d, user }){
     if (unsub){ unsub.forEach(f => f()); unsub = null; }
     db = d; me = user ? user.email : ""; myName = (user && user.displayName) || (me || "").split("@")[0]; items = []; loaded = false;

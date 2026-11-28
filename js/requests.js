@@ -41,7 +41,7 @@
   // the home page shows what waits for me and where my own requests are
   function toHome(){
     window.dispatchEvent(new CustomEvent("app:requests", { detail: {
-      inbox: requests.filter(amApprover),
+      inbox: requests.filter(amApprover), all: requests.slice(),
       mine: requests.filter(r => r.submittedBy === me).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))),
       label: r => r.status === "pending" && stageOf(r) ? `عند: ${stageOf(r).name} · ${ageText(since(r))}` : STATUS[r.status] || r.status,
       late: isLate,

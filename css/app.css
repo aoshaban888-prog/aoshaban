@@ -2033,3 +2033,36 @@ body.fx-on{overflow:hidden}
 .og-g2{grid-template-columns:1fr 1fr !important}@media (max-width:700px){.og-g2{grid-template-columns:minmax(0,1fr) !important}}
 .og-mform textarea.input{min-height:0;height:auto;padding-block:8px;line-height:1.7;resize:vertical}.og-dec textarea.input{min-height:42px}
 .og-dlg textarea.input{height:auto;min-height:0;padding:8px 12px;line-height:1.7;resize:vertical}
+
+/* ---------- إدارة المشاريع: registry, project page, reports (phase 5) ---------- */
+.pj-dash{margin-bottom:14px}
+.pj-bar{display:inline-block;width:90px;height:7px;border-radius:999px;background:var(--line-soft);overflow:hidden;vertical-align:middle}
+.pj-bar i{display:block;height:100%;border-radius:inherit;background:var(--grad)}
+.pj-bar.big{width:100%;height:10px}.pj-bar.over i{background:var(--danger)}
+.pj-pct{font-size:12px;font-weight:600;margin-inline-start:6px;vertical-align:middle}
+.pj-pc{white-space:nowrap}.pj-pc small{display:block}
+.pj-dot{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c);margin-inline-end:8px;vertical-align:middle}
+.pj-t tbody tr{cursor:pointer}.pj-t tbody tr:hover td{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.pj-hero{border-inline-start:4px solid var(--c)}
+.pj-ring{--p:0;display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--line-soft) 0);flex:none}
+.pj-ring b{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--surface);font-size:15px}
+.pj-pills{display:flex;gap:6px;margin-top:6px}
+.pj-desc{margin:0;font-size:13.5px;line-height:1.9;color:var(--ink-2);white-space:pre-line}
+.pj-goals{margin:0;padding-inline-start:20px;font-size:13.5px;line-height:1.9}
+.pj-late{color:var(--danger);font-weight:600}
+.pj-rows{border:0;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.pj-r{display:grid;gap:8px;align-items:center}
+.pj-k{grid-template-columns:minmax(0,2fr) minmax(0,1fr) 90px 90px 90px 150px 32px}
+.pj-b{grid-template-columns:minmax(0,2fr) 140px 140px 150px 32px}
+.pj-rh{font-size:12px;font-weight:600;color:var(--muted)}
+.pj-r .input{min-width:0;height:36px}
+.pj-tot{padding-top:8px;border-top:1px solid var(--line);font-weight:700;font-size:13.5px}
+.pj-ra{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.pj-bbar{margin:4px 0 10px}
+.pj-md{white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.9;color:var(--ink-2);margin:0;max-height:420px;overflow:auto}
+.pj-colors{display:flex;gap:8px}.pj-colors input{position:absolute;opacity:0}.pj-colors span{display:block;width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.pj-colors input:checked+span{border-color:var(--ink);box-shadow:0 0 0 2px var(--surface) inset}
+.pj-colors input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.rp-title{margin:4px 0 8px;font-size:17px}.rp-sp{flex:1}
+#rpView .og-kpis{margin-bottom:12px}
+@media (max-width:800px){.pj-k{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 32px}.pj-k>.input[data-f="name"]{grid-column:1/3}.pj-k .pj-pc{grid-column:1/3}.pj-rh{display:none}.pj-b{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 32px}.pj-b>.input[data-f="item"]{grid-column:1/3}}

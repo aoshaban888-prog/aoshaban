@@ -110,10 +110,10 @@ service cloud.firestore {
                     && request.resource.data.data.size() <= 960000 && taskSees(taskAt(request.resource.data.taskId));
       allow delete: if isAdmin() || resource.data.owner == myEmail();
     }
-    // projects and categories, shared by everyone in the tasks section
+    // projects and categories, shared by everyone in the tasks section; سجل المشاريع (إدارة المشاريع) reads and adds them too
     match /taskProjects/{id} {
-      allow read: if section("tasks");
-      allow create: if section("tasks") && request.resource.data.owner == myEmail() && request.resource.data.name is string && request.resource.data.name.size() <= 80;
+      allow read: if section("tasks") || section("projects");
+      allow create: if (section("tasks") || section("projects")) && request.resource.data.owner == myEmail() && request.resource.data.name is string && request.resource.data.name.size() <= 80;
       allow update, delete: if isAdmin() || resource.data.owner == myEmail();
     }
 

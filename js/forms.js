@@ -225,6 +225,9 @@
         <label class="s-check"><input type="checkbox" data-s="showProgress"${s.showProgress ? " checked" : ""}> <span>إظهار شريط التقدم بين الأقسام</span></label>
         <label class="ig-f"><span>إغلاق تلقائي في تاريخ <i>(اختياري)</i></span><input class="input" type="date" data-s="closeAt" value="${esc(s.closeAt)}"></label>
         <label class="ig-f"><span>رسالة الشكر بعد الإرسال</span><textarea class="input" rows="2" data-s="confirm">${esc(s.confirm)}</textarea></label></div>
+      <div class="fm-card-s"><h3>الربط</h3><p class="muted-text">يظهر الاستبيان وعدد ردوده في صفحة المشروع، وفي تقارير المشاريع والجمعيات.</p>
+        <label class="ig-f"><span>المشروع</span><select class="select" data-s="projectId"><option value="">—</option>${(window.Projects ? Projects.list() : []).map(p => `<option value="${esc(p.id)}"${p.id === s.projectId ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
+        <label class="ig-f"><span>الجمعية</span><select class="select" data-s="assocId"><option value="">—</option>${(window.Assocs ? Assocs.list() : []).map(a => `<option value="${esc(a.id)}"${a.id === s.assocId ? " selected" : ""}>${esc(a.name)}</option>`).join("")}</select></label></div>
     </fieldset>`;
     $("fmCopy2").addEventListener("click", () => copyLink({ ...cur, id: curId }));
   }
@@ -425,6 +428,7 @@
   }
   window.addEventListener("app:view", e => { if (e.detail === "projects/forms" && db && !cur) loadCounts(); });
   window.FormsList = () => forms.slice();
+  window.FormsCounts = () => ({ ...counts });
   window.addEventListener("app:db", e => connect(e.detail));
   if (window.appDb) connect({ db: window.appDb, user: window.appUser });
   renderList();
