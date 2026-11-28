@@ -93,6 +93,30 @@
     if (e.target.id === "calAssoc") filt.assoc = e.target.value;
     save(); page();
   });
+  /* export the shown events (current filters) as an .ics file: Google Calendar, Outlook and Apple Calendar import it */
+  function ics(){
+    const list = events().filter(e => /^\d{4}-\d{2}-\d{2}$/.test(e.date || "")), stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+    if (!list.length){ UI.toast("لا توجد مواعيد للتصدير بالتصفية الحالية", "err"); return; }
+    const CRLF = String.fromCharCode(13, 10), BS = String.fromCharCode(92);
+    const txt = s => String(s || "").split(BS).join(BS + BS).replace(/[,;]/g, m => BS + m).replace(new RegExp(String.fromCharCode(13) + "?" + String.fromCharCode(10), "g"), BS + "n");
+    const fold = l => { const out = []; let cur = ""; for (const ch of l){ if (new TextEncoder().encode(cur + ch).length > 74){ out.push(cur); cur = " " + ch; } else cur += ch; } out.push(cur); return out.join(CRLF); };
+    const d8 = d => d.replace(/-/g, ""), next = d => { const x = new Date(d + "T12:00:00"); x.setDate(x.getDate() + 1); return x.toLocaleDateString("en-CA").replace(/-/g, ""); };
+    const utc = (d, t) => { const x = new Date(`${d}T${t}:00+03:00`); return x.toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""); };
+    const name = (window.siteSettings && siteSettings.siteName) || "التقويم";
+    const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//" + txt(name) + "//AR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:" + txt(name), "X-WR-TIMEZONE:Asia/Riyadh"];
+    list.forEach(e => {
+      lines.push("BEGIN:VEVENT", "UID:" + e.key.replace(/[^\w:-]/g, "") + "@" + location.hostname, "DTSTAMP:" + stamp);
+      if (e.time && /^\d{2}:\d{2}$/.test(e.time)){ const end = new Date(`${e.date}T${e.time}:00+03:00`); end.setMinutes(end.getMinutes() + 30); lines.push("DTSTART:" + utc(e.date, e.time), "DTEND:" + end.toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "")); }
+      else lines.push("DTSTART;VALUE=DATE:" + d8(e.date), "DTEND;VALUE=DATE:" + next(e.date));
+      lines.push("SUMMARY:" + txt(e.title), "CATEGORIES:" + txt(e.kindLabel || ""), "END:VEVENT");
+    });
+    lines.push("END:VCALENDAR");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([lines.map(fold).join(CRLF)], { type: "text/calendar;charset=utf-8" }));
+    a.download = "calendar.ics"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    UI.toast(`صُدّر ${list.length} موعداً. افتح الملف أو استورده في Google Calendar من «الإعدادات › استيراد»`);
+  }
+  window.Calendar_ics = ics;
+  $("calIcs") && $("calIcs").addEventListener("click", ics);
   $("calAdd") && $("calAdd").addEventListener("click", () => { location.hash = "#/tasks"; setTimeout(() => { const i = $("tkQuickIn"); if (i){ i.focus(); i.value = "موعد "; } }, 200); });
   ["app:tasks", "app:life", "app:assocs", "app:forms", "app:orgs"].forEach(ev => window.addEventListener(ev, () => { clearTimeout(page._t); page._t = setTimeout(page, 60); }));
   window.addEventListener("app:view", e => { if (e.detail === "calendar") setTimeout(page, 30); });

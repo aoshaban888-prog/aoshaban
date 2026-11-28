@@ -7,10 +7,18 @@
 <meta name="application-name" content="نظام أحمد التفاعلي">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
-<script src="js/boot.js?v=20261128t"></script>
-<link rel="stylesheet" href="css/library.css?v=20261128t">
-<link rel="stylesheet" href="css/app.css?v=20261128t">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap"></noscript>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#7c3aed">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="نظام أحمد">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
+<script src="js/boot.js?v=20261128u"></script>
+<link rel="stylesheet" href="css/library.css?v=20261128u">
+<link rel="stylesheet" href="css/app.css?v=20261128u">
 </head>
 <body>
 <div class="login" id="login" hidden>
@@ -125,6 +133,7 @@
           <div class="acct-menu" id="acctMenu" role="menu" hidden>
             <bdi class="acct-mail" id="acctMail"></bdi>
             <a class="acct-item" role="menuitem" href="#/admin">التمكين التقني</a>
+            <button class="acct-item" role="menuitem" type="button" id="acctInstall" hidden>تثبيت التطبيق على الجهاز</button>
             <button class="acct-item" role="menuitem" type="button" id="acctPass">تغيير كلمة المرور</button>
             <button class="acct-item" role="menuitem" type="button" id="acctOut">تسجيل الخروج</button>
           </div>
@@ -240,7 +249,7 @@
       </div>
     </section>
     <section class="view" data-view="calendar" hidden>
-      <header class="page-h"><div><p class="crumb">إدارة حياتي الشخصية</p><h1>التقويم الموحد</h1><p class="rq-subh">كل المواعيد والاستحقاقات من الأقسام المتاحة لك، بالتاريخين الهجري والميلادي وتوقيت الرياض. اسحب المهمة إلى يوم آخر لتغيير موعدها.</p></div><div class="actions"><button class="btn primary" type="button" id="calAdd">+ موعد</button></div></header>
+      <header class="page-h"><div><p class="crumb">إدارة حياتي الشخصية</p><h1>التقويم الموحد</h1><p class="rq-subh">كل المواعيد والاستحقاقات من الأقسام المتاحة لك، بالتاريخين الهجري والميلادي وتوقيت الرياض. اسحب المهمة إلى يوم آخر لتغيير موعدها.</p></div><div class="actions"><button class="btn" type="button" id="calIcs" title="ملف ICS يُستورد في Google Calendar وOutlook وتقويم Apple">تصدير إلى Google/Outlook</button><button class="btn primary" type="button" id="calAdd">+ موعد</button></div></header>
       <div class="cal-filters" id="calFilters"></div>
       <div id="calView"><div class="card cal-card" id="calPage"></div></div>
     </section>
@@ -1259,37 +1268,38 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/prefs.js?v=20261128t"></script>
-<script src="js/ui.js?v=20261128t"></script>
-<script src="js/library.js?v=20261128t"></script>
+<script src="js/prefs.js?v=20261128u"></script>
+<script src="js/ui.js?v=20261128u"></script>
+<script src="js/library.js?v=20261128u"></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-<script src="js/cloud.js?v=20261128t"></script>
-<script src="js/task-core.js?v=20261128t"></script>
-<script src="js/smart-task.js?v=20261128t"></script>
-<script src="js/reminders.js?v=20261128t"></script>
-<script src="js/life.js?v=20261128t"></script>
-<script src="js/dash.js?v=20261128t" defer></script>
-<script src="js/home.js?v=20261128t"></script>
-<script src="js/calendar.js?v=20261128t"></script>
-<script src="js/focus.js?v=20261128t"></script>
-<script src="js/followups.js?v=20261128t" defer></script>
-<script src="js/tasks.js?v=20261128t"></script>
-<script src="js/task-detail.js?v=20261128t"></script>
-<script src="js/slider.js?v=20261128t"></script>
-<script src="js/settings.js?v=20261128t"></script>
-<script src="js/fonts.js?v=20261128t"></script>
-<script src="js/hr.js?v=20261128t"></script>
-<script src="js/assocs.js?v=20261128t"></script>
-<script src="js/orgs.js?v=20261128t"></script>
-<script src="js/projects.js?v=20261128t"></script>
-<script src="js/forms.js?v=20261128t"></script>
-<script src="js/initiatives.js?v=20261128t"></script>
-<script src="js/requests.js?v=20261128t"></script>
-<script src="js/table-tools.js?v=20261128t"></script>
-<script src="js/login.js?v=20261128t"></script>
-<script src="js/backup.js?v=20261128t"></script>
-<script src="js/notif.js?v=20261128t"></script>
-<script src="js/nav.js?v=20261128t"></script>
-<script src="js/shell.js?v=20261128t"></script>
+<script src="js/cloud.js?v=20261128u"></script>
+<script src="js/task-core.js?v=20261128u"></script>
+<script src="js/smart-task.js?v=20261128u"></script>
+<script src="js/reminders.js?v=20261128u"></script>
+<script src="js/life.js?v=20261128u"></script>
+<script src="js/dash.js?v=20261128u" defer></script>
+<script src="js/home.js?v=20261128u"></script>
+<script src="js/calendar.js?v=20261128u"></script>
+<script src="js/focus.js?v=20261128u"></script>
+<script src="js/followups.js?v=20261128u" defer></script>
+<script src="js/tasks.js?v=20261128u"></script>
+<script src="js/task-detail.js?v=20261128u"></script>
+<script src="js/slider.js?v=20261128u"></script>
+<script src="js/settings.js?v=20261128u"></script>
+<script src="js/fonts.js?v=20261128u"></script>
+<script src="js/hr.js?v=20261128u"></script>
+<script src="js/assocs.js?v=20261128u"></script>
+<script src="js/orgs.js?v=20261128u"></script>
+<script src="js/projects.js?v=20261128u"></script>
+<script src="js/forms.js?v=20261128u"></script>
+<script src="js/initiatives.js?v=20261128u"></script>
+<script src="js/requests.js?v=20261128u"></script>
+<script src="js/table-tools.js?v=20261128u"></script>
+<script src="js/login.js?v=20261128u"></script>
+<script src="js/backup.js?v=20261128u"></script>
+<script src="js/notif.js?v=20261128u"></script>
+<script src="js/nav.js?v=20261128u"></script>
+<script src="js/pwa.js?v=20261128u"></script>
+<script src="js/shell.js?v=20261128u"></script>
 </body>
 </html>
