@@ -4,6 +4,7 @@
   const $ = id => document.getElementById(id);
   const S = window.SiteSettings;
   const PRESETS = [
+    ["نَسَق (الرسمي)", "#9333EA", "#542580"],
     ["بنفسجي نيون", "#7c3aed", "#c026d3"],
     ["أزرق ليلي", "#2563eb", "#7c3aed"],
     ["أخضر رسمي", "#0f766e", "#15803d"],
@@ -22,16 +23,9 @@
   // the old default (32) shows at the new one; the slider steps by 8 from 20, so 32 can't be picked by hand
   const logoPx = s => s.logoSize === 32 ? 56 : s.logoSize;
   function renderBrand(s){
-    const img = document.querySelector(".brand .logo-img"), name = document.querySelector(".brand .brand-name");
-    if (!img || !name) return;
-    const src = (isDarkish() && s.logoDark) || s.logo || "";
-    img.hidden = !src; if (src) img.src = src;
-    img.style.height = logoPx(s) + "px";
-    name.textContent = s.siteName;
-    name.hidden = !!src && !s.showName;
-    // the browser tab's icon and the installed app's name follow the settings too
-    let ic = document.querySelector('link[rel="icon"]'); if (s.logo){ if (!ic){ ic = document.createElement("link"); ic.rel = "icon"; document.head.append(ic); } ic.href = s.logo; }
-    const an = document.querySelector('meta[name="application-name"]'); if (an) an.content = s.siteName;
+    if (window.Brand) Brand.render();
+    const br = document.querySelector(".side .brand");
+    if (br){ br.classList.toggle("bx-noname", !s.showName); br.style.setProperty("--logo-h", Math.max(28, Math.min(64, Math.round(logoPx(s) * 0.68))) + "px"); }
     document.querySelectorAll(".prayer-card").forEach(c => { c.hidden = !s.home.prayer; });
     document.querySelectorAll(".tasks-card").forEach(c => { c.hidden = !s.home.tasks; });
   }
@@ -43,6 +37,8 @@
   function fill(){
     const s = draft;
     if (document.activeElement !== $("sName")) $("sName").value = s.siteName;
+    [["sNameEn", "siteNameEn"], ["sTagline", "tagline"], ["sSlogan", "slogan"], ["sCredit", "credit"]].forEach(([id, k]) => { if ($(id) && document.activeElement !== $(id)) $(id).value = s[k] || ""; });
+    document.querySelectorAll("#sPalette input[type=color]").forEach(i => { i.value = s[i.dataset.ck]; i.nextElementSibling.textContent = s[i.dataset.ck]; });
     $("sShowName").checked = s.showName;
     $("sLogoSize").value = logoPx(s); $("sLogoSizeV").textContent = logoPx(s) + "px";
     showLogo("sLogoPrev", s.logo); showLogo("sLogoDarkPrev", s.logoDark);
@@ -80,6 +76,11 @@
     });
     Object.keys(S.FONTS).forEach(f => $("sFont").append(new Option(f, f)));
     $("sName").addEventListener("input", e => change({ siteName: e.target.value.trim() ? e.target.value : S.DEFAULTS.siteName }));
+    [["sNameEn", "siteNameEn"], ["sTagline", "tagline"], ["sSlogan", "slogan"], ["sCredit", "credit"]].forEach(([id, k]) => $(id) && $(id).addEventListener("input", e => change({ [k]: e.target.value })));
+    // the full palette (نَسَق): each color editable, linked to the same settings
+    const PAL = [["a3", "الثانوي"], ["cLight", "التمييز الفاتح"], ["cBgLight", "خلفية الوضع النهاري"], ["cBgDark", "خلفية الوضع الليلي"], ["cSurface", "الأسطح والبطاقات"], ["cInk", "النص الأساسي"], ["cMuted", "النص الثانوي"], ["cLine", "الحدود"]];
+    if ($("sPalette")){ $("sPalette").innerHTML = PAL.map(([k, l]) => `<div><label for="sp_${k}">${l}</label><div class="color"><input type="color" id="sp_${k}" data-ck="${k}"><bdi class="mono"></bdi></div></div>`).join("");
+      $("sPalette").addEventListener("input", e => { const k = e.target.dataset.ck; if (k) change({ [k]: e.target.value }); }); }
     $("sShowName").addEventListener("change", e => change({ showName: e.target.checked }));
     $("sLogoSize").addEventListener("input", e => change({ logoSize: +e.target.value }));
     $("sA1").addEventListener("input", e => change({ a1: e.target.value }));
@@ -208,7 +209,9 @@
     $("sSignin").hidden = true; $("uSignin").hidden = true;
     db.collection("settings").doc("site").onSnapshot(d => {
       if (!d.exists) return;
-      const s = S.merge(d.data()); S.cache(s);
+      const raw = d.data(), s = S.merge(raw); S.cache(s);
+      // the first time an admin opens the site after the NASAQ identity: save the upgraded settings once
+      if (raw.brand !== "nasaq") db.collection("allowed").doc(myEmail).get().then(a => { if (a.exists && a.data().role === "admin") db.collection("settings").doc("site").set({ ...s, updatedAt: new Date().toISOString(), updatedBy: myEmail }).catch(() => {}); }).catch(() => {});
       saved = s;
       if (!dirty){ draft = S.merge(s); S.apply(draft); }
       fill();

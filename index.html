@@ -3,29 +3,55 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام أحمد التفاعلي</title>
-<meta name="application-name" content="نظام أحمد التفاعلي">
+<title>نَسَق | NASAQ — منصة التنظيم والإدارة المتكاملة</title>
+<meta name="application-name" content="نَسَق | NASAQ">
+<meta name="description" content="نَسَق | NASAQ: منصة التنظيم والإدارة المتكاملة. تنظيم أفضل، إنجاز أكبر.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="نَسَق | NASAQ">
+<meta property="og:title" content="نَسَق | NASAQ — منصة التنظيم والإدارة المتكاملة">
+<meta property="og:description" content="خطّط بوضوح، أدر بذكاء، أنجز بثقة. تنظيم أفضل، إنجاز أكبر.">
+<meta property="og:url" content="https://aoshaban.vercel.app/">
+<meta property="og:image" content="https://aoshaban.vercel.app/img/brand/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ar_SA">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="نَسَق | NASAQ">
+<meta name="twitter:description" content="منصة التنظيم والإدارة المتكاملة. تنظيم أفضل، إنجاز أكبر.">
+<meta name="twitter:image" content="https://aoshaban.vercel.app/img/brand/og.png">
+<link rel="icon" type="image/svg+xml" href="/img/brand/nasaq-icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/img/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/img/icons/favicon-16.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap"></noscript>
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#7c3aed">
+<meta name="theme-color" content="#9333EA">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="نظام أحمد">
+<meta name="apple-mobile-web-app-title" content="نَسَق">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
-<script src="js/boot.js?v=20261128v"></script>
-<link rel="stylesheet" href="css/library.css?v=20261128v">
-<link rel="stylesheet" href="css/app.css?v=20261128v">
+<script src="js/boot.js?v=20261128w"></script>
+<link rel="stylesheet" href="css/library.css?v=20261128w">
+<link rel="stylesheet" href="css/app.css?v=20261128w">
 </head>
 <body>
 <div class="login" id="login" hidden>
+  <aside class="lg-hero" aria-hidden="true">
+    <div class="lg-hero-in">
+      <div class="lg-hero-logo" data-brand="vertical"></div>
+      <p class="lg-motto">خطّط بوضوح، أدر بذكاء، أنجز بثقة.</p>
+      <ul class="lg-feats"><li>المهام والمتابعات والتقويم في مكان واحد</li><li>الحوكمة والخطابات والطلبات بمسارات اعتماد</li><li>المشاريع والجمعيات والتقارير</li></ul>
+    </div>
+  </aside>
+  <div class="lg-side">
   <div class="lg-card" role="main" aria-labelledby="lgName">
-    <div class="lg-brand"><img id="lgLogo" alt="" hidden><h1 id="lgName">نظام أحمد التفاعلي</h1></div>
+    <div class="lg-brand"><div class="lg-logo" data-brand="vertical"></div><h1 id="lgName" class="sr-only">نَسَق</h1><img id="lgLogo" alt="" hidden></div>
 
     <form id="lgForm" novalidate>
+      <h2 class="lg-title">تسجيل الدخول</h2>
       <p class="lg-sub">بوابة الدخول لمنسوبي الجهة</p>
       <label class="lg-l" for="lgEmail">البريد الإلكتروني</label>
       <div class="lg-field"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg><input id="lgEmail" type="email" dir="ltr" autocomplete="username" inputmode="email" placeholder="name@example.com"></div>
@@ -34,7 +60,7 @@
         <button class="lg-eye" id="lgEye" type="button" aria-label="إظهار كلمة المرور"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
       <button class="lg-forgot" id="lgForgot" type="button">نسيت كلمة المرور؟</button>
       <p class="lg-msg" id="lgMsg" role="status" hidden></p>
-      <button class="lg-go" id="lgGo" type="submit">تسجيل الدخول</button>
+      <button class="lg-go" id="lgGo" type="submit"><span class="lg-spin" aria-hidden="true"></span><span class="lg-go-t">تسجيل الدخول</span></button>
       <div class="lg-or"><span>أو</span></div>
       <button class="lg-google" id="lgGoogle" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>الدخول بحساب قوقل</button>
     </form>
@@ -53,13 +79,14 @@
       <button class="lg-go" type="button" data-lg-out>الدخول بحساب آخر</button>
     </div>
   </div>
-  <p class="lg-foot">دخول آمن عبر Firebase</p>
+  <p class="lg-foot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>دخول آمن عبر Firebase · <span data-brand="name"></span> © <span class="lg-year"></span></p>
+  </div>
 </div>
-<div class="gate-loader" aria-hidden="true"><span></span></div>
+<div class="gate-loader" role="status" aria-label="جارٍ التحميل"><div class="gl-in" data-brand="loader"></div></div>
 <div class="app">
   <aside class="side" id="side" aria-label="القائمة">
     <div class="side-top">
-      <a class="brand" href="#/home"><img class="logo-img" alt="" hidden><span class="brand-name">نظام أحمد التفاعلي</span></a>
+      <a class="brand" href="#/home" data-brand="horizontal" data-brand-label aria-label="نَسَق"></a>
       <button class="pin-btn" id="pinBtn" type="button" aria-pressed="true" title="إخفاء القائمة" aria-label="إخفاء القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M15 3v18"/></svg></button>
     </div>
     <nav class="nav">
@@ -117,7 +144,7 @@
   <div class="scrim"></div>
 
   <div class="main-col">
-    <div class="topbar"><button class="menu-btn" type="button" aria-label="طي القائمة أو توسعتها" title="طي القائمة أو توسعتها" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></svg></button><nav class="crumbs" id="crumbs" aria-label="مسار الصفحة"></nav><span class="t" hidden></span><button class="top-search" type="button" id="searchBtn" aria-label="البحث الشامل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>ابحث أو انتقل إلى صفحة…</span><kbd id="searchKbd">Ctrl K</kbd></button><div class="qa-wrap"><button class="top-ic qa-btn" type="button" id="qaBtn" aria-haspopup="menu" aria-expanded="false" aria-label="إضافة سريعة" title="إضافة سريعة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    <div class="topbar"><button class="menu-btn" type="button" aria-label="طي القائمة أو توسعتها" title="طي القائمة أو توسعتها" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></svg></button><a class="top-brand" href="#/home" data-brand="compact" data-brand-label aria-label="نَسَق"></a><nav class="crumbs" id="crumbs" aria-label="مسار الصفحة"></nav><span class="t" hidden></span><button class="top-search" type="button" id="searchBtn" aria-label="البحث الشامل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>ابحث أو انتقل إلى صفحة…</span><kbd id="searchKbd">Ctrl K</kbd></button><div class="qa-wrap"><button class="top-ic qa-btn" type="button" id="qaBtn" aria-haspopup="menu" aria-expanded="false" aria-label="إضافة سريعة" title="إضافة سريعة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
       <div class="top-tools">
         <div class="bell" id="bell" hidden>
           <button class="top-ic" id="bellBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="bellMenu" aria-label="التنبيهات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bell-dot" id="bellDot" hidden></span></button>
@@ -133,6 +160,7 @@
           <div class="acct-menu" id="acctMenu" role="menu" hidden>
             <bdi class="acct-mail" id="acctMail"></bdi>
             <a class="acct-item" role="menuitem" href="#/admin">التمكين التقني</a>
+            <a class="acct-item" role="menuitem" href="#/about">عن <span data-brand="name"></span></a>
             <button class="acct-item" role="menuitem" type="button" id="acctInstall" hidden>تثبيت التطبيق على الجهاز</button>
             <button class="acct-item" role="menuitem" type="button" id="acctPass">تغيير كلمة المرور</button>
             <button class="acct-item" role="menuitem" type="button" id="acctOut">تسجيل الخروج</button>
@@ -904,13 +932,19 @@
       <p class="muted-text s-signin" id="sSignin">سجّل الدخول لحفظ الإعدادات. التغييرات هنا تظهر فوراً لكنها لا تُحفظ قبل تسجيل الدخول</p>
       <div class="s-grid">
         <section class="card" data-atab="look" aria-labelledby="s1"><div class="card-h"><h2 id="s1">الهوية</h2></div>
-          <div class="s-row"><label for="sName">اسم الموقع</label><input class="input" id="sName" maxlength="40"></div>
+          <div class="s-row"><label for="sName">اسم النظام بالعربية</label><input class="input" id="sName" maxlength="40"></div>
+          <div class="s-row"><label for="sNameEn">الاسم بالإنجليزية</label><input class="input" id="sNameEn" maxlength="24" dir="ltr" placeholder="NASAQ"></div>
+          <div class="s-row"><label for="sTagline">الوصف</label><input class="input" id="sTagline" maxlength="80"></div>
+          <div class="s-row"><label for="sSlogan">الشعار التسويقي</label><input class="input" id="sSlogan" maxlength="80"></div>
+          <div class="s-row"><label for="sCredit">التطوير والإدارة <span class="muted-text">في التذييل</span></label><input class="input" id="sCredit" maxlength="60"></div>
           <div class="s-row"><span class="lbl">الشعار</span>
             <div class="logo-pick"><div class="logo-prev" id="sLogoPrev"></div><div class="logo-btns"><label class="btn small">رفع شعار<input type="file" id="sLogoFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" hidden></label><button class="btn small ghost" type="button" data-clear="logo">إزالة</button></div></div></div>
           <div class="s-row"><span class="lbl">شعار للخلفية الداكنة <span class="muted-text">اختياري</span></span>
             <div class="logo-pick"><div class="logo-prev dark" id="sLogoDarkPrev"></div><div class="logo-btns"><label class="btn small">رفع شعار<input type="file" id="sLogoDarkFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" hidden></label><button class="btn small ghost" type="button" data-clear="logoDark">إزالة</button></div></div></div>
           <div class="s-row"><label for="sLogoSize">حجم الشعار</label><div class="range"><input type="range" id="sLogoSize" min="20" max="116" step="8"><span class="mono" id="sLogoSizeV"></span></div></div>
           <label class="s-check"><input type="checkbox" id="sShowName"> إظهار الاسم بجانب الشعار</label>
+          <div class="s-brandpv"><div data-brand="horizontal"></div><div data-brand="compact"></div><div data-brand="icon"></div></div>
+          <p class="muted-text">بدون شعار مرفوع تُستخدم أيقونة نَسَق الرسمية وتتبع الألوان والوضع الليلي.</p>
         </section>
 
         <section class="card" data-atab="look" aria-labelledby="s2"><div class="card-h"><h2 id="s2">الألوان</h2></div>
@@ -919,6 +953,7 @@
             <div><label for="sA1">اللون الأول</label><div class="color"><input type="color" id="sA1"><bdi class="mono" id="sA1v"></bdi></div></div>
             <div><label for="sA2">اللون الثاني</label><div class="color"><input type="color" id="sA2"><bdi class="mono" id="sA2v"></bdi></div></div>
           </div>
+          <details class="s-pal"><summary>لوحة الألوان الكاملة</summary><div class="s-pal-g" id="sPalette"></div></details>
           <div class="s-preview"><span class="pv-btn">زر أساسي</span><span class="pv-link">رابط</span><span class="pv-soft">تحديد</span></div>
           <p class="muted-text">التدرّج يظهر على الزر الأساسي والقسم المحدد ومربع الصلاة القادمة في كل المظاهر. اختر لونين متقاربين للون واحد بلا تدرّج</p>
         </section>
@@ -1020,6 +1055,14 @@
         </section>
       </div>
     </section>
+    <section class="view about" data-view="about" hidden>
+      <div class="ab-hero card"><div data-brand="vertical"></div></div>
+      <div class="ab-grid">
+        <section class="card"><h2>عن المنصة</h2><p>منصة متكاملة لتنظيم العمل وإدارته: المهام الشخصية والمؤسسية، والحوكمة واللوائح، والخطابات والطلبات بمسارات اعتماد، والمشاريع والجمعيات والاستبيانات والتقارير، في مكان واحد وبصلاحيات محكمة.</p><p class="ab-motto">خطّط بوضوح، أدر بذكاء، أنجز بثقة.</p></section>
+        <section class="card"><h2>الأقسام</h2><ul class="ab-list"><li>إدارة حياتي الشخصية: المهام والتقويم والأهداف والعادات</li><li>الحوكمة: اللوائح والسياسات</li><li>الشؤون الإدارية: الخطابات والطلبات والمتابعات</li><li>إدارة المشاريع: السجل والمبادرات والاستبيانات والتقارير</li><li>إدارة الجمعيات: الملفات والاستحقاقات والاجتماعات</li></ul></section>
+      </div>
+    </section>
+      <footer class="site-foot" data-brand="footer"></footer>
     </main>
   </div>
 </div>
@@ -1266,41 +1309,41 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" defer></script>
-<script src="js/prefs.js?v=20261128v" defer></script>
-<script src="js/ui.js?v=20261128v" defer></script>
-<script src="js/library.js?v=20261128v" defer></script>
+<script src="js/prefs.js?v=20261128w" defer></script>
+<script src="js/ui.js?v=20261128w" defer></script>
+<script src="js/library.js?v=20261128w" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js" defer></script>
-<script src="js/cloud.js?v=20261128v" defer></script>
-<script src="js/task-core.js?v=20261128v" defer></script>
-<script src="js/smart-task.js?v=20261128v" defer></script>
-<script src="js/reminders.js?v=20261128v" defer></script>
-<script src="js/life.js?v=20261128v" defer></script>
-<script src="js/home.js?v=20261128v" defer></script>
-<script src="js/calendar.js?v=20261128v" defer></script>
-<script src="js/focus.js?v=20261128v" defer></script>
-<script src="js/tasks.js?v=20261128v" defer></script>
-<script src="js/task-detail.js?v=20261128v" defer></script>
-<script src="js/slider.js?v=20261128v" defer></script>
-<script src="js/settings.js?v=20261128v" defer></script>
-<script src="js/fonts.js?v=20261128v" defer></script>
-<script src="js/hr.js?v=20261128v" defer></script>
-<script src="js/assocs.js?v=20261128v" defer></script>
-<script src="js/orgs.js?v=20261128v" defer></script>
-<script src="js/projects.js?v=20261128v" defer></script>
-<script src="js/forms.js?v=20261128v" defer></script>
-<script src="js/initiatives.js?v=20261128v" defer></script>
-<script src="js/requests.js?v=20261128v" defer></script>
-<script src="js/table-tools.js?v=20261128v" defer></script>
-<script src="js/login.js?v=20261128v" defer></script>
-<script src="js/backup.js?v=20261128v" defer></script>
-<script src="js/notif.js?v=20261128v" defer></script>
-<script src="js/nav.js?v=20261128v" defer></script>
-<script src="js/pwa.js?v=20261128v" defer></script>
-<script src="js/shell.js?v=20261128v" defer></script>
+<script src="js/cloud.js?v=20261128w" defer></script>
+<script src="js/task-core.js?v=20261128w" defer></script>
+<script src="js/smart-task.js?v=20261128w" defer></script>
+<script src="js/reminders.js?v=20261128w" defer></script>
+<script src="js/life.js?v=20261128w" defer></script>
+<script src="js/home.js?v=20261128w" defer></script>
+<script src="js/calendar.js?v=20261128w" defer></script>
+<script src="js/focus.js?v=20261128w" defer></script>
+<script src="js/tasks.js?v=20261128w" defer></script>
+<script src="js/task-detail.js?v=20261128w" defer></script>
+<script src="js/slider.js?v=20261128w" defer></script>
+<script src="js/settings.js?v=20261128w" defer></script>
+<script src="js/fonts.js?v=20261128w" defer></script>
+<script src="js/hr.js?v=20261128w" defer></script>
+<script src="js/assocs.js?v=20261128w" defer></script>
+<script src="js/orgs.js?v=20261128w" defer></script>
+<script src="js/projects.js?v=20261128w" defer></script>
+<script src="js/forms.js?v=20261128w" defer></script>
+<script src="js/initiatives.js?v=20261128w" defer></script>
+<script src="js/requests.js?v=20261128w" defer></script>
+<script src="js/table-tools.js?v=20261128w" defer></script>
+<script src="js/login.js?v=20261128w" defer></script>
+<script src="js/backup.js?v=20261128w" defer></script>
+<script src="js/notif.js?v=20261128w" defer></script>
+<script src="js/nav.js?v=20261128w" defer></script>
+<script src="js/pwa.js?v=20261128w" defer></script>
+<script src="js/shell.js?v=20261128w" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.2/dist/docx-preview.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>
-<script src="js/dash.js?v=20261128v" defer></script>
-<script src="js/followups.js?v=20261128v" defer></script>
+<script src="js/dash.js?v=20261128w" defer></script>
+<script src="js/followups.js?v=20261128w" defer></script>
 </body>
 </html>

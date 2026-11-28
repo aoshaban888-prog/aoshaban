@@ -16,6 +16,7 @@
     "admin": "التمكين التقني",
     "admin/requests": "إدارة الطلبات الإدارية",
     "admin/permissions": "صلاحيات المستخدمين",
+    "about": "عن النظام",
     "orgs/associations": "الجمعيات", "orgs/deadlines": "مركز الوثائق والاستحقاقات", "orgs/meetings": "الاجتماعات والقرارات",
   };
   const DEFAULT = () => (window.siteSettings && ROUTES[window.siteSettings.startPage]) ? window.siteSettings.startPage : "home";
@@ -50,7 +51,7 @@
     });
     groups.forEach(g => { if (inGroup(g)) setGroup(g, true, false); });
     document.querySelector(".topbar .t").textContent = ROUTES[r];
-    document.title = ROUTES[r] + " · " + ((window.siteSettings && window.siteSettings.siteName) || "نظام أحمد التفاعلي");
+    document.title = window.Brand ? Brand.title(ROUTES[r]) : ROUTES[r];
     app.classList.remove("nav-open");
     if (r !== current){ const first = current === null; current = r; window.scrollTo(0, 0); if (!first) loading(); window.dispatchEvent(new CustomEvent("app:view", { detail: r })); }
   }
@@ -62,7 +63,7 @@
   function loading(){
     const st = window.siteSettings || {}, dark = (root.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) !== "light";
     const src = (dark && st.logoDark) || st.logo || "", box = loader.querySelector(".pg-logo");
-    box.innerHTML = src ? `<img src="${src.replace(/"/g, "&quot;")}" alt="">` : `<span class="pg-init">${((st.siteName || "م").trim()[0] || "م")}</span>`;
+    box.innerHTML = window.Brand ? Brand.icon("bx-anim") : (src ? `<img src="${src.replace(/"/g, "&quot;")}" alt="">` : "");
     clearTimeout(loadT); loader.hidden = false; loader.classList.remove("out"); void loader.offsetWidth; loader.classList.add("on");
     loadT = setTimeout(() => { loader.classList.add("out"); loadT = setTimeout(() => { loader.hidden = true; loader.classList.remove("on", "out"); }, 220); }, 700);
   }
@@ -144,6 +145,6 @@
     paintPick();
   });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paintPick);
-  window.addEventListener("app:settings", () => { paintPick(); if (current) document.title = ROUTES[current] + " · " + window.siteSettings.siteName; });
+  window.addEventListener("app:settings", () => { paintPick(); if (current) document.title = window.Brand ? Brand.title(ROUTES[current]) : ROUTES[current]; });
   paintPick();
 })();

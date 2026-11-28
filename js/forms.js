@@ -93,7 +93,7 @@
   }
   const cloudCfg = () => window.Cloud && Cloud.config ? Cloud.config() : null;
   // the site's identity (name, logo, colours, font) is copied into the form, since the public page cannot read the settings
-  const brand = () => { const st = window.siteSettings || {}; return { siteName: st.siteName || "", logo: st.logo || "", a1: st.a1 || "#7c3aed", a2: st.a2 || "#c026d3", font: st.font || "IBM Plex Sans Arabic" }; };
+  const brand = () => { const st = window.siteSettings || {}; return { siteName: window.Brand ? Brand.plain() : (st.siteName || ""), logo: st.logo || "", a1: st.a1 || "#7c3aed", a2: st.a2 || "#c026d3", font: st.font || "IBM Plex Sans Arabic" }; };
 
   /* ---------- the editor ---------- */
   function open(id, t = "q"){

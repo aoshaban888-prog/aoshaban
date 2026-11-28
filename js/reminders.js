@@ -27,7 +27,7 @@
   function notify(t){
     if (!("Notification" in window) || Notification.permission !== "granted") return;
     try {
-      const n = new Notification("تذكير: " + t.title, { body: window.SmartTask ? SmartTask.describe({ date: t.due, time: t.time }) : t.time, tag: "task-" + t.id, requireInteraction: true, lang: "ar", dir: "rtl" });
+      const n = new Notification("تذكير: " + t.title, { body: window.SmartTask ? SmartTask.describe({ date: t.due, time: t.time }) : t.time, tag: "task-" + t.id, requireInteraction: true, lang: "ar", dir: "rtl", icon: "/img/icons/icon-192.png", badge: "/img/icons/favicon-32.png" });
       n.onclick = () => { window.focus(); location.hash = "#/tasks"; n.close(); };
     } catch {}
   }
